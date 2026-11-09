@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מסך כיתה - Classroomscreen בעברית</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="background-layer" class="background-layer"></div>
+<canvas id="annotation-canvas" class="annotation-canvas"></canvas>
+<header class="top-bar">
+<div class="top-bar-right">
+<div class="brand-logo" title="מסך כיתה - דף הבית" id="btn-home-overview">
+<span class="brand-icon">🖥️</span>
+<span class="brand-title">מסך כיתה</span>
+</div>
+<div class="screens-tabs" id="screens-tabs">
+</div>
+<button class="top-btn icon-text-btn" id="btn-add-screen" title="הוסף מסך חדש">
+<span>+</span>
+<span>מסך חדש</span>
+</button>
+</div>
+<div class="top-bar-center">
+<div class="annotation-toolbar hidden" id="annotation-toolbar">
+<span class="toolbar-label">✏️ ציור על המסך:</span>
+<input type="color" id="anno-color" value="#ef4444" title="צבע טוש" />
+<div class="color-presets" id="anno-color-presets">
+<button class="color-dot active" data-color="#ef4444" style="background:#ef4444"></button>
+<button class="color-dot" data-color="#3b82f6" style="background:#3b82f6"></button>
+<button class="color-dot" data-color="#10b981" style="background:#10b981"></button>
+<button class="color-dot" data-color="#f59e0b" style="background:#f59e0b"></button>
+<button class="color-dot" data-color="#ffffff" style="background:#ffffff"></button>
+<button class="color-dot" data-color="#1e293b" style="background:#1e293b"></button>
+</div>
+<select id="anno-size" title="עובי קו">
+<option value="3">דק</option>
+<option value="6" selected>בינוני</option>
+<option value="12">עבה</option>
+<option value="24">מרקר מדגיש</option>
+</select>
+<button class="top-btn" id="btn-anno-eraser" title="מחק">🧹 מחק</button>
+<button class="top-btn" id="btn-anno-clear" title="נקה ציור">🗑️ נקה הכל</button>
+<button class="top-btn primary-btn" id="btn-anno-done">✓ סיום ציור</button>
+</div>
+</div>
+<div class="top-bar-left">
+<div class="cloud-sync-pill" id="cloud-sync-pill" title="סטטוס שמירה בשרת">
+<span id="cloud-sync-icon">☁️</span>
+<span id="cloud-sync-text">שמירה מקומית</span>
+</div>
+<button class="top-btn icon-text-btn" id="btn-student-lists" title="ניהול רשימות תלמידים">
+<span>👥</span>
+<span>רשימת תלמידים</span>
+</button>
+<button class="top-btn icon-text-btn" id="btn-annotate-toggle" title="צייר מעל המסך">
+<span>🖍️</span>
+<span>טוש מסך</span>
+</button>
+<button class="top-btn icon-text-btn" id="btn-templates" title="תבניות מוכנות לשיעור">
+<span>✨</span>
+<span>תבניות שיעור</span>
+</button>
+<button class="top-btn" id="btn-clear-widgets" title="נקה את כל הווידג'טים מהמסך">
+<span>🧹</span>
+</button>
+<button class="top-btn" id="btn-fullscreen" title="מסך מלא">
+<span>⛶</span>
+</button>
+<button class="google-top-btn" id="btn-google-login" title="התחבר עם חשבון גוגל לשמירה בענן">
+<svg class="google-g-icon" viewBox="0 0 24 24" width="18" height="18">
+<path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+<path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+<path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+<path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 20.9 7.4 24 12 24z"/>
+</svg>
+<span>התחבר עם Google</span>
+</button>
+<div class="user-profile-pill hidden" id="user-profile-pill">
+<img id="user-avatar-img" src="" alt="User" class="user-avatar" />
+<span id="user-display-name" class="user-name"></span>
+<button class="logout-mini-btn" id="btn-logout" title="התנתק מחשבון גוגל">התנתק</button>
+</div>
+</div>
+</header>
+<main id="workspace" class="workspace">
+</main>
+<footer class="bottom-dock-wrapper" id="bottom-dock-wrapper">
+<div class="more-widgets-drawer hidden" id="more-widgets-drawer">
+<div class="drawer-header">
+<h3>כל הכלים והווידג'טים לכיתה</h3>
+<button class="close-drawer-btn" id="btn-close-drawer">✕</button>
+</div>
+<div class="drawer-categories">
+<div class="drawer-category">
+<h4>⏱️ ניהול זמן ויומן</h4>
+<div class="drawer-grid">
+<button class="drawer-item" data-widget="timer"><span class="di-icon">⏳</span><span>טיימר ספירה לאחור</span></button>
+<button class="drawer-item" data-widget="visual-timer"><span class="di-icon">⭕</span><span>טיימר ויזואלי</span></button>
+<button class="drawer-item" data-widget="stopwatch"><span class="di-icon">⏱️</span><span>שעון עצר (סטופר)</span></button>
+<button class="drawer-item" data-widget="clock"><span class="di-icon">🕒</span><span>שעון (אנלוגי/דיגיטלי)</span></button>
+<button class="drawer-item" data-widget="timetable"><span class="di-icon">📋</span><span>מערכת שעות וסדר יום</span></button>
+<button class="drawer-item" data-widget="calendar"><span class="di-icon">📅</span><span>לוח שנה עברי/לועזי</span></button>
+<button class="drawer-item" data-widget="countdown"><span class="di-icon">🎉</span><span>ספירה לאחור לאירוע</span></button>
+</div>
+</div>
+<div class="drawer-category">
+<h4>🚦 ניהול כיתה והתנהגות</h4>
+<div class="drawer-grid">
+<button class="drawer-item" data-widget="traffic-light"><span class="di-icon">🚦</span><span>רמזור כיתתי</span></button>
+<button class="drawer-item" data-widget="work-symbols"><span class="di-icon">🤫</span><span>סמלי עבודה</span></button>
+<button class="drawer-item" data-widget="noise-meter"><span class="di-icon">🎙️</span><span>מד רעש (מיקרופון חי)</span></button>
+<button class="drawer-item" data-widget="stickers"><span class="di-icon">⭐</span><span>מדבקות וחיזוקים</span></button>
+</div>
+</div>
+<div class="drawer-category">
+<h4>🎲 מעורבות, הגרלות ומשחק</h4>
+<div class="drawer-grid">
+<button class="drawer-item" data-widget="random-name"><span class="di-icon">🎡</span><span>הגרלת שמות וגלגל מזל</span></button>
+<button class="drawer-item" data-widget="group-maker"><span class="di-icon">👥</span><span>מחלק לקבוצות</span></button>
+<button class="drawer-item" data-widget="dice"><span class="di-icon">🎲</span><span>הטלת קוביות</span></button>
+<button class="drawer-item" data-widget="scoreboard"><span class="di-icon">🏆</span><span>לוח תוצאות וניקוד</span></button>
+<button class="drawer-item" data-widget="poll"><span class="di-icon">📊</span><span>סקר והצבעה כיתתית</span></button>
+</div>
+</div>
+<div class="drawer-category">
+<h4>📝 תוכן, מדיה והצגה</h4>
+<div class="drawer-grid">
+<button class="drawer-item" data-widget="text"><span class="di-icon">📝</span><span>תיבת טקסט והוראות</span></button>
+<button class="drawer-item" data-widget="draw"><span class="di-icon">🎨</span><span>לוח ציור וכתיבה</span></button>
+<button class="drawer-item" data-widget="qr"><span class="di-icon">📱</span><span>מחולל קוד QR</span></button>
+<button class="drawer-item" data-widget="image"><span class="di-icon">🖼️</span><span>תמונה מהמחשב / קישור</span></button>
+<button class="drawer-item" data-widget="video"><span class="di-icon">▶️</span><span>סרטון יוטיוב</span></button>
+<button class="drawer-item" data-widget="webcam"><span class="di-icon">📷</span><span>מצלמת רשת / מסמכים</span></button>
+<button class="drawer-item" data-widget="embed"><span class="di-icon">🌐</span><span>הטמעת אתר / קישור</span></button>
+</div>
+</div>
+</div>
+</div>
+<div class="bottom-dock" id="bottom-dock">
+<button class="dock-btn" data-action="background" title="שינוי רקע המסך">
+<span class="dock-icon">🏞️</span>
+<span class="dock-label">רקע</span>
+</button>
+<div class="dock-divider"></div>
+<button class="dock-btn" data-widget="random-name" title="הגרלת תלמיד או גלגל מזל">
+<span class="dock-icon">🎡</span>
+<span class="dock-label">הגרלת שם</span>
+</button>
+<button class="dock-btn" data-widget="dice" title="הטלת קוביות">
+<span class="dock-icon">🎲</span>
+<span class="dock-label">קוביות</span>
+</button>
+<button class="dock-btn" data-widget="noise-meter" title="מד רעש כיתתי">
+<span class="dock-icon">🎙️</span>
+<span class="dock-label">מד רעש</span>
+</button>
+<button class="dock-btn" data-widget="qr" title="קוד QR לסריקה">
+<span class="dock-icon">📱</span>
+<span class="dock-label">קוד QR</span>
+</button>
+<button class="dock-btn" data-widget="draw" title="לוח ציור">
+<span class="dock-icon">🎨</span>
+<span class="dock-label">ציור</span>
+</button>
+<button class="dock-btn" data-widget="text" title="תיבת טקסט והנחיות">
+<span class="dock-icon">📝</span>
+<span class="dock-label">טקסט</span>
+</button>
+<button class="dock-btn" data-widget="work-symbols" title="סמלי עבודה">
+<span class="dock-icon">🤫</span>
+<span class="dock-label">סמלי עבודה</span>
+</button>
+<button class="dock-btn" data-widget="traffic-light" title="רמזור">
+<span class="dock-icon">🚦</span>
+<span class="dock-label">רמזור</span>
+</button>
+<button class="dock-btn" data-widget="timer" title="טיימר ספירה לאחור">
+<span class="dock-icon">⏳</span>
+<span class="dock-label">טיימר</span>
+</button>
+<button class="dock-btn" data-widget="stopwatch" title="שעון עצר">
+<span class="dock-icon">⏱️</span>
+<span class="dock-label">סטופר</span>
+</button>
+<button class="dock-btn" data-widget="clock" title="שעון">
+<span class="dock-icon">🕒</span>
+<span class="dock-label">שעון</span>
+</button>
+<button class="dock-btn" data-widget="group-maker" title="חלוקה לקבוצות">
+<span class="dock-icon">👥</span>
+<span class="dock-label">קבוצות</span>
+</button>
+<button class="dock-btn" data-widget="scoreboard" title="לוח ניקוד">
+<span class="dock-icon">🏆</span>
+<span class="dock-label">ניקוד</span>
+</button>
+<button class="dock-btn" data-widget="poll" title="סקר והצבעה">
+<span class="dock-icon">📊</span>
+<span class="dock-label">סקר</span>
+</button>
+<div class="dock-divider"></div>
+<button class="dock-btn highlight-btn" id="btn-more-widgets" title="כל הווידג'טים">
+<span class="dock-icon">➕</span>
+<span class="dock-label">עוד כלים</span>
+</button>
+<button class="dock-collapse-btn" id="btn-toggle-dock" title="הסתר/הצג סרגל תחתון">▼</button>
+</div>
+<button class="dock-Minimized-restore hidden" id="btn-restore-dock" title="הצג סרגל כלים">▲ פתח סרגל כלים</button>
+</footer>
+<div class="modal-backdrop hidden" id="modal-google-auth">
+<div class="modal-card google-auth-modal">
+<div class="modal-header">
+<div style="display:flex;align-items:center;gap:10px;">
+<svg viewBox="0 0 24 24" width="24" height="24">
+<path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+<path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+<path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+<path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 20.9 7.4 24 12 24z"/>
+</svg>
+<h2>כניסה למסך כיתה באמצעות Google</h2>
+</div>
+<button class="modal-close" data-close="modal-google-auth">✕</button>
+</div>
+<div class="modal-body">
+<p class="modal-subtitle">התחבר עם חשבון Google שלך כדי לשמור את כל המסכים, הווידג'טים ורשימות התלמידים שלך בענן בשרת ולגשת אליהם מכל מחשב בכיתה.</p>
+<div id="g-id-button-wrapper" class="g-id-button-wrapper hidden">
+<div id="g-id-signin-btn"></div>
+</div>
+<div class="google-chooser-box">
+<div class="chooser-title">בחר חשבון Google להתחברות מהירה לשרת:</div>
+<div class="preset-google-accounts">
+<button class="google-account-row" data-gemail="meir3101@gmail.com" data-gname="מאיר (meir3101)">
+<img src="https://api.dicebear.com/7.x/initials/svg?seed=M&backgroundColor=4285f4" alt="" />
+<div class="ga-info">
+<div class="ga-name">מאיר</div>
+<div class="ga-email">meir3101@gmail.com</div>
+</div>
+<span class="ga-arrow">←</span>
+</button>
+<button class="google-account-row" data-gemail="teacher@school.edu.il" data-gname="המורה שרה כהן">
+<img src="https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=4f46e5" alt="" />
+<div class="ga-info">
+<div class="ga-name">המורה שרה כהן</div>
+<div class="ga-email">teacher@school.edu.il</div>
+</div>
+<span class="ga-arrow">←</span>
+</button>
+<button class="google-account-row" data-gemail="avi.levi@tzafonet.org.il" data-gname="המורה אבי לוי">
+<img src="https://api.dicebear.com/7.x/initials/svg?seed=AL&backgroundColor=0ea5e9" alt="" />
+<div class="ga-info">
+<div class="ga-name">המורה אבי לוי</div>
+<div class="ga-email">avi.levi@tzafonet.org.il</div>
+</div>
+<span class="ga-arrow">←</span>
+</button>
+</div>
+<div class="custom-google-divider"><span>או היכנס עם כתובת ה-Gmail האישית שלך</span></div>
+<form id="custom-google-form" class="custom-google-form">
+<input type="text" id="inp-google-name" placeholder="השם המלא שלך (למשל: דניאל ישראלי)" required />
+<input type="email" id="inp-google-email" placeholder="כתובת Gmail (למשל: daniel@gmail.com)" dir="ltr" required />
+<button type="submit" class="google-submit-btn">
+<svg viewBox="0 0 24 24" width="18" height="18">
+<path fill="#ffffff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+</svg>
+<span>המשך עם חשבון Google זה</span>
+</button>
+</form>
+</div>
+<details class="oauth-config-details">
+<summary>⚙️ הגדרת Google OAuth Client ID רשמי (לסביבת ייצור / Google Cloud)</summary>
+<div class="oauth-config-body">
+<p>אם ברצונך לחבר Client ID מ-Google Cloud Console (`APIs & Services -> Credentials`), הדבק אותו כאן והשרת ישמור ויפעיל את חלון Google One-Tap הרשמי:</p>
+<div style="display:flex;gap:8px;margin-top:8px;">
+<input type="text" id="inp-oauth-client-id" placeholder="xxxx-xxxx.apps.googleusercontent.com" dir="ltr" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;" />
+<button type="button" class="primary-btn" id="btn-save-client-id">שמור בשרת</button>
+</div>
+</div>
+</details>
+</div>
+</div>
+</div>
+<div class="modal-backdrop hidden" id="modal-background">
+<div class="modal-card">
+<div class="modal-header">
+<h2>בחירת רקע למסך הכיתה</h2>
+<button class="modal-close" data-close="modal-background">✕</button>
+</div>
+<div class="modal-body">
+<div class="bg-tabs">
+<button class="bg-tab active" data-bgtab="nature">נופים וטבע</button>
+<button class="bg-tab" data-bgtab="classroom">כיתה ולימודים</button>
+<button class="bg-tab" data-bgtab="colors">צבעים וגרדיאנטים</button>
+<button class="bg-tab" data-bgtab="custom">העלאת תמונה אישית</button>
+</div>
+<div class="bg-grid" id="bg-picker-grid">
+</div>
+<div class="bg-custom-upload hidden" id="bg-custom-section">
+<label class="upload-box">
+<span>📁 לחץ לבחירת תמונה מהמחשב</span>
+<input type="file" id="bg-file-input" accept="image/*" hidden />
+</label>
+<div class="custom-url-row">
+<input type="text" id="bg-url-input" placeholder="או הדבק קישור לתמונה (URL)..." />
+<button class="primary-btn" id="btn-apply-bg-url">החל</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-backdrop hidden" id="modal-students">
+<div class="modal-card">
+<div class="modal-header">
+<h2>👥 ניהול רשימות תלמידים</h2>
+<button class="modal-close" data-close="modal-students">✕</button>
+</div>
+<div class="modal-body">
+<p class="modal-subtitle">רשימות אלו נשמרות בחשבון שלך ומשמשות את כלי "הגרלת שם" ו-"חלוקה לקבוצות". רשום כל תלמיד בשורה נפרדת.</p>
+<div class="student-lists-layout">
+<div class="student-classes-sidebar">
+<div class="sidebar-header">
+<span>כיתות / קבוצות</span>
+<button class="small-btn" id="btn-new-class-list">+ כיתה חדשה</button>
+</div>
+<div id="class-lists-nav" class="class-lists-nav"></div>
+</div>
+<div class="student-editor-main">
+<div class="editor-top-row">
+<input type="text" id="current-class-name" placeholder="שם הכיתה (למשל: כיתה ה'2)" />
+<span id="student-count-badge" class="badge">0 תלמידים</span>
+</div>
+<textarea id="student-names-textarea" rows="10" placeholder="הכנס שמות תלמידים (כל שם בשורה חדשה)..."></textarea>
+<div class="editor-actions">
+<button class="secondary-btn" id="btn-load-sample-students">טען שמות לדוגמה</button>
+<button class="danger-btn" id="btn-delete-class-list">מחק רשימה</button>
+<button class="primary-btn" id="btn-save-student-list">💾 שמור רשימה</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-backdrop hidden" id="modal-templates">
+<div class="modal-card">
+<div class="modal-header">
+<h2>✨ תבניות שיעור מוכנות</h2>
+<button class="modal-close" data-close="modal-templates">✕</button>
+</div>
+<div class="modal-body">
+<p class="modal-subtitle">בחר תבנית כדי לפתוח מערך כלים מותאם בלחיצה אחת:</p>
+<div class="templates-grid" id="templates-grid">
+<div class="template-card" data-template="morning">
+<div class="tc-icon">☀️</div>
+<h3>פתיחת בוקר וכיתה</h3>
+<p>שעון, סדר יום, לוח שנה, והודעת בוקר טוב לתלמידים</p>
+</div>
+<div class="template-card" data-template="independent">
+<div class="tc-icon">✍️</div>
+<h3>עבודה עצמאית שקטה</h3>
+<p>טיימר ויזואלי, רמזור, סמל עבודה בדממה, מד רעש והנחיות</p>
+</div>
+<div class="template-card" data-template="groupwork">
+<div class="tc-icon">👥</div>
+<h3>למידה בקבוצות</h3>
+<p>מחלק לקבוצות, טיימר ספירה לאחור, סמל עבודה משותפת ומד רעש</p>
+</div>
+<div class="template-card" data-template="game">
+<div class="tc-icon">🏆</div>
+<h3>משחק וחידון כיתתי</h3>
+<p>גלגל מזל להגרלת שמות, לוח ניקוד קבוצתי, קוביות ושעון עצר</p>
+</div>
+<div class="template-card" data-template="discussion">
+<div class="tc-icon">📊</div>
+<h3>דיון וסקר כיתתי</h3>
+<p>סקר הצבעה חי, הגרלת דובר, ולוח כתיבה לסיכום נקודות</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script src="audio.js"></script>
+<script src="widgets.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
