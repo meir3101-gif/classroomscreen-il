@@ -15,7 +15,7 @@ const crypto = require('crypto');
  * ========================================================================= */
 
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '').trim();
+const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '952919285347-7g5ng6t4ogaksbbuaqt5jiad0uvma0a0.apps.googleusercontent.com').trim();
 const REDIS_URL = (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/+$/, '');
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
