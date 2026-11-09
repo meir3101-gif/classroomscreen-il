@@ -1,0 +1,6 @@
+# Local data and secrets
+data/
+.env
+.env*.local
+.vercel/
+node_modules/

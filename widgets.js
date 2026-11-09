@@ -916,8 +916,16 @@ icon: '📊',
 defaultW: 410,
 defaultH: 340,
 render(body, state, saveState) {
-let pollId = state.pollId ?? ('p' + Math.random().toString(36).slice(2, 7));
-state.pollId = pollId;
+const randomToken = (bytes) => Array.from(crypto.getRandomValues(new Uint8Array(bytes)), b => b.toString(16).padStart(2, '0')).join('');
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Legacy 5-char ids are guessable – upgrade them together with a secret owner key.
+if (!state.pollOwnerKey || !state.pollId || state.pollId.length < 12) {
+state.pollId = 'p' + randomToken(8);
+state.pollOwnerKey = randomToken(24);
+saveState();
+}
+let pollId = state.pollId;
+const pollOwnerKey = state.pollOwnerKey;
 let question = state.question ?? 'איך הבנתם את החומר בשיעור היום?';
 let options = state.options ?? [
 { label: '😊 הבנתי מצוין!', votes: 0 },
@@ -927,7 +935,7 @@ let options = state.options ?? [
 let showQR = false;
 body.innerHTML = `
 <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
-<input type="text" data-el="q" value="${question}" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid #cbd5e1;font-weight:800;font-size:0.95rem;" />
+<input type="text" data-el="q" value="${escHtml(question)}" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid #cbd5e1;font-weight:800;font-size:0.95rem;" />
 <div class="poll-bars" data-el="bars"></div>
 <div data-el="qr-box" class="hidden" style="display:flex;align-items:center;justify-content:center;gap:12px;background:#f8fafc;padding:8px;border-radius:12px;border:1px solid #e2e8f0;">
 <img data-el="qr-img" style="width:90px;height:90px;border-radius:8px;" alt="QR" />
@@ -956,7 +964,7 @@ try {
 await fetch(`/api/polls/${pollId}`, {
 method: 'POST',
 headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ question: qInput.value, options })
+body: JSON.stringify({ question: qInput.value, options, ownerKey: pollOwnerKey })
 });
 } catch (_) {}
 }
@@ -966,7 +974,7 @@ barsEl.innerHTML = options.map((o, i) => {
 const pct = total > 0 ? Math.round((o.votes / total) * 100) : 0;
 return `
 <div class="poll-option-row">
-<button class="poll-vote-btn" data-idx="${i}">+ ${o.label}</button>
+<button class="poll-vote-btn" data-idx="${i}">+ ${escHtml(o.label)}</button>
 <div class="poll-bar-track">
 <div class="poll-bar-fill" style="width:${pct}%"></div>
 </div>

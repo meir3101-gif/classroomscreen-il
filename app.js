@@ -140,40 +140,6 @@ await fetch('/api/auth/logout', { method: 'POST' });
 this.user = null;
 this.updateAuthUI();
 });
-document.querySelectorAll('.google-account-row').forEach(btn => {
-btn.addEventListener('click', () => {
-this.loginWithGoogleAccount({
-email: btn.dataset.gemail,
-name: btn.dataset.gname
-});
-});
-});
-document.getElementById('custom-google-form').addEventListener('submit', (e) => {
-e.preventDefault();
-const name = document.getElementById('inp-google-name').value.trim();
-const email = document.getElementById('inp-google-email').value.trim();
-if (name && email) {
-this.loginWithGoogleAccount({ name, email });
-}
-});
-document.getElementById('btn-save-client-id').addEventListener('click', async () => {
-const cid = document.getElementById('inp-oauth-client-id').value.trim();
-try {
-const res = await fetch('/api/config', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ googleClientId: cid })
-});
-const data = await res.json();
-if (data.ok) {
-this.googleClientId = data.googleClientId;
-this.renderOfficialGoogleButton();
-alert('Google Client ID נשמר בשרת בהצלחה!');
-}
-} catch (e) {
-alert('שגיאה בשמירת Client ID בשרת');
-}
-});
 try {
 const [cfgRes, meRes] = await Promise.all([
 fetch('/api/config'),
@@ -182,7 +148,6 @@ fetch('/api/auth/me')
 if (cfgRes.ok) {
 const cfg = await cfgRes.json();
 this.googleClientId = cfg.googleClientId || '';
-document.getElementById('inp-oauth-client-id').value = this.googleClientId;
 }
 if (meRes.ok) {
 const me = await meRes.json();
@@ -203,11 +168,20 @@ this.updateAuthUI();
 this.updateCloudPill('local', 'מצב לא מקוון');
 }
 }
-renderOfficialGoogleButton() {
+renderOfficialGoogleButton(attempt = 0) {
 const wrap = document.getElementById('g-id-button-wrapper');
 const target = document.getElementById('g-id-signin-btn');
-if (!this.googleClientId || !window.google || !window.google.accounts) {
+const notice = document.getElementById('g-auth-not-configured');
+if (!this.googleClientId) {
 wrap.classList.add('hidden');
+notice.classList.remove('hidden');
+return;
+}
+notice.classList.add('hidden');
+if (!window.google || !window.google.accounts) {
+// The Google script loads asynchronously – retry for a few seconds.
+wrap.classList.add('hidden');
+if (attempt < 20) setTimeout(() => this.renderOfficialGoogleButton(attempt + 1), 250);
 return;
 }
 wrap.classList.remove('hidden');
@@ -246,26 +220,6 @@ alert(result.error || 'שגיאה בהתחברות עם Google');
 }
 } catch (e) {
 alert('שגיאת תקשורת עם השרת');
-}
-}
-async loginWithGoogleAccount(googleAccount) {
-try {
-const res = await fetch('/api/auth/google', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-googleAccount,
-initialWorkspace: this.data
-})
-});
-const result = await res.json();
-if (result.ok) {
-this.onAuthSuccess(result);
-} else {
-alert(result.error || 'שגיאה בהתחברות');
-}
-} catch (e) {
-alert('ודא שהשרת פועל בכתובת http://localhost:3000');
 }
 }
 onAuthSuccess(result) {
@@ -330,6 +284,14 @@ body: JSON.stringify(this.data)
 });
 if (res.ok) {
 this.updateCloudPill('synced', 'נשמר בענן');
+} else if (res.status === 401) {
+this.user = null;
+this.updateAuthUI();
+this.updateCloudPill('local', 'ההתחברות פגה – התחבר שוב');
+} else if (res.status === 413) {
+this.updateCloudPill('local', 'המסך גדול מדי לשמירה בענן');
+} else {
+this.updateCloudPill('local', 'שגיאת סנכרון');
 }
 } catch (e) {
 this.updateCloudPill('local', 'שגיאת סנכרון');

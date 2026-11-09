@@ -1,1 +1,1 @@
-{"name":"classroomscreen-il","version":"2.0.0","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18.0.0"}}
+{"name":"classroomscreen-il","version":"2.1.0","private":true,"main":"server.js","scripts":{"start":"node server.js","test":"node scripts/smoke-test.js"},"engines":{"node":">=18.0.0"}}
