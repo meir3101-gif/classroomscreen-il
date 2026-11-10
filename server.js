@@ -11,7 +11,7 @@ const apiHandler = require('./api/index.js');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = __dirname;
-const STATIC_FILES = new Set(['/index.html', '/app.js', '/widgets.js', '/audio.js', '/styles.css']);
+const STATIC_FILES = new Set(['/index.html', '/privacy.html', '/app.js', '/widgets.js', '/audio.js', '/styles.css']);
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
