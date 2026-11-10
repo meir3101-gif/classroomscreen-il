@@ -1027,7 +1027,7 @@ ctx.save();
 ctx.translate(65, 65);
 ctx.beginPath();
 ctx.arc(0, 0, r, 0, Math.PI * 2);
-ctx.fillStyle = '#ffffff';
+ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
 ctx.fill();
 ctx.lineWidth = 4;
 ctx.strokeStyle = '#4f46e5';
@@ -1084,7 +1084,7 @@ return () => clearInterval(id);
 'traffic-light': {
 title: 'רמזור כיתתי',
 icon: '🚦',
-defaultW: 220,
+defaultW: 200,
 defaultH: 350,
 render(body, state, saveState) {
 let activeLight = state.activeLight ?? 'green';
@@ -1094,8 +1094,12 @@ yellow: '⚠️ התארגנות / שיח שקט',
 green: '✅ עבודה פעילה בכיתה'
 };
 body.innerHTML = `
-<div class="traffic-light-layout">
-  <div class="traffic-light-casing">
+<div class="frameless-tool-wrapper">
+  <div class="tool-hud-strip">
+    <button class="tool-hud-btn" data-wdrag title="גרור להזזת הרמזור">✋</button>
+    <button class="tool-hud-btn close-hud" data-wclose title="סגור רמזור">✕</button>
+  </div>
+  <div class="traffic-light-casing" data-wdrag>
     <div class="tl-bulb red ${activeLight === 'red' ? 'active' : ''}" data-color="red" title="אדום - עצור והקשב">
       <div class="tl-glare"></div>
     </div>
@@ -1111,7 +1115,8 @@ body.innerHTML = `
 `;
 const caption = body.querySelector('[data-el="caption"]');
 body.querySelectorAll('.tl-bulb').forEach(bulb => {
-bulb.addEventListener('click', () => {
+bulb.addEventListener('click', (e) => {
+e.stopPropagation();
 const color = bulb.dataset.color;
 activeLight = activeLight === color ? null : color;
 state.activeLight = activeLight;
@@ -1126,49 +1131,65 @@ caption.textContent = labels[activeLight] || 'בחר אור ברמזור';
 'work-symbols': {
 title: 'סמלי עבודה',
 icon: '🤫',
-defaultW: 320,
-defaultH: 280,
+defaultW: 250,
+defaultH: 260,
 render(body, state, saveState) {
 const modes = {
 silence: { icon: '🤫', title: 'דממה מוחלטת', sub: 'עובדים לבד בשקט מוחלט' },
-whisper: { icon: '🔉', title: 'עבודה בלחישה', sub: 'מותר לדבר בקול נמוך מאוד' },
-neighbor: { icon: '💬', title: 'שאל חבר קרוב', sub: 'התייעצות בזוגות עם השכן לשולחן' },
-together: { icon: '👥', title: 'עבודה בקבוצות', sub: 'שיתוף פעולה ושיח קבוצתי פורה' }
+whisper: { icon: '🔉', title: 'עבודה בלחישה', sub: 'מותר לדבר בקול נמוך' },
+neighbor: { icon: '💬', title: 'שאל חבר קרוב', sub: 'התייעצות עם השכן' },
+together: { icon: '👥', title: 'עבודה בקבוצות', sub: 'שיתוף פעולה קבוצתי' }
 };
 let current = state.mode ?? 'silence';
+
 body.innerHTML = `
-<div class="work-symbols-wrap">
-  <div class="ws-active-display">
+<div class="frameless-tool-wrapper">
+  <div class="tool-hud-strip">
+    <button class="tool-hud-btn" data-wdrag title="גרור להזזת הסמל">✋</button>
+    <button class="tool-hud-btn close-hud" data-wclose title="סגור סמל">✕</button>
+  </div>
+  <div class="frameless-work-symbol-card" data-act="cycle" title="לחץ להחלפת סמל עבודה">
     <div class="ws-big-icon" data-el="icon"></div>
     <div class="ws-big-title" data-el="title"></div>
     <div class="ws-big-sub" data-el="sub"></div>
   </div>
-  <div class="ws-selector">
+  <div class="frameless-ws-pills">
     ${Object.entries(modes).map(([k, v]) => `
-    <button class="ws-btn ${k === current ? 'active' : ''}" data-mode="${k}">
-      <span class="ws-btn-icon">${v.icon}</span>
-      <span class="ws-btn-text">${v.title.split(' ')[0]}</span>
-    </button>
+      <button class="ws-mini-pill ${k === current ? 'active' : ''}" data-mode="${k}" title="${v.title}">${v.icon}</button>
     `).join('')}
   </div>
 </div>
 `;
+
 function updateView() {
-const m = modes[current] || modes.silence;
-body.querySelector('[data-el="icon"]').textContent = m.icon;
-body.querySelector('[data-el="title"]').textContent = m.title;
-body.querySelector('[data-el="sub"]').textContent = m.sub;
-body.querySelectorAll('.ws-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === current));
+  const m = modes[current] || modes.silence;
+  body.querySelector('[data-el="icon"]').textContent = m.icon;
+  body.querySelector('[data-el="title"]').textContent = m.title;
+  body.querySelector('[data-el="sub"]').textContent = m.sub;
+  body.querySelectorAll('.ws-mini-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === current));
 }
-body.querySelectorAll('.ws-btn').forEach(btn => {
-btn.addEventListener('click', () => {
-current = btn.dataset.mode;
-state.mode = current;
-saveState();
-SoundFX.pop();
-updateView();
+
+body.querySelector('[data-act="cycle"]').addEventListener('click', () => {
+  const keys = Object.keys(modes);
+  const nextIdx = (keys.indexOf(current) + 1) % keys.length;
+  current = keys[nextIdx];
+  state.mode = current;
+  saveState();
+  SoundFX.pop();
+  updateView();
 });
+
+body.querySelectorAll('.ws-mini-pill').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    current = btn.dataset.mode;
+    state.mode = current;
+    saveState();
+    SoundFX.pop();
+    updateView();
+  });
 });
+
 updateView();
 }
 },
@@ -1773,52 +1794,60 @@ if (audioCtx) audioCtx.close().catch(() => {});
 'dice': {
 title: 'הטלת קוביות',
 icon: '🎲',
-defaultW: 300,
-defaultH: 240,
+defaultW: 280,
+defaultH: 220,
 render(body, state, saveState) {
 let diceCount = state.diceCount ?? 2;
 let values = state.values ?? [4, 6];
 const diceFaces = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
 body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;justify-content:space-between;">
-<div class="dice-stage" data-el="stage"></div>
-<div style="text-align:center;font-weight:800;font-size:1rem;" data-el="sum"></div>
-<div style="display:flex;gap:8px;align-items:center;justify-content:center;">
-<select data-el="count" style="padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;font-weight:700;">
-<option value="1" ${diceCount === 1 ? 'selected' : ''}>קובייה 1</option>
-<option value="2" ${diceCount === 2 ? 'selected' : ''}>2 קוביות</option>
-<option value="3" ${diceCount === 3 ? 'selected' : ''}>3 קוביות</option>
-</select>
-<button class="primary-btn" data-act="roll" style="flex:1;">🎲 הטל קוביות!</button>
-</div>
+<div class="frameless-tool-wrapper">
+  <div class="tool-hud-strip">
+    <button class="tool-hud-btn" data-wdrag title="גרור להזזת הקוביות">✋</button>
+    <button class="tool-hud-btn" data-act="toggle-dice-count" title="שנה מספר קוביות (1-3)">🎲 ${diceCount}</button>
+    <button class="tool-hud-btn close-hud" data-wclose title="סגור קוביות">✕</button>
+  </div>
+  <div class="frameless-dice-stage" data-act="roll" title="לחץ על הקוביות להטלה!">
+    <div class="dice-stage" data-el="stage"></div>
+    <div class="dice-sum-pill" data-el="sum"></div>
+  </div>
 </div>
 `;
 const stage = body.querySelector('[data-el="stage"]');
 const sumEl = body.querySelector('[data-el="sum"]');
-const countSel = body.querySelector('[data-el="count"]');
+const countBtn = body.querySelector('[data-act="toggle-dice-count"]');
+
 function renderDice(rolling = false) {
-stage.innerHTML = values.map(v => `
-<div class="die-cube ${rolling ? 'rolling' : ''}" title="${v}">${diceFaces[v] || v}</div>
-`).join('');
-const total = values.reduce((a, b) => a + b, 0);
-sumEl.textContent = `סך הכל: ${total} (${values.join(' + ')})`;
+  stage.innerHTML = values.map(v => `
+    <div class="die-cube ${rolling ? 'rolling' : ''}" title="${v}">${diceFaces[v] || v}</div>
+  `).join('');
+  const total = values.reduce((a, b) => a + b, 0);
+  sumEl.textContent = `סך הכל: ${total}`;
 }
+
 function roll() {
-diceCount = parseInt(countSel.value, 10);
-values = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
-renderDice(true);
-SoundFX.tick();
-setTimeout(() => {
-values = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
-state.diceCount = diceCount;
-state.values = values;
-saveState();
-SoundFX.pop();
-renderDice(false);
-}, 420);
+  values = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
+  renderDice(true);
+  SoundFX.tick();
+  setTimeout(() => {
+    values = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
+    state.diceCount = diceCount;
+    state.values = values;
+    saveState();
+    SoundFX.pop();
+    renderDice(false);
+  }, 420);
 }
-countSel.addEventListener('change', roll);
+
 body.querySelector('[data-act="roll"]').addEventListener('click', roll);
+countBtn.addEventListener('click', () => {
+  diceCount = (diceCount % 3) + 1;
+  state.diceCount = diceCount;
+  countBtn.textContent = `🎲 ${diceCount}`;
+  roll();
+});
+
 renderDice(false);
 }
 },
