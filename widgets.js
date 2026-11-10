@@ -1,3 +1,355 @@
+function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams') {
+let activeTab = state.activeTab ?? defaultTab;
+let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+let scoreMode = state.scoreMode ?? 'daily'; // 'daily' or 'total'
+let searchQuery = '';
+let selectedStudentForAward = null;
+
+const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+let teams = state.teams ?? [
+{ name: 'קבוצה א׳', score: 0 },
+{ name: 'קבוצה ב׳', score: 0 }
+];
+
+// Student points map: { [studentName]: { daily: number, total: number, breakdown: { [reason]: number } } }
+let studentScores = state.studentScores ?? {};
+
+const BEHAVIORS = [
+{ id: 'ready', icon: '🎒', title: 'מוכנות לשיעור', pts: 1 },
+{ id: 'task', icon: '📝', title: 'ביצוע מטלה', pts: 1 },
+{ id: 'listen', icon: '👂', title: 'הקשבה והשתתפות', pts: 1 },
+{ id: 'help', icon: '🤝', title: 'עזרה לחבר', pts: 2 },
+{ id: 'polite', icon: '💬', title: 'דיבור בנימוס', pts: 1 },
+{ id: 'order', icon: '🧹', title: 'סדר וארגון', pts: 1 },
+{ id: 'excel', icon: '⭐', title: 'מצוינות והשקעה', pts: 2 },
+{ id: 'free', icon: '➕', title: 'נקודת חיזוק חופשית', pts: 1 },
+{ id: 'penalty', icon: '➖', title: 'בירור/משמעת (-1)', pts: -1 }
+];
+
+body.innerHTML = `
+<div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
+  <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
+    <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
+    <button class="rand-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students" style="flex:1;">⭐ כוכבי הכיתה (אישי)</button>
+  </div>
+
+  <!-- 1. TEAMS VIEW -->
+  <div data-el="teams-view" class="${activeTab === 'teams' ? '' : 'hidden'}" style="display:flex;flex-direction:column;height:100%;gap:10px;">
+    <div class="scoreboard-teams" data-el="teams-container"></div>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:auto;">
+      <button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
+      <button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס ניקוד קבוצות</button>
+    </div>
+  </div>
+
+  <!-- 2. STUDENTS INDIVIDUAL POINTS VIEW -->
+  <div data-el="students-view" class="sp-container ${activeTab === 'students' ? '' : 'hidden'}">
+    <div class="sp-toolbar">
+      <select data-el="sp-class-sel" style="max-width:140px;padding:5px 8px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;font-size:0.8rem;"></select>
+      <input type="text" class="sp-search" data-el="sp-search" placeholder="🔍 חיפוש תלמיד..." />
+      <div style="display:flex;gap:3px;">
+        <button class="sp-mode-pill ${scoreMode === 'daily' ? 'active' : ''}" data-mode="daily" title="הצג ניקוד שנצבר היום">היום</button>
+        <button class="sp-mode-pill ${scoreMode === 'total' ? 'active' : ''}" data-mode="total" title="הצג ניקוד מצטבר כולל">מצטבר</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+      <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:800;border:none;">🏆 מצעד מצטייני היום</button>
+      <button class="small-btn" data-act="reset-daily" style="font-size:0.75rem;">↺ איפוס יומי</button>
+    </div>
+    <div class="sp-grid" data-el="students-grid"></div>
+
+    <!-- Award Drawer (Opens on clicking student) -->
+    <div data-el="award-drawer" class="sp-drawer hidden">
+      <div class="sp-drawer-header">
+        <span data-el="drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);"></span>
+        <button class="small-btn" data-act="close-drawer" style="padding:2px 8px;">✕</button>
+      </div>
+      <div class="sp-behavior-grid">
+        ${BEHAVIORS.map(b => `
+          <button class="sp-behavior-btn" data-behavior="${b.id}" data-pts="${b.pts}">
+            <span style="font-size:1.2rem;">${b.icon}</span>
+            <span>${b.title}</span>
+            <span class="sp-pts-tag" style="${b.pts < 0 ? 'background:#fee2e2;color:#dc2626;' : ''}">${b.pts > 0 ? '+' + b.pts : b.pts}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Podium Celebratory Overlay -->
+    <div data-el="podium-overlay" class="sp-podium-overlay hidden">
+      <button class="small-btn" data-act="close-podium" style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.2);color:#fff;border:none;">✕ סגור</button>
+      <div class="sp-podium-title">🎉 מצעד כוכבי הכיתה! 🎉</div>
+      <div style="font-size:0.85rem;color:#fef08a;margin-bottom:6px;">מצטייני היום שצברו הכי הרבה נקודות</div>
+      <div class="sp-podium-steps" data-el="podium-steps"></div>
+      <div data-el="podium-category-leaders" style="font-size:0.8rem;text-align:center;margin-top:6px;max-width:90%;"></div>
+    </div>
+  </div>
+</div>
+`;
+
+// TAB TOGGLING
+body.querySelectorAll('[data-sptab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.sptab;
+    state.activeTab = activeTab;
+    saveState();
+    body.querySelectorAll('[data-sptab]').forEach(b => b.classList.toggle('active', b.dataset.sptab === activeTab));
+    body.querySelector('[data-el="teams-view"]').classList.toggle('hidden', activeTab !== 'teams');
+    body.querySelector('[data-el="students-view"]').classList.toggle('hidden', activeTab !== 'students');
+    if (activeTab === 'teams') renderTeamsBoard();
+    else renderStudentsGrid();
+  });
+});
+
+// 1. TEAMS LOGIC
+const teamsContainer = body.querySelector('[data-el="teams-container"]');
+function renderTeamsBoard() {
+  teamsContainer.innerHTML = teams.map((t, idx) => `
+    <div class="team-column" style="border-top-color:${colors[idx % colors.length]}">
+      <input class="team-name-input" data-idx="${idx}" value="${t.name}" />
+      <div class="team-score-val">${t.score}</div>
+      <div class="team-score-btns">
+        <button class="score-step-btn plus" data-step="1" data-idx="${idx}">+1</button>
+        <button class="score-step-btn minus" data-step="-1" data-idx="${idx}">-1</button>
+      </div>
+    </div>
+  `).join('');
+
+  teamsContainer.querySelectorAll('.team-name-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      teams[inp.dataset.idx].name = inp.value;
+      state.teams = teams;
+      saveState();
+    });
+  });
+  teamsContainer.querySelectorAll('.score-step-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.idx, 10);
+      const step = parseInt(btn.dataset.step, 10);
+      teams[i].score += step;
+      state.teams = teams;
+      saveState();
+      if (step > 0) SoundFX.pop();
+      renderTeamsBoard();
+    });
+  });
+}
+
+body.querySelector('[data-act="add-team"]').addEventListener('click', () => {
+  if (teams.length >= 6) return;
+  teams.push({ name: `קבוצה ${teams.length + 1}`, score: 0 });
+  state.teams = teams;
+  saveState();
+  renderTeamsBoard();
+});
+
+body.querySelector('[data-act="reset-scores"]').addEventListener('click', () => {
+  if (confirm('האם לאפס את ניקוד כל הקבוצות?')) {
+    teams.forEach(t => t.score = 0);
+    state.teams = teams;
+    saveState();
+    renderTeamsBoard();
+  }
+});
+
+// 2. STUDENTS LOGIC
+const classSel = body.querySelector('[data-el="sp-class-sel"]');
+const searchInput = body.querySelector('[data-el="sp-search"]');
+const studentsGrid = body.querySelector('[data-el="students-grid"]');
+const awardDrawer = body.querySelector('[data-el="award-drawer"]');
+const drawerTitle = body.querySelector('[data-el="drawer-title"]');
+const podiumOverlay = body.querySelector('[data-el="podium-overlay"]');
+const podiumSteps = body.querySelector('[data-el="podium-steps"]');
+const categoryLeadersEl = body.querySelector('[data-el="podium-category-leaders"]');
+
+function populateClassSelect() {
+  const lists = window.AppStore.getClassLists();
+  classSel.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
+}
+
+function getStudentsList() {
+  const lists = window.AppStore.getClassLists();
+  const found = lists.find(c => c.id === selectedClassId) || lists[0];
+  return (found ? found.students : []).filter(Boolean);
+}
+
+function getStudentScore(name) {
+  if (!studentScores[name]) {
+    studentScores[name] = { daily: 0, total: 0, breakdown: {} };
+  }
+  return studentScores[name];
+}
+
+function renderStudentsGrid() {
+  const students = getStudentsList();
+  const filtered = searchQuery.trim() 
+    ? students.filter(n => n.includes(searchQuery.trim())) 
+    : students;
+
+  if (filtered.length === 0) {
+    studentsGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-muted);font-weight:600;">לא נמצאו תלמידים</div>`;
+    return;
+  }
+
+  studentsGrid.innerHTML = filtered.map(name => {
+    const sc = getStudentScore(name);
+    const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
+    const initial = name.charAt(0);
+    return `
+      <div class="sp-card" data-student="${name}">
+        <div class="sp-avatar">${initial}</div>
+        <div class="sp-name" title="${name}">${name}</div>
+        <div class="sp-score">⭐ ${scoreVal}</div>
+      </div>
+    `;
+  }).join('');
+
+  studentsGrid.querySelectorAll('.sp-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedStudentForAward = card.dataset.student;
+      drawerTitle.textContent = `חיזוק והענקת נקודות: ${selectedStudentForAward}`;
+      awardDrawer.classList.remove('hidden');
+    });
+  });
+}
+
+// Mode toggle (Daily vs Total)
+body.querySelectorAll('.sp-mode-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    scoreMode = btn.dataset.mode;
+    state.scoreMode = scoreMode;
+    saveState();
+    body.querySelectorAll('.sp-mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === scoreMode));
+    renderStudentsGrid();
+  });
+});
+
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value;
+  renderStudentsGrid();
+});
+
+classSel.addEventListener('change', () => {
+  selectedClassId = classSel.value;
+  state.classId = selectedClassId;
+  saveState();
+  renderStudentsGrid();
+});
+
+body.querySelector('[data-act="close-drawer"]').addEventListener('click', () => {
+  awardDrawer.classList.add('hidden');
+  selectedStudentForAward = null;
+});
+
+// Award points clicked
+awardDrawer.querySelectorAll('.sp-behavior-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!selectedStudentForAward) return;
+    const bId = btn.dataset.behavior;
+    const pts = parseInt(btn.dataset.pts, 10);
+    const sc = getStudentScore(selectedStudentForAward);
+    
+    sc.daily = Math.max(0, sc.daily + pts);
+    sc.total = Math.max(0, sc.total + pts);
+    if (!sc.breakdown) sc.breakdown = {};
+    sc.breakdown[bId] = (sc.breakdown[bId] || 0) + 1;
+
+    state.studentScores = studentScores;
+    saveState();
+
+    if (pts > 0) {
+      SoundFX.pop();
+    }
+    awardDrawer.classList.add('hidden');
+    renderStudentsGrid();
+  });
+});
+
+// Reset daily points
+body.querySelector('[data-act="reset-daily"]').addEventListener('click', () => {
+  if (confirm('האם לאפס את הניקוד היומי של כל התלמידים? (הניקוד המצטבר יישמר)')) {
+    Object.values(studentScores).forEach(sc => {
+      sc.daily = 0;
+    });
+    state.studentScores = studentScores;
+    saveState();
+    renderStudentsGrid();
+  }
+});
+
+// Celebration Podium
+body.querySelector('[data-act="open-podium"]').addEventListener('click', () => {
+  const students = getStudentsList();
+  if (students.length === 0) return;
+
+  const sorted = [...students].map(name => {
+    const sc = getStudentScore(name);
+    return { name, score: sc.daily, total: sc.total, breakdown: sc.breakdown || {} };
+  }).sort((a, b) => b.score - a.score);
+
+  const top1 = sorted[0] && sorted[0].score > 0 ? sorted[0] : null;
+  const top2 = sorted[1] && sorted[1].score > 0 ? sorted[1] : null;
+  const top3 = sorted[2] && sorted[2].score > 0 ? sorted[2] : null;
+
+  if (!top1) {
+    alert('עדיין לא נצברו נקודות היום. הענק נקודות לתלמידים ולאחר מכן לחץ על מצעד המצטיינים!');
+    return;
+  }
+
+  podiumSteps.innerHTML = `
+    ${top2 ? `
+      <div class="sp-step second">
+        <div style="font-size:1.4rem;">🥈</div>
+        <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top2.name}</div>
+        <div style="font-weight:900;font-size:1.1rem;color:#f8fafc;">${top2.score}</div>
+        <div style="font-size:0.7rem;opacity:0.8;">נקודות</div>
+      </div>
+    ` : '<div class="sp-step second" style="opacity:0.2;"></div>'}
+
+    <div class="sp-step first">
+      <div style="font-size:1.8rem;">👑 🥇</div>
+      <div style="font-weight:900;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top1.name}</div>
+      <div style="font-weight:900;font-size:1.3rem;color:#fef08a;">${top1.score}</div>
+      <div style="font-size:0.7rem;opacity:0.9;">כוכב/ת היום!</div>
+    </div>
+
+    ${top3 ? `
+      <div class="sp-step third">
+        <div style="font-size:1.2rem;">🥉</div>
+        <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top3.name}</div>
+        <div style="font-weight:900;font-size:1rem;color:#f8fafc;">${top3.score}</div>
+        <div style="font-size:0.7rem;opacity:0.8;">נקודות</div>
+      </div>
+    ` : '<div class="sp-step third" style="opacity:0.2;"></div>'}
+  `;
+
+  // Check top category achievers
+  const helpLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.help || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
+  const readyLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.ready || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
+
+  let catLeadersText = '';
+  if (helpLeader && helpLeader.cnt > 0) {
+    catLeadersText += `🤝 <b>אלופ/ת העזרה לחבר:</b> ${helpLeader.name} (${helpLeader.cnt} פעמים) &nbsp; `;
+  }
+  if (readyLeader && readyLeader.cnt > 0) {
+    catLeadersText += `🎒 <b>אלופ/ת המוכנות:</b> ${readyLeader.name} (${readyLeader.cnt} פעמים)`;
+  }
+  categoryLeadersEl.innerHTML = catLeadersText;
+
+  SoundFX.fanfare();
+  podiumOverlay.classList.remove('hidden');
+});
+
+body.querySelector('[data-act="close-podium"]').addEventListener('click', () => {
+  podiumOverlay.classList.add('hidden');
+});
+
+// Init
+populateClassSelect();
+if (activeTab === 'teams') renderTeamsBoard();
+else renderStudentsGrid();
+}
+
 const WIDGET_REGISTRY = {
 'timer': {
 title: 'טיימר ספירה לאחור',
@@ -494,19 +846,32 @@ updateView();
 'random-name': {
 title: 'הגרלת שם וגלגל מזל',
 icon: '🎡',
-defaultW: 350,
-defaultH: 370,
+defaultW: 360,
+defaultH: 390,
 render(body, state, saveState) {
 let mode = state.mode ?? 'wheel';
 let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
 let excludedNames = new Set(state.excluded || []);
+let includedStudents = state.included ? new Set(state.included) : null;
 let spinning = false;
 let wheelAngle = 0;
+let showRosterPanel = false;
 body.innerHTML = `
 <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
 <div style="display:flex;gap:6px;align-items:center;">
 <select data-el="class-select" style="flex:1;padding:6px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;"></select>
+<button class="small-btn" data-act="toggle-roster" title="סמן מי מהתלמידים משתתף בהגרלה">👥 משתתפים (<span data-el="roster-count">0</span>)</button>
 <button class="small-btn" data-act="edit-lists" title="ערוך רשימת תלמידים">✏️ שמות</button>
+</div>
+<div data-el="selection-panel" class="rand-selection-panel hidden">
+  <div class="rand-sel-header">
+    <span>בחירת תלמידים להגרלה:</span>
+    <div style="display:flex;gap:4px;">
+      <button class="small-btn" data-act="select-all" style="padding:2px 8px;font-size:0.75rem;">סמן הכל</button>
+      <button class="small-btn" data-act="deselect-all" style="padding:2px 8px;font-size:0.75rem;">נקה הכל</button>
+    </div>
+  </div>
+  <div class="rand-students-checklist" data-el="students-checklist"></div>
 </div>
 <div class="randomizer-tabs">
 <button class="rand-tab ${mode === 'wheel' ? 'active' : ''}" data-mode="wheel">🎡 גלגל מזל</button>
@@ -523,7 +888,7 @@ body.innerHTML = `
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;">
 <label style="font-size:0.78rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
 <input type="checkbox" data-el="no-repeat" ${state.noRepeat ? 'checked' : ''} />
-ללא חזרה (${excludedNames.size} הוגרלו)
+ללא חזרה (<span data-el="excluded-count">${excludedNames.size}</span>)
 </label>
 <button class="secondary-btn" data-act="reset-pool" style="padding:5px 8px;font-size:0.76rem;">איפוס</button>
 <button class="primary-btn" data-act="spin" style="flex:1;">🎲 הגרל תלמיד!</button>
@@ -536,27 +901,79 @@ const wCtx = wheelCanvas.getContext('2d');
 const wheelWinnerEl = body.querySelector('[data-el="wheel-winner"]');
 const cardWinnerEl = body.querySelector('[data-el="card-winner"]');
 const noRepeatCb = body.querySelector('[data-el="no-repeat"]');
+const rosterCountEl = body.querySelector('[data-el="roster-count"]');
+const excludedCountEl = body.querySelector('[data-el="excluded-count"]');
+const selectionPanel = body.querySelector('[data-el="selection-panel"]');
+const checklistEl = body.querySelector('[data-el="students-checklist"]');
+function getClassStudents() {
+const lists = window.AppStore.getClassLists();
+const found = lists.find(c => c.id === selectedClassId) || lists[0];
+return (found ? found.students : ['דניאל', 'נועה', 'איתי', 'מאיה', 'יונתן', 'שירה']).filter(Boolean);
+}
 function populateClasses() {
 const lists = window.AppStore.getClassLists();
 selectEl.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
+const allStudents = getClassStudents();
+if (!includedStudents) {
+  includedStudents = new Set(allStudents);
+}
+renderChecklist();
+}
+function renderChecklist() {
+const allStudents = getClassStudents();
+checklistEl.innerHTML = allStudents.map(name => {
+  const isChecked = includedStudents.has(name);
+  return `
+    <label class="roster-chip ${isChecked ? '' : 'excluded'}">
+      <input type="checkbox" data-student="${name}" ${isChecked ? 'checked' : ''} />
+      <span>${name}</span>
+    </label>
+  `;
+}).join('');
+rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
+checklistEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const student = cb.dataset.student;
+    if (cb.checked) {
+      includedStudents.add(student);
+    } else {
+      includedStudents.delete(student);
+    }
+    state.included = Array.from(includedStudents);
+    saveState();
+    rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
+    cb.closest('.roster-chip').classList.toggle('excluded', !cb.checked);
+    drawWheel();
+  });
+});
 }
 function getActiveStudents() {
-const lists = window.AppStore.getClassLists();
-const found = lists.find(c => c.id === selectedClassId) || lists[0];
-if (!found) return ['דניאל', 'נועה', 'איתי', 'מאיה', 'יונתן', 'שירה'];
-const all = found.students.filter(Boolean);
+const all = getClassStudents();
+let list = includedStudents ? all.filter(n => includedStudents.has(n)) : all;
 if (noRepeatCb.checked) {
-const filtered = all.filter(n => !excludedNames.has(n));
-return filtered.length > 0 ? filtered : all;
+const filtered = list.filter(n => !excludedNames.has(n));
+return filtered.length > 0 ? filtered : list;
 }
-return all;
+return list;
 }
 const palette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];
 function drawWheel() {
 const names = getActiveStudents();
 const cx = 100, cy = 100, r = 92;
 wCtx.clearRect(0, 0, 200, 200);
-if (names.length === 0) return;
+if (names.length === 0) {
+  wCtx.beginPath();
+  wCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  wCtx.fillStyle = '#f1f5f9';
+  wCtx.fill();
+  wCtx.strokeStyle = '#cbd5e1';
+  wCtx.stroke();
+  wCtx.fillStyle = '#64748b';
+  wCtx.font = 'bold 12px Heebo, sans-serif';
+  wCtx.textAlign = 'center';
+  wCtx.fillText('אין תלמידים מסומנים', cx, cy + 4);
+  return;
+}
 const arc = (Math.PI * 2) / names.length;
 names.forEach((name, i) => {
 const start = wheelAngle + i * arc;
@@ -589,15 +1006,39 @@ wCtx.fill();
 }
 populateClasses();
 drawWheel();
+body.querySelector('[data-act="toggle-roster"]').addEventListener('click', () => {
+showRosterPanel = !showRosterPanel;
+selectionPanel.classList.toggle('hidden', !showRosterPanel);
+});
+body.querySelector('[data-act="select-all"]').addEventListener('click', () => {
+const all = getClassStudents();
+includedStudents = new Set(all);
+state.included = Array.from(includedStudents);
+saveState();
+renderChecklist();
+drawWheel();
+});
+body.querySelector('[data-act="deselect-all"]').addEventListener('click', () => {
+includedStudents.clear();
+state.included = [];
+saveState();
+renderChecklist();
+drawWheel();
+});
 selectEl.addEventListener('change', () => {
 selectedClassId = selectEl.value;
 state.classId = selectedClassId;
 excludedNames.clear();
+state.excluded = [];
+includedStudents = null;
+state.included = null;
 saveState();
+populateClasses();
 drawWheel();
 });
 body.querySelector('[data-act="edit-lists"]').addEventListener('click', () => {
 window.AppStore.openStudentsModal(selectedClassId, () => {
+includedStudents = null;
 populateClasses();
 drawWheel();
 });
@@ -613,10 +1054,16 @@ body.querySelector('[data-el="card-view"]').classList.toggle('hidden', mode !== 
 drawWheel();
 });
 });
+noRepeatCb.addEventListener('change', () => {
+state.noRepeat = noRepeatCb.checked;
+saveState();
+drawWheel();
+});
 body.querySelector('[data-act="reset-pool"]').addEventListener('click', () => {
 excludedNames.clear();
 state.excluded = [];
 saveState();
+excludedCountEl.textContent = '0';
 wheelWinnerEl.textContent = '';
 cardWinnerEl.textContent = 'לחץ להגרלה!';
 drawWheel();
@@ -624,7 +1071,10 @@ drawWheel();
 body.querySelector('[data-act="spin"]').addEventListener('click', () => {
 if (spinning) return;
 const names = getActiveStudents();
-if (!names.length) return;
+if (!names.length) {
+  alert('יש לסמן לפחות תלמיד אחד להגרלה ברשימת המשתתפים!');
+  return;
+}
 spinning = true;
 if (mode === 'wheel') {
 const spinDuration = 2200;
@@ -655,6 +1105,7 @@ SoundFX.fanfare();
 if (noRepeatCb.checked) {
 excludedNames.add(winner);
 state.excluded = Array.from(excludedNames);
+excludedCountEl.textContent = excludedNames.size;
 saveState();
 }
 }
@@ -677,6 +1128,7 @@ SoundFX.fanfare();
 if (noRepeatCb.checked) {
 excludedNames.add(finalWinner);
 state.excluded = Array.from(excludedNames);
+excludedCountEl.textContent = excludedNames.size;
 saveState();
 }
 }
@@ -909,68 +1361,19 @@ renderDice(false);
 'scoreboard': {
 title: 'לוח תוצאות וניקוד',
 icon: '🏆',
-defaultW: 380,
-defaultH: 260,
+defaultW: 410,
+defaultH: 370,
 render(body, state, saveState) {
-const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899'];
-let teams = state.teams ?? [
-{ name: 'קבוצה א׳', score: 0 },
-{ name: 'קבוצה ב׳', score: 0 }
-];
-body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;gap:10px;">
-<div class="scoreboard-teams" data-el="teams"></div>
-<div style="display:flex;justify-content:space-between;gap:8px;">
-<button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
-<button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס ניקוד</button>
-</div>
-</div>
-`;
-const teamsEl = body.querySelector('[data-el="teams"]');
-function renderBoard() {
-teamsEl.innerHTML = teams.map((t, idx) => `
-<div class="team-column" style="border-top-color:${colors[idx % colors.length]}">
-<input class="team-name-input" data-idx="${idx}" value="${t.name}" />
-<div class="team-score-val">${t.score}</div>
-<div class="team-score-btns">
-<button class="score-step-btn plus" data-step="1" data-idx="${idx}">+1</button>
-<button class="score-step-btn minus" data-step="-1" data-idx="${idx}">-1</button>
-</div>
-</div>
-`).join('');
-teamsEl.querySelectorAll('.team-name-input').forEach(inp => {
-inp.addEventListener('change', () => {
-teams[inp.dataset.idx].name = inp.value;
-state.teams = teams;
-saveState();
-});
-});
-teamsEl.querySelectorAll('.score-step-btn').forEach(btn => {
-btn.addEventListener('click', () => {
-const i = parseInt(btn.dataset.idx, 10);
-const step = parseInt(btn.dataset.step, 10);
-teams[i].score += step;
-state.teams = teams;
-saveState();
-if (step > 0) SoundFX.pop();
-renderBoard();
-});
-});
+renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'teams');
 }
-body.querySelector('[data-act="add-team"]').addEventListener('click', () => {
-if (teams.length >= 6) return;
-teams.push({ name: `קבוצה ${teams.length + 1}`, score: 0 });
-state.teams = teams;
-saveState();
-renderBoard();
-});
-body.querySelector('[data-act="reset-scores"]').addEventListener('click', () => {
-teams.forEach(t => t.score = 0);
-state.teams = teams;
-saveState();
-renderBoard();
-});
-renderBoard();
+},
+'student-points': {
+title: 'כוכבי הכיתה - ניקוד אישי',
+icon: '⭐',
+defaultW: 420,
+defaultH: 390,
+render(body, state, saveState) {
+renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'students');
 }
 },
 'poll': {
@@ -1297,72 +1700,234 @@ updateQR();
 }
 },
 'timetable': {
-title: 'מערכת שעות וסדר יום',
+title: 'מערכת שעות שבועית',
 icon: '📋',
-defaultW: 330,
-defaultH: 340,
+defaultW: 360,
+defaultH: 380,
 render(body, state, saveState) {
-let items = state.items ?? [
-{ time: '08:00', subject: 'מפגש בוקר ובדיקת נוכחות', done: false },
-{ time: '08:30', subject: 'שפה וכתיבה יוצרת', done: false },
-{ time: '09:50', subject: 'הפסקה פעילה וארוחת עשר', done: false },
-{ time: '10:15', subject: 'מתמטיקה - עבודה בקבוצות', done: false },
-{ time: '11:45', subject: 'מדעים וטכנולוגיה', done: false },
-{ time: '12:45', subject: 'סיכום יום ומשחק כיתתי', done: false }
-];
+const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
+const todayDayIdx = Math.min(5, Math.max(0, new Date().getDay()));
+let selectedDay = state.selectedDay ?? todayDayIdx;
+let isEditMode = false;
+
+const DEFAULT_WEEKLY = {
+0: [
+  { time: '08:00', num: '1', subject: 'תפילת בוקר ומפגש', teacher: 'מחנכת', done: false },
+  { time: '08:45', num: '2', subject: 'עברית ושפה', teacher: 'מיכל', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר והפסקה', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'חשבון והנדסה', teacher: 'רונית', done: false },
+  { time: '11:15', num: '4', subject: 'תנ"ך ומורשת', teacher: 'דוד', done: false },
+  { time: '12:00', num: '5', subject: 'חינוך גופני (ספורט)', teacher: 'יוסי', done: false }
+],
+1: [
+  { time: '08:00', num: '1', subject: 'מפגש בוקר ושיח', teacher: 'מחנכת', done: false },
+  { time: '08:45', num: '2', subject: 'חשבון והנדסה', teacher: 'רונית', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'הפסקה פעילה', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'אנגלית', teacher: 'שרה', done: false },
+  { time: '11:15', num: '4', subject: 'מדעים וטכנולוגיה', teacher: 'דנה', done: false },
+  { time: '12:00', num: '5', subject: 'אמנות ויצירה', teacher: 'אורלי', done: false }
+],
+2: [
+  { time: '08:00', num: '1', subject: 'קריאה מונחית', teacher: 'מיכל', done: false },
+  { time: '08:45', num: '2', subject: 'עברית וכתיבה', teacher: 'מיכל', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'הפסקת בוקר', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'חשבון', teacher: 'רונית', done: false },
+  { time: '11:15', num: '4', subject: 'מוזיקה ושירה', teacher: 'נועם', done: false },
+  { time: '12:00', num: '5', subject: 'גאוגרפיה ומולדת', teacher: 'דוד', done: false }
+],
+3: [
+  { time: '08:00', num: '1', subject: 'מפגש בוקר', teacher: 'מחנכת', done: false },
+  { time: '08:45', num: '2', subject: 'אנגלית', teacher: 'שרה', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'תנ"ך', teacher: 'דוד', done: false },
+  { time: '11:15', num: '4', subject: 'חינוך גופני', teacher: 'יוסי', done: false },
+  { time: '12:00', num: '5', subject: 'שפה והבעה', teacher: 'מיכל', done: false }
+],
+4: [
+  { time: '08:00', num: '1', subject: 'כישורי חיים ושיח', teacher: 'מחנכת', done: false },
+  { time: '08:45', num: '2', subject: 'חשבון', teacher: 'רונית', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'מחשבים ורובוטיקה', teacher: 'אלעד', done: false },
+  { time: '11:15', num: '4', subject: 'מדעים', teacher: 'דנה', done: false },
+  { time: '12:00', num: '5', subject: 'סיכום שבוע ומעגל', teacher: 'מחנכת', done: false }
+],
+5: [
+  { time: '08:00', num: '1', subject: 'קבלת שבת ושיח חגיגי', teacher: 'מחנכת', done: false },
+  { time: '08:45', num: '2', subject: 'פרשת השבוע ומורשת', teacher: 'דוד', done: false },
+  { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', done: false },
+  { time: '10:15', num: '3', subject: 'משחקי חברה וחידות', teacher: 'מחנכת', done: false },
+  { time: '11:00', num: '4', subject: 'חלוקת תעודות ושבת שלום', teacher: 'מחנכת', done: false }
+]
+};
+
+let weekly = state.weeklySchedule || JSON.parse(JSON.stringify(DEFAULT_WEEKLY));
+
 body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;gap:8px;">
-<div class="timetable-list" data-el="list"></div>
-<button class="small-btn" data-act="add">+ הוסף שלב בסדר היום</button>
+<div class="tt-wrapper">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+    <div class="tt-day-tabs" data-el="day-tabs"></div>
+    <button class="small-btn" data-act="toggle-edit" title="ערוך את המערכת">✏️ עריכה</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.8rem;color:var(--text-muted);">
+    <span data-el="day-heading" style="font-weight:700;color:var(--text-dark);"></span>
+    <button class="small-btn" data-act="jump-today" style="font-size:0.74rem;padding:2px 8px;">חזור להיום</button>
+  </div>
+  <div class="timetable-list" data-el="list"></div>
+  <div data-el="edit-controls" class="hidden" style="display:flex;gap:6px;margin-top:auto;">
+    <button class="small-btn" data-act="add-period" style="flex:1;">+ הוסף שיעור ליום זה</button>
+    <button class="small-btn" data-act="reset-day" style="font-size:0.75rem;">↺ שחזר ברירת מחדל</button>
+  </div>
 </div>
 `;
+
+const tabsContainer = body.querySelector('[data-el="day-tabs"]');
+const dayHeadingEl = body.querySelector('[data-el="day-heading"]');
 const listEl = body.querySelector('[data-el="list"]');
-function renderSchedule() {
-listEl.innerHTML = items.map((item, i) => `
-<div class="tt-row ${item.done ? 'done' : ''}">
-<input type="checkbox" data-check="${i}" ${item.done ? 'checked' : ''} />
-<input type="text" class="tt-time" data-time="${i}" value="${item.time}" style="border:none;background:transparent;width:54px;" />
-<input type="text" class="tt-subject" data-sub="${i}" value="${item.subject}" />
-<button data-del="${i}" style="opacity:0.45;font-size:0.8rem;">✕</button>
-</div>
-`).join('');
-listEl.querySelectorAll('[data-check]').forEach(cb => {
-cb.addEventListener('change', () => {
-items[cb.dataset.check].done = cb.checked;
-state.items = items;
-saveState();
-renderSchedule();
-});
-});
-listEl.querySelectorAll('[data-time]').forEach(inp => {
-inp.addEventListener('change', () => {
-items[inp.dataset.time].time = inp.value;
-state.items = items;
-saveState();
-});
-});
-listEl.querySelectorAll('[data-sub]').forEach(inp => {
-inp.addEventListener('change', () => {
-items[inp.dataset.sub].subject = inp.value;
-state.items = items;
-saveState();
-});
-});
-listEl.querySelectorAll('[data-del]').forEach(btn => {
-btn.addEventListener('click', () => {
-items.splice(parseInt(btn.dataset.del, 10), 1);
-state.items = items;
-saveState();
-renderSchedule();
-});
+const editControls = body.querySelector('[data-el="edit-controls"]');
+const toggleEditBtn = body.querySelector('[data-act="toggle-edit"]');
+const jumpTodayBtn = body.querySelector('[data-act="jump-today"]');
+
+function renderDayTabs() {
+tabsContainer.innerHTML = DAY_NAMES.map((name, idx) => {
+  const isSelected = idx === selectedDay;
+  const isToday = idx === todayDayIdx;
+  return `
+    <button class="tt-day-tab ${isSelected ? 'active' : ''}" data-day="${idx}">
+      ${name}
+      ${isToday ? '<span class="tt-today-dot" title="היום"></span>' : ''}
+    </button>
+  `;
+}).join('');
+
+tabsContainer.querySelectorAll('.tt-day-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedDay = parseInt(btn.dataset.day, 10);
+    state.selectedDay = selectedDay;
+    saveState();
+    renderDayTabs();
+    renderSchedule();
+  });
 });
 }
-body.querySelector('[data-act="add"]').addEventListener('click', () => {
-items.push({ time: '13:30', subject: 'פעילות חדשה', done: false });
-state.items = items;
+
+function renderSchedule() {
+const isToday = selectedDay === todayDayIdx;
+dayHeadingEl.textContent = `מערכת יום ${DAY_NAMES[selectedDay]} ${isToday ? '• (היום)' : ''}`;
+const currentList = weekly[selectedDay] || [];
+
+if (isEditMode) {
+  editControls.classList.remove('hidden');
+  toggleEditBtn.textContent = '✓ שמור וסיים';
+  toggleEditBtn.style.background = '#10b981';
+  toggleEditBtn.style.color = '#fff';
+  listEl.innerHTML = currentList.map((item, i) => `
+    <div class="tt-card" style="padding:6px 8px;">
+      <input type="text" data-edit-num="${i}" value="${item.num || (i + 1)}" style="width:36px;text-align:center;font-weight:700;border:1px solid #cbd5e1;border-radius:6px;padding:3px;" title="מס' שיעור" />
+      <input type="text" data-edit-time="${i}" value="${item.time || ''}" style="width:50px;text-align:center;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:6px;padding:3px;direction:ltr;" title="שעה" />
+      <input type="text" data-edit-sub="${i}" value="${item.subject || ''}" placeholder="מקצוע/נושא" style="flex:1;font-weight:700;border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;" />
+      <input type="text" data-edit-teacher="${i}" value="${item.teacher || ''}" placeholder="מורה" style="width:65px;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;" />
+      <button data-del="${i}" style="border:none;background:transparent;cursor:pointer;color:#ef4444;font-size:0.9rem;" title="מחק שיעור">✕</button>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('[data-edit-num]').forEach(inp => {
+    inp.addEventListener('change', () => { currentList[inp.dataset.editNum].num = inp.value; saveSchedule(); });
+  });
+  listEl.querySelectorAll('[data-edit-time]').forEach(inp => {
+    inp.addEventListener('change', () => { currentList[inp.dataset.editTime].time = inp.value; saveSchedule(); });
+  });
+  listEl.querySelectorAll('[data-edit-sub]').forEach(inp => {
+    inp.addEventListener('change', () => { currentList[inp.dataset.editSub].subject = inp.value; saveSchedule(); });
+  });
+  listEl.querySelectorAll('[data-edit-teacher]').forEach(inp => {
+    inp.addEventListener('change', () => { currentList[inp.dataset.editTeacher].teacher = inp.value; saveSchedule(); });
+  });
+  listEl.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentList.splice(parseInt(btn.dataset.del, 10), 1);
+      saveSchedule();
+      renderSchedule();
+    });
+  });
+} else {
+  editControls.classList.add('hidden');
+  toggleEditBtn.textContent = '✏️ עריכה';
+  toggleEditBtn.style.background = '';
+  toggleEditBtn.style.color = '';
+  if (currentList.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-weight:600;">
+        אין שיעורים מוגדרים ליום זה.<br>
+        <button class="small-btn" data-act="start-add" style="margin-top:8px;">+ הוסף שיעור ראשון</button>
+      </div>
+    `;
+    const startAdd = listEl.querySelector('[data-act="start-add"]');
+    if (startAdd) startAdd.addEventListener('click', () => { isEditMode = true; renderSchedule(); });
+    return;
+  }
+  listEl.innerHTML = currentList.map((item, i) => `
+    <div class="tt-card ${item.done ? 'done' : ''}">
+      <input type="checkbox" data-check="${i}" ${item.done ? 'checked' : ''} style="cursor:pointer;" />
+      <span class="tt-period-badge">${item.num || (i + 1)}</span>
+      <div style="display:flex;flex-direction:column;flex:1;">
+        <span class="tt-sub-text">${item.subject}</span>
+        ${item.teacher ? `<span class="tt-teacher-tag">מורה: ${item.teacher}</span>` : ''}
+      </div>
+      ${item.time ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-muted);direction:ltr;">${item.time}</span>` : ''}
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('[data-check]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      currentList[cb.dataset.check].done = cb.checked;
+      saveSchedule();
+      renderSchedule();
+    });
+  });
+}
+}
+
+function saveSchedule() {
+state.weeklySchedule = weekly;
 saveState();
+}
+
+toggleEditBtn.addEventListener('click', () => {
+isEditMode = !isEditMode;
 renderSchedule();
 });
+
+jumpTodayBtn.addEventListener('click', () => {
+selectedDay = todayDayIdx;
+state.selectedDay = selectedDay;
+saveState();
+renderDayTabs();
+renderSchedule();
+});
+
+body.querySelector('[data-act="add-period"]').addEventListener('click', () => {
+const currentList = weekly[selectedDay] || [];
+currentList.push({
+  num: String(currentList.length + 1),
+  time: '12:45',
+  subject: 'שיעור חדש',
+  teacher: '',
+  done: false
+});
+weekly[selectedDay] = currentList;
+saveSchedule();
+renderSchedule();
+});
+
+body.querySelector('[data-act="reset-day"]').addEventListener('click', () => {
+if (confirm(`האם לשחזר את מערכת יום ${DAY_NAMES[selectedDay]} לברירת המחדל המקורית?`)) {
+  weekly[selectedDay] = JSON.parse(JSON.stringify(DEFAULT_WEEKLY[selectedDay] || []));
+  saveSchedule();
+  renderSchedule();
+}
+});
+
+renderDayTabs();
 renderSchedule();
 }
 },

@@ -2260,3 +2260,500 @@ button {
   border-radius: 10px;
   line-height: 1.45;
 }
+
+/* =====================================================
+   UPGRADE: Random-Name Roster Checklist
+   ===================================================== */
+.rand-selection-panel {
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 14px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  max-height: 160px;
+}
+
+.theme-dark .rand-selection-panel {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.rand-sel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 4px;
+}
+
+.theme-dark .rand-sel-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.rand-students-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  overflow-y: auto;
+  max-height: 110px;
+  padding: 2px;
+}
+
+.roster-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+
+.roster-chip:hover {
+  border-color: var(--primary);
+}
+
+.roster-chip.excluded {
+  opacity: 0.45;
+  background: #f1f5f9;
+  text-decoration: line-through;
+}
+
+.theme-dark .roster-chip {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+/* =====================================================
+   UPGRADE: Timetable Weekly View & Editing
+   ===================================================== */
+.tt-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+}
+
+.tt-day-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.theme-dark .tt-day-tabs {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tt-day-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  border: none;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.tt-day-tab:hover {
+  color: var(--text-dark);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tt-day-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+.tt-today-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 4px #10b981;
+}
+
+.tt-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.18s;
+}
+
+.tt-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
+}
+
+.tt-card.done {
+  opacity: 0.55;
+  background: rgba(241, 245, 249, 0.6);
+}
+
+.tt-card.done .tt-sub-text {
+  text-decoration: line-through;
+}
+
+.theme-dark .tt-card {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tt-period-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-weight: 800;
+  font-size: 0.76rem;
+  letter-spacing: -0.2px;
+}
+
+.theme-dark .tt-period-badge {
+  background: rgba(79, 70, 229, 0.25);
+  color: #a5b4fc;
+}
+
+.tt-sub-text {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+}
+
+.theme-dark .tt-sub-text {
+  color: #f8fafc;
+}
+
+.tt-teacher-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* =====================================================
+   UPGRADE: Student Points - Stars of the Class
+   ===================================================== */
+.sp-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  position: relative;
+}
+
+.sp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sp-search {
+  flex: 1;
+  min-width: 110px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.theme-dark .sp-search {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.sp-mode-pill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sp-mode-pill.active {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+}
+
+.theme-dark .sp-mode-pill.active {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fde68a;
+}
+
+.sp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px;
+}
+
+.sp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.sp-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+  border-color: #f59e0b;
+}
+
+.sp-card:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.theme-dark .sp-card {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.sp-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #b45309;
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);
+}
+
+.sp-name {
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: var(--text-dark);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+}
+
+.theme-dark .sp-name {
+  color: #f8fafc;
+}
+
+.sp-score {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef9c3;
+  color: #a16207;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+.theme-dark .sp-score {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+
+/* Points Award Drawer */
+.sp-drawer {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px 20px 0 0;
+  padding: 14px;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-dark .sp-drawer {
+  background: rgba(15, 23, 42, 0.96);
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sp-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sp-behavior-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sp-behavior-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: right;
+}
+
+.sp-behavior-btn:hover {
+  background: #ffffff;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+.theme-dark .sp-behavior-btn {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.sp-pts-tag {
+  margin-inline-start: auto;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #ecfdf5;
+  color: #059669;
+  font-weight: 900;
+  font-size: 0.78rem;
+}
+
+/* Podium Celeb Modal */
+.sp-podium-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: #ffffff;
+  border-radius: 18px;
+}
+
+.sp-podium-title {
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+  text-align: center;
+  background: linear-gradient(135deg, #fef08a, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sp-podium-steps {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  width: 100%;
+}
+
+.sp-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+  padding: 8px 6px;
+  text-align: center;
+  flex: 1;
+  max-width: 95px;
+}
+
+.sp-step.first {
+  height: 125px;
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  order: 2;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.5);
+}
+
+.sp-step.second {
+  height: 95px;
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  order: 1;
+}
+
+.sp-step.third {
+  height: 75px;
+  background: linear-gradient(180deg, #b45309, #78350f);
+  order: 3;
+}
