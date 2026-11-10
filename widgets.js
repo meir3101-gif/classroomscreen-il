@@ -624,32 +624,48 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
     podiumSteps.innerHTML = `
       ${top2 ? `
-        <div class="sp-step second">
-          <div style="margin-bottom:3px;">${renderStudentIconHtml(top2.icon, top2.name)}</div>
-          <div style="font-size:1.1rem;">🥈</div>
-          <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top2.name}</div>
-          <div style="font-weight:900;font-size:1.1rem;color:#f8fafc;">💎 ${top2.score}</div>
-          <div style="font-size:0.7rem;opacity:0.8;">יהלומים</div>
+        <div class="sp-podium-col second">
+          <div class="sp-podium-winner">
+            <div class="sp-podium-medal">🥈</div>
+            <div class="sp-podium-avatar">${renderStudentIconHtml(top2.icon, top2.name)}</div>
+            <div class="sp-podium-name" title="${top2.name}">${top2.name}</div>
+          </div>
+          <div class="sp-pedestal">
+            <div class="sp-pedestal-rank">2</div>
+            <div class="sp-pedestal-score">💎 ${top2.score}</div>
+            <div class="sp-pedestal-label">יהלומים</div>
+          </div>
         </div>
-      ` : '<div class="sp-step second" style="opacity:0.2;"></div>'}
+      ` : '<div class="sp-podium-col second" style="opacity:0.2;"></div>'}
 
-      <div class="sp-step first">
-        <div style="margin-bottom:3px;">${renderStudentIconHtml(top1.icon, top1.name)}</div>
-        <div style="font-size:1.4rem;">👑 🥇</div>
-        <div style="font-weight:900;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top1.name}</div>
-        <div style="font-weight:900;font-size:1.3rem;color:#fef08a;">💎 ${top1.score}</div>
-        <div style="font-size:0.72rem;opacity:0.95;font-weight:700;">אלוף/ת היהלומים!</div>
+      <div class="sp-podium-col first">
+        <div class="sp-podium-winner">
+          <div class="sp-podium-crown">👑</div>
+          <div class="sp-podium-medal">🥇</div>
+          <div class="sp-podium-avatar first-avatar">${renderStudentIconHtml(top1.icon, top1.name)}</div>
+          <div class="sp-podium-name first-name" title="${top1.name}">${top1.name}</div>
+        </div>
+        <div class="sp-pedestal">
+          <div class="sp-pedestal-rank">1</div>
+          <div class="sp-pedestal-score">💎 ${top1.score}</div>
+          <div class="sp-pedestal-label">אלוף/ת היהלומים!</div>
+        </div>
       </div>
 
       ${top3 ? `
-        <div class="sp-step third">
-          <div style="margin-bottom:3px;">${renderStudentIconHtml(top3.icon, top3.name)}</div>
-          <div style="font-size:1rem;">🥉</div>
-          <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top3.name}</div>
-          <div style="font-weight:900;font-size:1rem;color:#f8fafc;">💎 ${top3.score}</div>
-          <div style="font-size:0.7rem;opacity:0.8;">יהלומים</div>
+        <div class="sp-podium-col third">
+          <div class="sp-podium-winner">
+            <div class="sp-podium-medal">🥉</div>
+            <div class="sp-podium-avatar">${renderStudentIconHtml(top3.icon, top3.name)}</div>
+            <div class="sp-podium-name" title="${top3.name}">${top3.name}</div>
+          </div>
+          <div class="sp-pedestal">
+            <div class="sp-pedestal-rank">3</div>
+            <div class="sp-pedestal-score">💎 ${top3.score}</div>
+            <div class="sp-pedestal-label">יהלומים</div>
+          </div>
         </div>
-      ` : '<div class="sp-step third" style="opacity:0.2;"></div>'}
+      ` : '<div class="sp-podium-col third" style="opacity:0.2;"></div>'}
     `;
 
     // Check top category achievers
@@ -2919,8 +2935,12 @@ const DUTY_ROLES = [
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 if (state.dayOff === undefined) state.dayOff = 2; // יום שלישי כברירת מחדל
-if (state.roundNumber === undefined) state.roundNumber = 1;
-if (!Array.isArray(state.remainingPool)) state.remainingPool = [];
+if (!state.rolePools || typeof state.rolePools !== 'object') state.rolePools = {};
+if (!state.roleRounds || typeof state.roleRounds !== 'object') state.roleRounds = {};
+DUTY_ROLES.forEach(r => {
+  if (!Array.isArray(state.rolePools[r.id])) state.rolePools[r.id] = [];
+  if (typeof state.roleRounds[r.id] !== 'number') state.roleRounds[r.id] = 1;
+});
 if (!state.assignments) state.assignments = {};
 if (!state.substitutes) state.substitutes = {};
 
@@ -2966,33 +2986,34 @@ function performDailyRotation(force = false) {
   const allStudents = getClassStudents();
   if (allStudents.length === 0) return;
 
-  // Clean pool of any students no longer in class
-  let pool = (state.remainingPool || []).filter(s => allStudents.includes(s));
+  const assignedToday = [];
+  const newAssignments = {};
 
-  const needed = Math.min(DUTY_ROLES.length, allStudents.length);
-  const picked = [];
+  DUTY_ROLES.forEach(role => {
+    // Keep only active students for this role
+    let pool = (state.rolePools[role.id] || []).filter(s => allStudents.includes(s));
 
-  while (picked.length < needed) {
-    if (pool.length === 0) {
-      state.roundNumber = (state.roundNumber || 0) + 1;
-      const fresh = allStudents.filter(s => !picked.includes(s));
-      pool = shuffle([...fresh]);
-      if (pool.length === 0) {
-        pool = shuffle([...allStudents]);
-      }
+    // Try finding the first candidate in this role's queue not yet assigned to another duty today
+    let chosenIdx = pool.findIndex(s => !assignedToday.includes(s));
+
+    if (chosenIdx === -1) {
+      // Round complete for this specific role! Start a new cycle for this role
+      state.roleRounds[role.id] = (state.roleRounds[role.id] || 0) + 1;
+      const unassignedInClass = allStudents.filter(s => !assignedToday.includes(s));
+      const alreadyAssigned = allStudents.filter(s => assignedToday.includes(s));
+      pool = [...shuffle(unassignedInClass), ...shuffle(alreadyAssigned)];
+      chosenIdx = pool.findIndex(s => !assignedToday.includes(s));
+      if (chosenIdx === -1) chosenIdx = 0; // fallback if fewer students than roles
     }
-    const nextS = pool.shift();
-    if (nextS && !picked.includes(nextS)) {
-      picked.push(nextS);
-    }
-  }
 
-  state.remainingPool = pool;
-  state.assignments = {};
-  state.substitutes = {};
-  DUTY_ROLES.forEach((r, idx) => {
-    state.assignments[r.id] = picked[idx] || '';
+    const chosenStudent = pool.splice(chosenIdx, 1)[0] || '';
+    state.rolePools[role.id] = pool;
+    newAssignments[role.id] = chosenStudent;
+    if (chosenStudent) assignedToday.push(chosenStudent);
   });
+
+  state.assignments = newAssignments;
+  state.substitutes = {};
   state.lastAssignedDate = todayStr;
   state.forceDutyToday = false;
   saveState();
@@ -3002,13 +3023,14 @@ function replaceDuty(roleId, newStudent) {
   const curStudent = state.assignments[roleId];
   if (!curStudent || !newStudent || curStudent === newStudent) return;
 
-  // Absent student didn't serve today, so return them back to pool for next turns
-  if (!state.remainingPool.includes(curStudent)) {
-    state.remainingPool.unshift(curStudent);
+  if (!state.rolePools[roleId]) state.rolePools[roleId] = [];
+  // Return the absent student to the front of this role's round queue so they get their turn next time
+  if (!state.rolePools[roleId].includes(curStudent)) {
+    state.rolePools[roleId].unshift(curStudent);
   }
 
-  // Remove newStudent from remaining pool if present
-  state.remainingPool = state.remainingPool.filter(s => s !== newStudent);
+  // Remove the replacement student from this role's pool so they don't get assigned again soon
+  state.rolePools[roleId] = state.rolePools[roleId].filter(s => s !== newStudent);
 
   state.assignments[roleId] = newStudent;
   state.substitutes[roleId] = {
@@ -3029,8 +3051,6 @@ function renderUI() {
   const lists = (window.AppStore && window.AppStore.getClassLists) ? window.AppStore.getClassLists() : [];
   const currentClassId = state.classId || (window.AppStore && window.AppStore.getSelectedClassId ? window.AppStore.getSelectedClassId() : null);
   const totalStudents = allStudents.length;
-  const inPool = (state.remainingPool || []).length;
-  const servedCount = Math.max(0, totalStudents - inPool);
 
   body.innerHTML = `
     <div class="duty-container">
@@ -3039,8 +3059,8 @@ function renderUI() {
           <span class="duty-day-icon">📅</span>
           <span>יום ${dayName}</span>
         </div>
-        <div class="duty-round-pill" title="מספר סבב התורנות הנוכחי">
-          <span>סבב ${state.roundNumber || 1}</span>
+        <div class="duty-round-pill" title="סבב תורנויות כיתתי אישי לכל תפקיד">
+          <span>סבב נפרד לכל תפקיד</span>
         </div>
         <button class="duty-icon-btn ${showSettings ? 'active' : ''}" data-act="toggle-settings" title="הגדרות תורנות ויום חופשי">
           ⚙️
@@ -3069,7 +3089,7 @@ function renderUI() {
           </div>
           <div class="duty-settings-actions">
             <button class="duty-mini-btn" data-act="reroll-today">🎲 ערבב תורנים להיום</button>
-            <button class="duty-mini-btn danger" data-act="reset-cycle">🔄 איפוס סבב מלא</button>
+            <button class="duty-mini-btn danger" data-act="reset-cycle">🔄 איפוס כל הסבבים</button>
           </div>
         </div>
       ` : ''}
@@ -3078,7 +3098,7 @@ function renderUI() {
         <div class="duty-day-off-card">
           <div class="duty-day-off-icon">🏖️</div>
           <div class="duty-day-off-title">היום החופשי של המורה!</div>
-          <div class="duty-day-off-desc">ביום זה אין תורנויות כיתתיות. סבב התורנים מושהה וימשיך אוטומטית ביום הלימודים הבא.</div>
+          <div class="duty-day-off-desc">ביום זה אין תורנויות כיתתיות. הסבב מושהה וימשיך אוטומטית ביום הלימודים הבא.</div>
           <button class="duty-force-btn" data-act="force-today">⚡ הפעל תורנויות בכל זאת להיום</button>
         </div>
       ` : totalStudents === 0 ? `
@@ -3092,11 +3112,16 @@ function renderUI() {
           ${DUTY_ROLES.map(role => {
             const student = state.assignments ? state.assignments[role.id] : '';
             const sub = state.substitutes ? state.substitutes[role.id] : null;
+            const rolePool = state.rolePools[role.id] || [];
+            const roundNum = state.roleRounds[role.id] || 1;
             return `
               <div class="duty-role-item ${sub ? 'is-substitute' : ''}">
                 <div class="duty-role-info">
                   <span class="duty-role-icon">${role.icon}</span>
-                  <span class="duty-role-title">${role.title}</span>
+                  <div class="duty-role-texts">
+                    <span class="duty-role-title">${role.title}</span>
+                    <span class="duty-role-round-badge">סבב ${roundNum} • נותרו ${rolePool.length}</span>
+                  </div>
                 </div>
                 <div class="duty-student-area">
                   <span class="duty-student-name">${student || '—'}</span>
@@ -3111,13 +3136,6 @@ function renderUI() {
         </div>
 
         <div class="duty-footer">
-          <div class="duty-progress-info">
-            <span>התקדמות בסבב: ${servedCount}/${totalStudents} תלמידים</span>
-            <span style="opacity:0.75;">(נותרו ${inPool})</span>
-          </div>
-          <div class="duty-progress-bar">
-            <div class="duty-progress-fill" style="width:${totalStudents > 0 ? Math.min(100, Math.round((servedCount / totalStudents) * 100)) : 0}%"></div>
-          </div>
           <button class="duty-reward-btn" data-act="reward-duty" title="הענק נקודת יהלום לכל תורני היום">
             💎 פרגן יהלום לכל התורנים
           </button>
@@ -3135,7 +3153,7 @@ function renderSubModal(roleId) {
   const role = DUTY_ROLES.find(r => r.id === roleId) || { title: 'תורן' };
   const curStudent = state.assignments ? state.assignments[roleId] : '';
   const allStudents = getClassStudents();
-  const pool = state.remainingPool || [];
+  const pool = state.rolePools[roleId] || [];
   const assigned = Object.values(state.assignments || {});
   const otherStudents = allStudents.filter(s => s !== curStudent);
 
@@ -3149,17 +3167,17 @@ function renderSubModal(roleId) {
         <p class="duty-modal-desc">
           התלמיד <strong>${curStudent}</strong> נעדר היום?
           <br>
-          הוא יוחלף להיום בלבד ויחזור לסבב בהמשך כדי שלא יפסיד את תורו!
+          הוא יוחלף להיום בלבד ויחזור לראש הסבב של <strong>${role.title}</strong> בהמשך כדי שלא יפסיד את תורו!
         </p>
 
         <button class="duty-modal-quick-btn" data-act="quick-random-sub">
-          🎲 הגרל מחליף מהסבב (${pool.length} ממתינים)
+          🎲 הגרל מחליף מסבב ${role.title} (${pool.length} ממתינים בסבב)
         </button>
 
         <div style="font-size:0.8rem;font-weight:700;margin:10px 0 4px;color:inherit;">או בחר תלמיד מחליף:</div>
         <select class="duty-modal-select" data-el="sub-select">
           ${otherStudents.map(s => {
-            const inP = pool.includes(s) ? ' (בסבב)' : '';
+            const inP = pool.includes(s) ? ` (בסבב ${role.title})` : '';
             const isAssigned = assigned.includes(s) ? ' (תורן אחר)' : '';
             return `<option value="${s}">${s}${inP}${isAssigned}</option>`;
           }).join('')}
@@ -3187,10 +3205,10 @@ function bindEvents() {
   if (classSel) {
     classSel.addEventListener('change', (e) => {
       state.classId = e.target.value;
-      state.remainingPool = [];
+      state.rolePools = {};
+      state.roleRounds = {};
       state.assignments = {};
       state.substitutes = {};
-      state.roundNumber = 1;
       performDailyRotation(true);
       renderUI();
     });
@@ -3217,11 +3235,11 @@ function bindEvents() {
   const resetBtn = body.querySelector('[data-act="reset-cycle"]');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (confirm('לאפס את סבב התורנות ולהתחיל סבב 1 מחדש?')) {
-        state.remainingPool = [];
+      if (confirm('לאפס את כל הסבבים של כל התורנויות ולהתחיל סבב 1 מחדש?')) {
+        state.rolePools = {};
+        state.roleRounds = {};
         state.assignments = {};
         state.substitutes = {};
-        state.roundNumber = 1;
         state.lastAssignedDate = '';
         performDailyRotation(true);
         if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
@@ -3261,7 +3279,7 @@ function bindEvents() {
       const curStudent = state.assignments[activeModalRole];
       const allStudents = getClassStudents();
       const assigned = Object.values(state.assignments || {}).filter(s => s !== curStudent);
-      const pool = (state.remainingPool || []).filter(s => s !== curStudent && !assigned.includes(s));
+      const pool = (state.rolePools[activeModalRole] || []).filter(s => s !== curStudent && !assigned.includes(s));
       let subCandidate = pool.length > 0 ? pool[0] : null;
       if (!subCandidate) {
         const available = allStudents.filter(s => s !== curStudent && !assigned.includes(s));
