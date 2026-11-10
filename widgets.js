@@ -2176,132 +2176,296 @@ renderSchedule();
 }
 },
 'daily-agenda': {
-title: 'סדר יום כיתתי (היום)',
+title: 'סדר יום כיתתי',
 icon: '📅',
-defaultW: 390,
-defaultH: 420,
+defaultW: 420,
+defaultH: 460,
 render(body, state, saveState) {
-const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
-const todayDayIdx = Math.min(5, Math.max(0, new Date().getDay()));
-let selectedDay = state.selectedDay ?? todayDayIdx;
-let customTopics = state.customTopics ?? {}; // { [day]: { [periodIdx]: topicString } }
-let doneState = state.doneState ?? {}; // { [day]: { [periodIdx]: boolean } }
+  const DAY_NAMES = ['יום ראשון', 'יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי', 'יום שישי'];
+  const rawDay = new Date().getDay();
+  const todayDayIdx = rawDay === 6 ? 0 : Math.min(5, Math.max(0, rawDay));
 
-function getMasterSchedule() {
-  const fromStore = window.AppStore.getWeeklySchedule ? window.AppStore.getWeeklySchedule() : null;
-  return fromStore || DEFAULT_WEEKLY_SCHEDULE;
-}
+  let viewMode = state.viewMode || 'current'; // 'current' | 'all'
+  let focusedPeriodIdx = state.focusedPeriodIdx ?? null;
+  let customTopics = state.customTopics ?? {}; // { [day]: { [periodIdx]: topicString } }
+  let doneState = state.doneState ?? {}; // { [day]: { [periodIdx]: boolean } }
 
-body.innerHTML = `
-<div class="tt-wrapper">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-    <div class="tt-day-tabs" data-el="agenda-day-tabs"></div>
-    <button class="small-btn" data-act="agenda-today" style="font-size:0.75rem;padding:3px 8px;">חזור להיום</button>
-  </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.82rem;">
-    <span data-el="agenda-heading" style="font-weight:800;color:var(--text-dark);"></span>
-    <span style="font-size:0.75rem;color:var(--text-muted);">סמן ביצוע וערוך את תוכן השיעור</span>
-  </div>
-  <div class="timetable-list" data-el="agenda-list"></div>
-</div>
-`;
-
-const tabsEl = body.querySelector('[data-el="agenda-day-tabs"]');
-const headingEl = body.querySelector('[data-el="agenda-heading"]');
-const listEl = body.querySelector('[data-el="agenda-list"]');
-
-function renderAgendaTabs() {
-  tabsEl.innerHTML = DAY_NAMES.map((name, idx) => {
-    const isSelected = idx === selectedDay;
-    const isToday = idx === todayDayIdx;
-    return `
-      <button class="tt-day-tab ${isSelected ? 'active' : ''}" data-day="${idx}">
-        ${name}
-        ${isToday ? '<span class="tt-today-dot" title="היום"></span>' : ''}
-      </button>
-    `;
-  }).join('');
-
-  tabsEl.querySelectorAll('.tt-day-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedDay = parseInt(btn.dataset.day, 10);
-      state.selectedDay = selectedDay;
-      saveState();
-      renderAgendaTabs();
-      renderAgendaList();
-    });
-  });
-}
-
-body.querySelector('[data-act="agenda-today"]').addEventListener('click', () => {
-  selectedDay = todayDayIdx;
-  state.selectedDay = selectedDay;
-  saveState();
-  renderAgendaTabs();
-  renderAgendaList();
-});
-
-function renderAgendaList() {
-  const isToday = selectedDay === todayDayIdx;
-  headingEl.textContent = `סדר יום • ${DAY_NAMES[selectedDay]} ${isToday ? '(היום)' : ''}`;
-  const weekly = getMasterSchedule();
-  const currentList = weekly[selectedDay] || [];
-  if (!customTopics[selectedDay]) customTopics[selectedDay] = {};
-  if (!doneState[selectedDay]) doneState[selectedDay] = {};
-
-  if (currentList.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center;padding:30px 10px;color:var(--text-muted);font-weight:600;">אין שיעורים מוגדרים ליום זה במערכת השבועית.<br><span style="font-size:0.8rem;">(פתח את ווידג'ט 'מערכת שעות שבועית' להזנת שיעורים)</span></div>`;
-    return;
+  function getMasterSchedule() {
+    const fromStore = window.AppStore.getWeeklySchedule ? window.AppStore.getWeeklySchedule() : null;
+    return fromStore || DEFAULT_WEEKLY_SCHEDULE;
   }
 
-  listEl.innerHTML = currentList.map((item, i) => {
-    const isDone = doneState[selectedDay][i] ?? item.done;
-    const topic = customTopics[selectedDay][i] ?? item.topic ?? '';
-    return `
-      <div class="agenda-item-card ${isDone ? 'done' : ''}">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" class="agenda-checkbox" data-idx="${i}" ${isDone ? 'checked' : ''} title="סמן שיעור שהסתיים" />
-          <span class="tt-period-badge">${item.num || (i + 1)}</span>
-          <span class="tt-time-badge">${item.time || ''}</span>
-          <span class="tt-subject-title">${item.subject || ''}</span>
-          ${item.teacher ? `<span class="tt-teacher-tag">${item.teacher}</span>` : ''}
+  function parseTimeInMinutes(timeStr) {
+    if (!timeStr) return null;
+    const parts = timeStr.trim().split(':');
+    if (parts.length < 2) return null;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+
+  function calculateAutoCurrentIndex(list) {
+    if (!list || list.length === 0) return 0;
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    for (let i = 0; i < list.length; i++) {
+      const curMin = parseTimeInMinutes(list[i].time);
+      if (curMin === null) continue;
+      const nextMin = (i < list.length - 1) ? parseTimeInMinutes(list[i + 1].time) : (curMin + 45);
+      if (nextMin !== null && nowMin >= curMin && nowMin < nextMin) {
+        return i;
+      }
+    }
+    const firstMin = parseTimeInMinutes(list[0].time);
+    if (firstMin !== null && nowMin < firstMin) return 0;
+    const firstUncompleted = list.findIndex((_, idx) => !(doneState[todayDayIdx] && doneState[todayDayIdx][idx]));
+    return firstUncompleted !== -1 ? firstUncompleted : 0;
+  }
+
+  function render() {
+    const weekly = getMasterSchedule();
+    const currentList = weekly[todayDayIdx] || [];
+    if (!customTopics[todayDayIdx]) customTopics[todayDayIdx] = {};
+    if (!doneState[todayDayIdx]) doneState[todayDayIdx] = {};
+
+    const autoCurrentIdx = calculateAutoCurrentIndex(currentList);
+    let activeIdx = (focusedPeriodIdx !== null && focusedPeriodIdx >= 0 && focusedPeriodIdx < currentList.length)
+      ? focusedPeriodIdx
+      : autoCurrentIdx;
+
+    body.innerHTML = `
+      <div class="agenda-container">
+        <!-- Top Controls Bar -->
+        <div class="agenda-top-bar">
+          <div class="agenda-day-badge">
+            <span class="agenda-calendar-icon">📅</span>
+            <span class="agenda-day-title">${DAY_NAMES[todayDayIdx]} (היום)</span>
+          </div>
+          <div class="agenda-mode-toggle">
+            <button class="agenda-mode-btn ${viewMode === 'current' ? 'active' : ''}" data-mode="current">
+              🎯 שיעור עכשיו
+            </button>
+            <button class="agenda-mode-btn ${viewMode === 'all' ? 'active' : ''}" data-mode="all">
+              📋 כל היום (${currentList.length})
+            </button>
+          </div>
         </div>
-        <div class="agenda-topic-row">
-          <span class="agenda-topic-label">מה נלמד:</span>
-          <input type="text" class="agenda-topic-input" data-topic-idx="${i}" placeholder="הוסף נושא לשיעור (לדוגמה: כפל שלם בשבר)..." value="${topic}" />
+
+        <!-- Main Content Area -->
+        <div class="agenda-content-area">
+          ${currentList.length === 0 ? `
+            <div class="agenda-empty-state">
+              <div style="font-size:2rem;margin-bottom:6px;">📚</div>
+              <div style="font-weight:700;font-size:0.95rem;">אין שיעורים מוגדרים להיום במערכת השבועית</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">
+                פתח את כלי 'מערכת שעות שבועית' כדי להזין את מערכת השעות של הכיתה
+              </div>
+            </div>
+          ` : (viewMode === 'current' ? renderCurrentLessonView(currentList, activeIdx, autoCurrentIdx) : renderAllLessonsView(currentList, autoCurrentIdx))}
         </div>
       </div>
     `;
-  }).join('');
 
-  listEl.querySelectorAll('.agenda-checkbox').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const idx = cb.dataset.idx;
-      doneState[selectedDay][idx] = cb.checked;
-      state.doneState = doneState;
-      saveState();
-      cb.closest('.agenda-item-card').classList.toggle('done', cb.checked);
-      if (cb.checked) SoundFX.pop();
+    // Event handlers for mode toggle
+    body.querySelectorAll('.agenda-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        viewMode = btn.dataset.mode;
+        state.viewMode = viewMode;
+        saveState();
+        render();
+      });
     });
-  });
 
-  listEl.querySelectorAll('.agenda-topic-input').forEach(inp => {
-    inp.addEventListener('change', () => {
-      const idx = inp.dataset.topicIdx;
-      customTopics[selectedDay][idx] = inp.value;
+    if (viewMode === 'current') {
+      bindCurrentLessonEvents(currentList, activeIdx);
+    } else {
+      bindAllLessonsEvents(currentList);
+    }
+  }
+
+  function renderCurrentLessonView(list, activeIdx, autoCurrentIdx) {
+    const item = list[activeIdx] || list[0];
+    const isDone = doneState[todayDayIdx][activeIdx] ?? item.done;
+    const topic = customTopics[todayDayIdx][activeIdx] ?? item.topic ?? '';
+    const nextItem = list[activeIdx + 1];
+    const isAutoActive = activeIdx === autoCurrentIdx;
+
+    return `
+      <div class="agenda-spotlight-card ${isDone ? 'is-completed' : ''}">
+        <!-- Spotlight Header: Nav & Period Info -->
+        <div class="spotlight-header-row">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="spotlight-num-badge">${item.num ? `שיעור ${item.num}` : `שיעור ${activeIdx + 1}`}</span>
+            <span class="spotlight-time-badge">⏱️ ${item.time || 'שעה לא נקבעה'}</span>
+            ${isAutoActive ? `<span class="spotlight-live-pill"><span class="live-pulse-dot"></span>שיעור פעיל כעת</span>` : ''}
+          </div>
+          <div class="spotlight-nav-actions">
+            <button class="spotlight-nav-btn" data-act="prev" ${activeIdx <= 0 ? 'disabled' : ''} title="שיעור קודם">▶</button>
+            <select class="spotlight-period-select" title="קפוץ לשיעור">
+              ${list.map((it, idx) => `
+                <option value="${idx}" ${idx === activeIdx ? 'selected' : ''}>
+                  ${it.num ? `${it.num}.` : `${idx + 1}.`} ${it.subject || 'שיעור'} (${it.time || ''})
+                </option>
+              `).join('')}
+            </select>
+            <button class="spotlight-nav-btn" data-act="next" ${activeIdx >= list.length - 1 ? 'disabled' : ''} title="שיעור הבא">◀</button>
+          </div>
+        </div>
+
+        <!-- Spotlight Subject & Teacher -->
+        <div class="spotlight-main-info">
+          <div class="spotlight-subject-title">${item.subject || 'שיעור ללא שם'}</div>
+          ${item.teacher ? `<div class="spotlight-teacher-pill">👨‍🏫 מורה: <strong>${item.teacher}</strong></div>` : ''}
+        </div>
+
+        <!-- Spotlight Topic Section (Inline Editable) -->
+        <div class="spotlight-topic-box">
+          <div class="spotlight-topic-header">
+            <span>✍️ מה נלמד בשיעור זה:</span>
+            <span class="spotlight-save-hint">נשמר אוטומטית</span>
+          </div>
+          <input type="text" class="spotlight-topic-field" data-idx="${activeIdx}" 
+            placeholder="לדוגמה: כפל שלם בשבר, עמודים 34-36..." value="${topic}" />
+        </div>
+
+        <!-- Spotlight Completion & Next Up -->
+        <div class="spotlight-footer-row">
+          <button class="spotlight-done-toggle-btn ${isDone ? 'checked' : ''}" data-act="toggle-done" data-idx="${activeIdx}">
+            ${isDone ? '✓ שיעור זה הסתיים (לחץ לביטול)' : '○ סמן שיעור זה כהסתיים'}
+          </button>
+          <div class="spotlight-next-lesson-teaser">
+            ${nextItem ? `
+              <span>הבא בתור: <strong>${nextItem.num ? `${nextItem.num}.` : ''} ${nextItem.subject}</strong> (${nextItem.time || ''})</span>
+            ` : `
+              <span>🎉 סוף יום הלימודים</span>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAllLessonsView(list, autoCurrentIdx) {
+    return `
+      <div class="agenda-all-list">
+        ${list.map((item, i) => {
+          const isDone = doneState[todayDayIdx][i] ?? item.done;
+          const topic = customTopics[todayDayIdx][i] ?? item.topic ?? '';
+          const isAutoActive = i === autoCurrentIdx;
+          return `
+            <div class="agenda-item-card ${isDone ? 'done' : ''} ${isAutoActive ? 'is-current-active' : ''}">
+              <div class="agenda-card-top-row">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <input type="checkbox" class="agenda-checkbox" data-idx="${i}" ${isDone ? 'checked' : ''} title="סמן שיעור שהסתיים" />
+                  <span class="tt-period-badge">${item.num || (i + 1)}</span>
+                  <span class="tt-time-badge">${item.time || ''}</span>
+                  <span class="tt-subject-title">${item.subject || ''}</span>
+                  ${item.teacher ? `<span class="tt-teacher-tag">${item.teacher}</span>` : ''}
+                  ${isAutoActive ? `<span class="agenda-mini-now">עכשיו ⏱️</span>` : ''}
+                </div>
+                <button class="agenda-focus-btn" data-focus="${i}" title="הצג שיעור זה בלבד במסך">
+                  🎯 התמקד
+                </button>
+              </div>
+              <div class="agenda-topic-row">
+                <span class="agenda-topic-label">מה נלמד:</span>
+                <input type="text" class="agenda-topic-input" data-topic-idx="${i}" 
+                  placeholder="הוסף נושא לשיעור (לדוגמה: כפל שלם בשבר)..." value="${topic}" />
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function bindCurrentLessonEvents(list, activeIdx) {
+    body.querySelector('[data-act="prev"]')?.addEventListener('click', () => {
+      if (activeIdx > 0) {
+        focusedPeriodIdx = activeIdx - 1;
+        state.focusedPeriodIdx = focusedPeriodIdx;
+        saveState();
+        render();
+      }
+    });
+
+    body.querySelector('[data-act="next"]')?.addEventListener('click', () => {
+      if (activeIdx < list.length - 1) {
+        focusedPeriodIdx = activeIdx + 1;
+        state.focusedPeriodIdx = focusedPeriodIdx;
+        saveState();
+        render();
+      }
+    });
+
+    body.querySelector('.spotlight-period-select')?.addEventListener('change', (e) => {
+      focusedPeriodIdx = parseInt(e.target.value, 10);
+      state.focusedPeriodIdx = focusedPeriodIdx;
+      saveState();
+      render();
+    });
+
+    body.querySelector('.spotlight-topic-field')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      customTopics[todayDayIdx][activeIdx] = val;
       state.customTopics = customTopics;
       saveState();
     });
-  });
-}
 
-renderAgendaTabs();
-renderAgendaList();
+    body.querySelector('[data-act="toggle-done"]')?.addEventListener('click', () => {
+      const cur = !(doneState[todayDayIdx][activeIdx] ?? list[activeIdx].done);
+      doneState[todayDayIdx][activeIdx] = cur;
+      state.doneState = doneState;
+      saveState();
+      SoundFX.pop();
+      render();
+    });
+  }
 
-const updateHandler = () => {
-  renderAgendaList();
-};
-window.addEventListener('cs:schedule-updated', updateHandler);
+  function bindAllLessonsEvents(list) {
+    body.querySelectorAll('.agenda-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = cb.dataset.idx;
+        doneState[todayDayIdx][idx] = cb.checked;
+        state.doneState = doneState;
+        saveState();
+        cb.closest('.agenda-item-card').classList.toggle('done', cb.checked);
+        if (cb.checked) SoundFX.pop();
+      });
+    });
+
+    body.querySelectorAll('.agenda-topic-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const idx = inp.dataset.topicIdx;
+        customTopics[todayDayIdx][idx] = inp.value;
+        state.customTopics = customTopics;
+        saveState();
+      });
+    });
+
+    body.querySelectorAll('[data-focus]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        focusedPeriodIdx = parseInt(btn.dataset.focus, 10);
+        viewMode = 'current';
+        state.viewMode = viewMode;
+        state.focusedPeriodIdx = focusedPeriodIdx;
+        saveState();
+        render();
+      });
+    });
+  }
+
+  render();
+
+  const updateHandler = () => {
+    render();
+  };
+  window.addEventListener('cs:schedule-updated', updateHandler);
+  return () => {
+    window.removeEventListener('cs:schedule-updated', updateHandler);
+  };
 }
 },
 'calendar': {

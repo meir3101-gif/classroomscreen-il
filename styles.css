@@ -3127,33 +3127,485 @@ button {
   }
 }
 
-/* Daily Agenda Items */
-.agenda-item-card {
+/* ============================================================
+   DAILY AGENDA FLOATING GLASS STYLING (Translucent & Blended)
+   ============================================================ */
+.widget-window[data-type="daily-agenda"] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.6) inset !important;
+}
+
+.theme-dark .widget-window[data-type="daily-agenda"],
+.widget-window[data-type="daily-agenda"].theme-dark {
+  background: rgba(15, 23, 42, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35) !important;
+}
+
+.widget-window[data-type="daily-agenda"] .widget-header {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.theme-dark .widget-window[data-type="daily-agenda"] .widget-header {
+  background: rgba(15, 23, 42, 0.4) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.agenda-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.agenda-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.agenda-day-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.theme-dark .agenda-day-badge {
+  background: rgba(30, 41, 59, 0.65);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.agenda-mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  gap: 2px;
+}
+
+.theme-dark .agenda-mode-toggle {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.agenda-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.theme-dark .agenda-mode-btn {
+  color: #cbd5e1;
+}
+
+.agenda-mode-btn.active {
+  background: #ffffff;
+  color: #4f46e5;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.16);
+}
+
+.theme-dark .agenda-mode-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.agenda-content-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Spotlight Card (Single Current Lesson) */
+.agenda-spotlight-card {
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.agenda-spotlight-card.is-completed {
+  opacity: 0.8;
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.theme-dark .agenda-spotlight-card {
+  background: rgba(30, 41, 59, 0.45);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.spotlight-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spotlight-num-badge {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.25);
+}
+
+.spotlight-time-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.theme-dark .spotlight-time-badge {
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.spotlight-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #047857;
+  background: rgba(209, 250, 229, 0.85);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #a7f3d0;
+}
+
+.live-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.6);
+  animation: livePulse 1.8s infinite;
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.spotlight-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spotlight-nav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  color: #1e293b;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.spotlight-nav-btn:hover:not(:disabled) {
+  background: #ffffff;
+  color: #4f46e5;
+  transform: scale(1.08);
+}
+
+.spotlight-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.spotlight-period-select {
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+}
+
+.theme-dark .spotlight-period-select {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+}
+
+.spotlight-main-info {
+  text-align: center;
+  padding: 6px 4px;
+}
+
+.spotlight-subject-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.theme-dark .spotlight-subject-title {
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.spotlight-teacher-pill {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.theme-dark .spotlight-teacher-pill {
+  background: rgba(15, 23, 42, 0.6);
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.spotlight-topic-box {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+  padding: 10px 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.theme-dark .spotlight-topic-box {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.spotlight-topic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #4338ca;
+  margin-bottom: 6px;
+}
+
+.theme-dark .spotlight-topic-header {
+  color: #a5b4fc;
+}
+
+.spotlight-save-hint {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.spotlight-topic-field {
+  width: 100%;
+  border: 1px solid rgba(199, 210, 254, 0.8);
   background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) inset;
+}
+
+.spotlight-topic-field:focus {
+  border-color: #4f46e5;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.theme-dark .spotlight-topic-field {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+
+.spotlight-footer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.spotlight-done-toggle-btn {
+  width: 100%;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.spotlight-done-toggle-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.spotlight-done-toggle-btn.checked {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.spotlight-next-lesson-teaser {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.theme-dark .spotlight-next-lesson-teaser {
+  color: #cbd5e1;
+}
+
+/* Full Day List (Mode 2) */
+.agenda-all-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.agenda-item-card {
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
   transition: all 0.15s ease;
 }
 
 .theme-dark .agenda-item-card {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(30, 41, 59, 0.45);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.agenda-item-card.is-current-active {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+}
+
+.theme-dark .agenda-item-card.is-current-active {
+  background: rgba(49, 46, 129, 0.6);
+  border-color: #818cf8;
 }
 
 .agenda-item-card.done {
   opacity: 0.65;
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: rgba(248, 250, 252, 0.4);
+  border-color: rgba(203, 213, 225, 0.6);
 }
 
 .agenda-item-card.done .tt-subject-title {
   text-decoration: line-through;
   color: var(--text-muted);
+}
+
+.agenda-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.agenda-mini-now {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.agenda-focus-btn {
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  color: #4338ca;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.agenda-focus-btn:hover {
+  background: #ffffff;
+  color: #4f46e5;
+  transform: scale(1.05);
+}
+
+.theme-dark .agenda-focus-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a5b4fc;
 }
 
 .agenda-checkbox {
@@ -3168,7 +3620,7 @@ button {
   align-items: center;
   gap: 6px;
   padding-top: 4px;
-  border-top: 1px dashed rgba(226, 232, 240, 0.7);
+  border-top: 1px dashed rgba(255, 255, 255, 0.5);
 }
 
 .theme-dark .agenda-topic-row {
@@ -3184,15 +3636,15 @@ button {
 
 .agenda-topic-input {
   flex: 1;
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-dark);
-  background: rgba(255, 255, 255, 0.8);
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .agenda-topic-input:focus {
@@ -3204,4 +3656,13 @@ button {
   background: rgba(15, 23, 42, 0.7);
   border-color: rgba(255, 255, 255, 0.15);
   color: #f8fafc;
+}
+
+.agenda-empty-state {
+  text-align: center;
+  padding: 30px 15px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
 }

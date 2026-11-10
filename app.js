@@ -686,6 +686,7 @@ if (!def) return;
 const win = document.createElement('section');
 win.className = `widget-window ${wData.theme === 'dark' ? 'theme-dark' : wData.theme === 'glass' ? 'theme-glass' : ''} ${wData.minimized ? 'minimized' : ''}`;
 win.dataset.id = wData.id;
+win.dataset.type = wData.type;
 win.style.left = `${wData.x}px`;
 win.style.top = `${wData.y}px`;
 win.style.width = `${wData.w}px`;
