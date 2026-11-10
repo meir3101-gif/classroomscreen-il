@@ -2899,5 +2899,419 @@ state.url = u;
 saveState();
 });
 }
+},
+'duty-roster': {
+title: 'תורנים כיתתיים',
+icon: '🌟',
+defaultW: 290,
+defaultH: 450,
+defaultX: 20,
+defaultY: 70,
+render(body, state, saveState) {
+const DUTY_ROLES = [
+  { id: 'computer', title: 'תורן מחשב', icon: '💻' },
+  { id: 'cleaning', title: 'תורן ניקיון', icon: '🧹' },
+  { id: 'chairs', title: 'תורן הרמת כיסאות', icon: '🪑' },
+  { id: 'board', title: 'תורן לוח', icon: '🖍️' },
+  { id: 'errands', title: 'תורן שליחויות', icon: '🏃' }
+];
+
+const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+if (state.dayOff === undefined) state.dayOff = 2; // יום שלישי כברירת מחדל
+if (state.roundNumber === undefined) state.roundNumber = 1;
+if (!Array.isArray(state.remainingPool)) state.remainingPool = [];
+if (!state.assignments) state.assignments = {};
+if (!state.substitutes) state.substitutes = {};
+
+let showSettings = false;
+let activeModalRole = null;
+
+function getClassStudents() {
+  if (window.AppStore && typeof window.AppStore.getClassLists === 'function') {
+    const lists = window.AppStore.getClassLists() || [];
+    const selId = state.classId || (window.AppStore.getSelectedClassId ? window.AppStore.getSelectedClassId() : null);
+    const cls = lists.find(c => c.id === selId) || lists[0];
+    if (cls && Array.isArray(cls.students)) {
+      return cls.students.filter(s => s && s.trim());
+    }
+  }
+  return [];
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function performDailyRotation(force = false) {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('sv-SE');
+  const todayDayOfWeek = now.getDay();
+  const isDayOff = state.dayOff !== -1 && todayDayOfWeek === state.dayOff;
+
+  if (isDayOff && !state.forceDutyToday && !force) {
+    return;
+  }
+
+  const assignedCount = Object.keys(state.assignments || {}).filter(k => state.assignments[k]).length;
+  if (!force && state.lastAssignedDate === todayStr && assignedCount >= DUTY_ROLES.length) {
+    return;
+  }
+
+  const allStudents = getClassStudents();
+  if (allStudents.length === 0) return;
+
+  // Clean pool of any students no longer in class
+  let pool = (state.remainingPool || []).filter(s => allStudents.includes(s));
+
+  const needed = Math.min(DUTY_ROLES.length, allStudents.length);
+  const picked = [];
+
+  while (picked.length < needed) {
+    if (pool.length === 0) {
+      state.roundNumber = (state.roundNumber || 0) + 1;
+      const fresh = allStudents.filter(s => !picked.includes(s));
+      pool = shuffle([...fresh]);
+      if (pool.length === 0) {
+        pool = shuffle([...allStudents]);
+      }
+    }
+    const nextS = pool.shift();
+    if (nextS && !picked.includes(nextS)) {
+      picked.push(nextS);
+    }
+  }
+
+  state.remainingPool = pool;
+  state.assignments = {};
+  state.substitutes = {};
+  DUTY_ROLES.forEach((r, idx) => {
+    state.assignments[r.id] = picked[idx] || '';
+  });
+  state.lastAssignedDate = todayStr;
+  state.forceDutyToday = false;
+  saveState();
+}
+
+function replaceDuty(roleId, newStudent) {
+  const curStudent = state.assignments[roleId];
+  if (!curStudent || !newStudent || curStudent === newStudent) return;
+
+  // Absent student didn't serve today, so return them back to pool for next turns
+  if (!state.remainingPool.includes(curStudent)) {
+    state.remainingPool.unshift(curStudent);
+  }
+
+  // Remove newStudent from remaining pool if present
+  state.remainingPool = state.remainingPool.filter(s => s !== newStudent);
+
+  state.assignments[roleId] = newStudent;
+  state.substitutes[roleId] = {
+    original: curStudent,
+    sub: newStudent,
+    time: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+  };
+  saveState();
+}
+
+performDailyRotation(false);
+
+function renderUI() {
+  const now = new Date();
+  const dayName = HEBREW_DAYS[now.getDay()];
+  const isDayOff = state.dayOff !== -1 && now.getDay() === state.dayOff && !state.forceDutyToday;
+  const allStudents = getClassStudents();
+  const lists = (window.AppStore && window.AppStore.getClassLists) ? window.AppStore.getClassLists() : [];
+  const currentClassId = state.classId || (window.AppStore && window.AppStore.getSelectedClassId ? window.AppStore.getSelectedClassId() : null);
+  const totalStudents = allStudents.length;
+  const inPool = (state.remainingPool || []).length;
+  const servedCount = Math.max(0, totalStudents - inPool);
+
+  body.innerHTML = `
+    <div class="duty-container">
+      <div class="duty-header-bar">
+        <div class="duty-day-pill">
+          <span class="duty-day-icon">📅</span>
+          <span>יום ${dayName}</span>
+        </div>
+        <div class="duty-round-pill" title="מספר סבב התורנות הנוכחי">
+          <span>סבב ${state.roundNumber || 1}</span>
+        </div>
+        <button class="duty-icon-btn ${showSettings ? 'active' : ''}" data-act="toggle-settings" title="הגדרות תורנות ויום חופשי">
+          ⚙️
+        </button>
+      </div>
+
+      ${showSettings ? `
+        <div class="duty-settings-panel">
+          <div class="duty-setting-row">
+            <label>כיתה:</label>
+            <select data-el="class-sel">
+              ${lists.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('')}
+            </select>
+          </div>
+          <div class="duty-setting-row">
+            <label>יום חופשי למורה:</label>
+            <select data-el="dayoff-sel">
+              <option value="-1" ${state.dayOff === -1 ? 'selected' : ''}>ללא יום חופשי</option>
+              <option value="0" ${state.dayOff === 0 ? 'selected' : ''}>יום ראשון</option>
+              <option value="1" ${state.dayOff === 1 ? 'selected' : ''}>יום שני</option>
+              <option value="2" ${state.dayOff === 2 ? 'selected' : ''}>יום שלישי (ברירת מחדל)</option>
+              <option value="3" ${state.dayOff === 3 ? 'selected' : ''}>יום רביעי</option>
+              <option value="4" ${state.dayOff === 4 ? 'selected' : ''}>יום חמישי</option>
+              <option value="5" ${state.dayOff === 5 ? 'selected' : ''}>יום שישי</option>
+            </select>
+          </div>
+          <div class="duty-settings-actions">
+            <button class="duty-mini-btn" data-act="reroll-today">🎲 ערבב תורנים להיום</button>
+            <button class="duty-mini-btn danger" data-act="reset-cycle">🔄 איפוס סבב מלא</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${isDayOff ? `
+        <div class="duty-day-off-card">
+          <div class="duty-day-off-icon">🏖️</div>
+          <div class="duty-day-off-title">היום החופשי של המורה!</div>
+          <div class="duty-day-off-desc">ביום זה אין תורנויות כיתתיות. סבב התורנים מושהה וימשיך אוטומטית ביום הלימודים הבא.</div>
+          <button class="duty-force-btn" data-act="force-today">⚡ הפעל תורנויות בכל זאת להיום</button>
+        </div>
+      ` : totalStudents === 0 ? `
+        <div class="duty-empty-card">
+          <div style="font-size:1.8rem;margin-bottom:6px;">👥</div>
+          <div>אין תלמידים בכיתה שנבחרה.</div>
+          <div style="font-size:0.8rem;opacity:0.8;margin-top:4px;">הוסף תלמידים דרך כפתור "רשימת תלמידים" בסרגל העליון.</div>
+        </div>
+      ` : `
+        <div class="duty-roles-list">
+          ${DUTY_ROLES.map(role => {
+            const student = state.assignments ? state.assignments[role.id] : '';
+            const sub = state.substitutes ? state.substitutes[role.id] : null;
+            return `
+              <div class="duty-role-item ${sub ? 'is-substitute' : ''}">
+                <div class="duty-role-info">
+                  <span class="duty-role-icon">${role.icon}</span>
+                  <span class="duty-role-title">${role.title}</span>
+                </div>
+                <div class="duty-student-area">
+                  <span class="duty-student-name">${student || '—'}</span>
+                  ${sub ? `<span class="duty-sub-tag" title="מחליף את ${sub.original}">מחליף</span>` : ''}
+                </div>
+                <button class="duty-replace-btn" data-act="open-sub" data-role="${role.id}" title="החלף תורן אם התלמיד נעדר">
+                  🔄 החלף
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="duty-footer">
+          <div class="duty-progress-info">
+            <span>התקדמות בסבב: ${servedCount}/${totalStudents} תלמידים</span>
+            <span style="opacity:0.75;">(נותרו ${inPool})</span>
+          </div>
+          <div class="duty-progress-bar">
+            <div class="duty-progress-fill" style="width:${totalStudents > 0 ? Math.min(100, Math.round((servedCount / totalStudents) * 100)) : 0}%"></div>
+          </div>
+          <button class="duty-reward-btn" data-act="reward-duty" title="הענק נקודת יהלום לכל תורני היום">
+            💎 פרגן יהלום לכל התורנים
+          </button>
+        </div>
+      `}
+
+      ${activeModalRole ? renderSubModal(activeModalRole) : ''}
+    </div>
+  `;
+
+  bindEvents();
+}
+
+function renderSubModal(roleId) {
+  const role = DUTY_ROLES.find(r => r.id === roleId) || { title: 'תורן' };
+  const curStudent = state.assignments ? state.assignments[roleId] : '';
+  const allStudents = getClassStudents();
+  const pool = state.remainingPool || [];
+  const assigned = Object.values(state.assignments || {});
+  const otherStudents = allStudents.filter(s => s !== curStudent);
+
+  return `
+    <div class="duty-modal-overlay">
+      <div class="duty-modal-card">
+        <div class="duty-modal-header">
+          <h4>🔄 החלפת ${role.title}</h4>
+          <button class="duty-modal-close" data-act="close-sub">✕</button>
+        </div>
+        <p class="duty-modal-desc">
+          התלמיד <strong>${curStudent}</strong> נעדר היום?
+          <br>
+          הוא יוחלף להיום בלבד ויחזור לסבב בהמשך כדי שלא יפסיד את תורו!
+        </p>
+
+        <button class="duty-modal-quick-btn" data-act="quick-random-sub">
+          🎲 הגרל מחליף מהסבב (${pool.length} ממתינים)
+        </button>
+
+        <div style="font-size:0.8rem;font-weight:700;margin:10px 0 4px;color:inherit;">או בחר תלמיד מחליף:</div>
+        <select class="duty-modal-select" data-el="sub-select">
+          ${otherStudents.map(s => {
+            const inP = pool.includes(s) ? ' (בסבב)' : '';
+            const isAssigned = assigned.includes(s) ? ' (תורן אחר)' : '';
+            return `<option value="${s}">${s}${inP}${isAssigned}</option>`;
+          }).join('')}
+        </select>
+
+        <div class="duty-modal-buttons">
+          <button class="duty-modal-btn primary" data-act="confirm-sub">✓ אשר החלפה</button>
+          <button class="duty-modal-btn secondary" data-act="close-sub">ביטול</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function bindEvents() {
+  const toggleBtn = body.querySelector('[data-act="toggle-settings"]');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      showSettings = !showSettings;
+      renderUI();
+    });
+  }
+
+  const classSel = body.querySelector('[data-el="class-sel"]');
+  if (classSel) {
+    classSel.addEventListener('change', (e) => {
+      state.classId = e.target.value;
+      state.remainingPool = [];
+      state.assignments = {};
+      state.substitutes = {};
+      state.roundNumber = 1;
+      performDailyRotation(true);
+      renderUI();
+    });
+  }
+
+  const dayoffSel = body.querySelector('[data-el="dayoff-sel"]');
+  if (dayoffSel) {
+    dayoffSel.addEventListener('change', (e) => {
+      state.dayOff = parseInt(e.target.value, 10);
+      saveState();
+      renderUI();
+    });
+  }
+
+  const rerollBtn = body.querySelector('[data-act="reroll-today"]');
+  if (rerollBtn) {
+    rerollBtn.addEventListener('click', () => {
+      performDailyRotation(true);
+      if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+      renderUI();
+    });
+  }
+
+  const resetBtn = body.querySelector('[data-act="reset-cycle"]');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (confirm('לאפס את סבב התורנות ולהתחיל סבב 1 מחדש?')) {
+        state.remainingPool = [];
+        state.assignments = {};
+        state.substitutes = {};
+        state.roundNumber = 1;
+        state.lastAssignedDate = '';
+        performDailyRotation(true);
+        if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
+        renderUI();
+      }
+    });
+  }
+
+  const forceBtn = body.querySelector('[data-act="force-today"]');
+  if (forceBtn) {
+    forceBtn.addEventListener('click', () => {
+      state.forceDutyToday = true;
+      performDailyRotation(true);
+      if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+      renderUI();
+    });
+  }
+
+  body.querySelectorAll('[data-act="open-sub"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeModalRole = btn.dataset.role;
+      renderUI();
+    });
+  });
+
+  const closeSubBtns = body.querySelectorAll('[data-act="close-sub"]');
+  closeSubBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeModalRole = null;
+      renderUI();
+    });
+  });
+
+  const quickRandomBtn = body.querySelector('[data-act="quick-random-sub"]');
+  if (quickRandomBtn && activeModalRole) {
+    quickRandomBtn.addEventListener('click', () => {
+      const curStudent = state.assignments[activeModalRole];
+      const allStudents = getClassStudents();
+      const assigned = Object.values(state.assignments || {}).filter(s => s !== curStudent);
+      const pool = (state.remainingPool || []).filter(s => s !== curStudent && !assigned.includes(s));
+      let subCandidate = pool.length > 0 ? pool[0] : null;
+      if (!subCandidate) {
+        const available = allStudents.filter(s => s !== curStudent && !assigned.includes(s));
+        if (available.length > 0) {
+          subCandidate = available[Math.floor(Math.random() * available.length)];
+        }
+      }
+      if (subCandidate) {
+        replaceDuty(activeModalRole, subCandidate);
+        activeModalRole = null;
+        if (typeof SoundFX !== 'undefined' && SoundFX.tap) SoundFX.tap();
+        renderUI();
+      } else {
+        alert('לא נמצאו תלמידים פנויים להחלפה.');
+      }
+    });
+  }
+
+  const confirmSubBtn = body.querySelector('[data-act="confirm-sub"]');
+  if (confirmSubBtn && activeModalRole) {
+    confirmSubBtn.addEventListener('click', () => {
+      const sel = body.querySelector('[data-el="sub-select"]');
+      if (sel && sel.value) {
+        replaceDuty(activeModalRole, sel.value);
+        activeModalRole = null;
+        if (typeof SoundFX !== 'undefined' && SoundFX.tap) SoundFX.tap();
+        renderUI();
+      }
+    });
+  }
+
+  const rewardBtn = body.querySelector('[data-act="reward-duty"]');
+  if (rewardBtn) {
+    rewardBtn.addEventListener('click', () => {
+      if (window.AppStore && window.AppStore.addDiamondsToStudent) {
+        const dutyStudents = Object.values(state.assignments || {}).filter(Boolean);
+        if (dutyStudents.length === 0) return;
+        dutyStudents.forEach(st => {
+          window.AppStore.addDiamondsToStudent(st, 1, 'תורנות כיתה');
+        });
+        if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
+        rewardBtn.textContent = '✓ נקודות יהלום הוענקו!';
+        rewardBtn.style.background = 'rgba(16, 185, 129, 0.4)';
+        setTimeout(() => { renderUI(); }, 1400);
+      }
+    });
+  }
+}
+
+renderUI();
+}
 }
 };

@@ -47,6 +47,7 @@ function getWidgetHeaderCapsule(type) {
     'draw': { cls: 'capsule-purple', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/><path d="M18 10l-4-4"/><path d="m20.5 7.5-3-3a2.12 2.12 0 0 0-3 0l-1.5 1.5 6 6 1.5-1.5a2.12 2.12 0 0 0 0-3Z"/></svg>' },
     'qr': { cls: 'capsule-indigo', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="6" height="6" x="3" y="3" rx="1.5"/><rect width="6" height="6" x="15" y="3" rx="1.5"/><rect width="6" height="6" x="3" y="15" rx="1.5"/><path d="M21 15h-3a2 2 0 0 0-2 2v4"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/></svg>' },
     'daily-agenda': { cls: 'capsule-indigo', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg>' },
+    'duty-roster': { cls: 'capsule-amber', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
     'timetable': { cls: 'capsule-blue', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>' },
     'calendar': { cls: 'capsule-emerald', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="12" cy="15" r="2"/></svg>' },
     'countdown': { cls: 'capsule-amber', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
@@ -410,6 +411,27 @@ toggleSidebarBtn.addEventListener('click', () => {
 this.toggleStudentsSidebar();
 });
 }
+const toggleDutyBtn = document.getElementById('btn-toggle-duty');
+if (toggleDutyBtn) {
+toggleDutyBtn.addEventListener('click', () => {
+  const existing = this.currentScreen.widgets.find(w => w.type === 'duty-roster');
+  if (existing) {
+    const el = document.getElementById(existing.id);
+    if (el) {
+      if (existing.minimized) {
+        existing.minimized = false;
+        el.classList.remove('minimized');
+        this.saveState();
+      }
+      this.bringToTop(el, existing);
+      el.style.transform = 'scale(1.03)';
+      setTimeout(() => { if (el) el.style.transform = ''; }, 200);
+    }
+  } else {
+    this.addWidget('duty-roster', { x: 20, y: 70, w: 290, h: 450 });
+  }
+});
+}
 window.addEventListener('cs:scores-updated', () => {
 this.renderStudentsSidebar();
 });
@@ -670,8 +692,8 @@ const count = this.currentScreen.widgets.length;
 const offset = (count % 7) * 28;
 const w = customOverrides.w || def.defaultW || 320;
 const h = customOverrides.h || def.defaultH || 260;
-const x = customOverrides.x ?? Math.max(30, Math.min(window.innerWidth - w - 40, Math.floor((window.innerWidth - w) / 2) + offset - 60));
-const y = customOverrides.y ?? Math.max(68, Math.min(window.innerHeight - h - 100, 95 + offset));
+const x = customOverrides.x ?? (def.defaultX !== undefined ? def.defaultX : Math.max(30, Math.min(window.innerWidth - w - 40, Math.floor((window.innerWidth - w) / 2) + offset - 60)));
+const y = customOverrides.y ?? (def.defaultY !== undefined ? def.defaultY : Math.max(68, Math.min(window.innerHeight - h - 100, 95 + offset)));
 const wData = {
 id: 'w-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
 type,
