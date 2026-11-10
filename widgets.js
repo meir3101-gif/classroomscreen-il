@@ -1173,10 +1173,10 @@ updateView();
 }
 },
 'random-name': {
-title: 'הגרלת שם וגלגל מזל',
+title: 'גלגל המזל',
 icon: '🎡',
-defaultW: 360,
-defaultH: 390,
+defaultW: 420,
+defaultH: 420,
 render(body, state, saveState) {
 let mode = state.mode ?? 'wheel';
 let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
@@ -1184,286 +1184,421 @@ let excludedNames = new Set(state.excluded || []);
 let includedStudents = state.included ? new Set(state.included) : null;
 let spinning = false;
 let wheelAngle = 0;
-let showRosterPanel = false;
+let showSettings = false;
+
 body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;gap:8px;">
-<div style="display:flex;gap:6px;align-items:center;">
-<select data-el="class-select" style="flex:1;padding:6px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;"></select>
-<button class="small-btn" data-act="toggle-roster" title="סמן מי מהתלמידים משתתף בהגרלה">👥 משתתפים (<span data-el="roster-count">0</span>)</button>
-<button class="small-btn" data-act="edit-lists" title="ערוך רשימת תלמידים">✏️ שמות</button>
-</div>
-<div data-el="selection-panel" class="rand-selection-panel hidden">
-  <div class="rand-sel-header">
-    <span>בחירת תלמידים להגרלה:</span>
-    <div style="display:flex;gap:4px;">
-      <button class="small-btn" data-act="select-all" style="padding:2px 8px;font-size:0.75rem;">סמן הכל</button>
-      <button class="small-btn" data-act="deselect-all" style="padding:2px 8px;font-size:0.75rem;">נקה הכל</button>
+<div class="frameless-wheel-wrapper">
+  <!-- Floating Action Buttons Strip (HUD) -->
+  <div class="wheel-hud-strip">
+    <button class="wheel-hud-btn" data-wdrag title="גרור להזזת הגלגל">✋</button>
+    <button class="wheel-hud-btn" data-act="toggle-settings" title="הגדרות וסימון משתתפים">⚙️</button>
+    <button class="wheel-hud-btn close-hud" data-wclose title="סגור גלגל">✕</button>
+  </div>
+
+  <!-- The Wheel Arena -->
+  <div class="wheel-stage" data-act="stage-click">
+    <!-- Top Pointer Arrow -->
+    <div class="wheel-pointer-arrow"></div>
+
+    <!-- Large High-Res Canvas -->
+    <canvas data-el="wheel-canvas" width="340" height="340" class="wheel-canvas-large"></canvas>
+
+    <!-- Center SPIN Button Hub -->
+    <button class="wheel-center-hub" data-act="spin-hub" title="לחץ לסיבוב הגלגל!">
+      <span class="hub-icon">🎲</span>
+      <span class="hub-text">סובב!</span>
+    </button>
+  </div>
+
+  <!-- Floating Winner Celebration Card -->
+  <div data-el="winner-overlay" class="wheel-winner-overlay hidden">
+    <div class="winner-trophy-badge">🏆 הזוכה בהגרלה!</div>
+    <div data-el="winner-name-display" class="winner-name-text"></div>
+    <div class="winner-btns-row">
+      <button class="small-btn primary-btn" data-act="spin-again">סובב שוב 🎲</button>
+      <button class="small-btn" data-act="close-winner">✕ סגור</button>
     </div>
   </div>
-  <div class="rand-students-checklist" data-el="students-checklist"></div>
-</div>
-<div class="randomizer-tabs">
-<button class="rand-tab ${mode === 'wheel' ? 'active' : ''}" data-mode="wheel">🎡 גלגל מזל</button>
-<button class="rand-tab ${mode === 'card' ? 'active' : ''}" data-mode="card">🎴 כרטיס הגרלה</button>
-</div>
-<div data-el="wheel-view" class="wheel-canvas-wrap ${mode === 'wheel' ? '' : 'hidden'}">
-<canvas data-el="wheel-canvas" width="200" height="200"></canvas>
-<div data-el="wheel-winner" style="font-weight:900;font-size:1.15rem;color:var(--primary);min-height:24px;margin-top:4px;"></div>
-</div>
-<div data-el="card-view" class="winner-card-box ${mode === 'card' ? '' : 'hidden'}">
-<div style="font-size:0.85rem;opacity:0.85;">התלמיד/ה שנבחר/ה:</div>
-<div class="winner-name" data-el="card-winner">לחץ להגרלה!</div>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;">
-<label style="font-size:0.78rem;display:flex;align-items:center;gap:4px;cursor:pointer;">
-<input type="checkbox" data-el="no-repeat" ${state.noRepeat ? 'checked' : ''} />
-ללא חזרה (<span data-el="excluded-count">${excludedNames.size}</span>)
-</label>
-<button class="secondary-btn" data-act="reset-pool" style="padding:5px 8px;font-size:0.76rem;">איפוס</button>
-<button class="primary-btn" data-act="spin" style="flex:1;">🎲 הגרל תלמיד!</button>
-</div>
+
+  <!-- Floating Settings Panel (Frosted Glass Popover) -->
+  <div data-el="settings-popover" class="wheel-settings-popover hidden">
+    <div class="settings-popover-header">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span>⚙️</span>
+        <span style="font-weight:800;font-size:0.85rem;">הגדרות גלגל המזל</span>
+      </div>
+      <button class="mini-icon-btn" data-act="close-settings">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:3px;">
+      <label style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">בחירת כיתה:</label>
+      <select data-el="class-select" class="sidebar-class-sel"></select>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="randomizer-tabs" style="margin:4px 0;">
+      <button class="rand-tab ${mode === 'wheel' ? 'active' : ''}" data-mode="wheel">🎡 גלגל מזל</button>
+      <button class="rand-tab ${mode === 'card' ? 'active' : ''}" data-mode="card">🎴 כרטיס</button>
+    </div>
+
+    <!-- Roster Checklist -->
+    <div class="settings-roster-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px;">
+        <span style="font-size:0.76rem;font-weight:800;">תלמידים משתתפים (<span data-el="roster-count">0</span>)</span>
+        <div style="display:flex;gap:3px;">
+          <button class="mini-icon-btn" data-act="select-all" style="font-size:0.68rem;">סמן הכל</button>
+          <button class="mini-icon-btn" data-act="deselect-all" style="font-size:0.68rem;">נקה</button>
+        </div>
+      </div>
+      <div class="rand-students-checklist" data-el="students-checklist"></div>
+    </div>
+
+    <!-- Settings options -->
+    <div style="display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.3);">
+      <label style="font-size:0.75rem;display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;">
+        <input type="checkbox" data-el="no-repeat" ${state.noRepeat ? 'checked' : ''} />
+        <span>ללא חזרה (הוצא זוכה מהסבב)</span>
+      </label>
+      <button class="secondary-btn" data-act="reset-pool" style="font-size:0.72rem;padding:4px 8px;">
+        איפוס סבב הגרלה (<span data-el="excluded-count">0</span>)
+      </button>
+    </div>
+  </div>
+
+  <!-- Card Mode Fallback Overlay if user switches to card mode -->
+  <div data-el="card-view" class="wheel-card-mode-overlay ${mode === 'card' ? '' : 'hidden'}">
+    <div style="font-size:0.9rem;font-weight:700;color:var(--text-muted);">התלמיד/ה שנבחר/ה:</div>
+    <div class="winner-name" data-el="card-winner" style="font-size:1.8rem;font-weight:900;color:#4f46e5;margin:12px 0;">לחץ להגרלה!</div>
+    <button class="primary-btn" data-act="card-spin-btn" style="padding:8px 24px;border-radius:999px;">🎲 הגרל!</button>
+  </div>
 </div>
 `;
+
 const selectEl = body.querySelector('[data-el="class-select"]');
 const wheelCanvas = body.querySelector('[data-el="wheel-canvas"]');
 const wCtx = wheelCanvas.getContext('2d');
-const wheelWinnerEl = body.querySelector('[data-el="wheel-winner"]');
+const winnerOverlay = body.querySelector('[data-el="winner-overlay"]');
+const winnerNameDisplay = body.querySelector('[data-el="winner-name-display"]');
 const cardWinnerEl = body.querySelector('[data-el="card-winner"]');
 const noRepeatCb = body.querySelector('[data-el="no-repeat"]');
 const rosterCountEl = body.querySelector('[data-el="roster-count"]');
 const excludedCountEl = body.querySelector('[data-el="excluded-count"]');
-const selectionPanel = body.querySelector('[data-el="selection-panel"]');
+const settingsPopover = body.querySelector('[data-el="settings-popover"]');
 const checklistEl = body.querySelector('[data-el="students-checklist"]');
+const cardView = body.querySelector('[data-el="card-view"]');
+
 function getClassStudents() {
-const lists = window.AppStore.getClassLists();
-const found = lists.find(c => c.id === selectedClassId) || lists[0];
-return (found ? found.students : ['דניאל', 'נועה', 'איתי', 'מאיה', 'יונתן', 'שירה']).filter(Boolean);
+  const lists = window.AppStore.getClassLists();
+  const found = lists.find(c => c.id === selectedClassId) || lists[0];
+  return (found ? found.students : ['דניאל', 'נועה', 'איתי', 'מאיה', 'יונתן', 'שירה']).filter(Boolean);
 }
+
 function populateClasses() {
-const lists = window.AppStore.getClassLists();
-selectEl.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
-const allStudents = getClassStudents();
-if (!includedStudents) {
-  includedStudents = new Set(allStudents);
+  const lists = window.AppStore.getClassLists();
+  selectEl.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
+  const allStudents = getClassStudents();
+  if (!includedStudents) {
+    includedStudents = new Set(allStudents);
+  }
+  renderChecklist();
 }
-renderChecklist();
-}
+
 function renderChecklist() {
-const allStudents = getClassStudents();
-checklistEl.innerHTML = allStudents.map(name => {
-  const isChecked = includedStudents.has(name);
-  return `
-    <label class="roster-chip ${isChecked ? '' : 'excluded'}">
-      <input type="checkbox" data-student="${name}" ${isChecked ? 'checked' : ''} />
-      <span>${name}</span>
-    </label>
-  `;
-}).join('');
-rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
-checklistEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener('change', () => {
-    const student = cb.dataset.student;
-    if (cb.checked) {
-      includedStudents.add(student);
-    } else {
-      includedStudents.delete(student);
+  const allStudents = getClassStudents();
+  checklistEl.innerHTML = allStudents.map(name => {
+    const isChecked = includedStudents.has(name);
+    return `
+      <label class="roster-chip ${isChecked ? '' : 'excluded'}">
+        <input type="checkbox" data-student="${name}" ${isChecked ? 'checked' : ''} />
+        <span>${name}</span>
+      </label>
+    `;
+  }).join('');
+  rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
+
+  checklistEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const student = cb.dataset.student;
+      if (cb.checked) {
+        includedStudents.add(student);
+      } else {
+        includedStudents.delete(student);
+      }
+      state.included = Array.from(includedStudents);
+      saveState();
+      rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
+      cb.closest('.roster-chip').classList.toggle('excluded', !cb.checked);
+      drawWheel();
+    });
+  });
+}
+
+function getActiveStudents() {
+  const all = getClassStudents();
+  let list = includedStudents ? all.filter(n => includedStudents.has(n)) : all;
+  if (noRepeatCb.checked) {
+    const filtered = list.filter(n => !excludedNames.has(n));
+    return filtered.length > 0 ? filtered : list;
+  }
+  return list;
+}
+
+const palette = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#3b82f6', '#ef4444', '#84cc16'];
+
+function drawWheel() {
+  const names = getActiveStudents();
+  const dpr = window.devicePixelRatio || 2;
+  const size = 340;
+  wheelCanvas.width = size * dpr;
+  wheelCanvas.height = size * dpr;
+  wheelCanvas.style.width = `${size}px`;
+  wheelCanvas.style.height = `${size}px`;
+
+  wCtx.save();
+  wCtx.scale(dpr, dpr);
+  wCtx.clearRect(0, 0, size, size);
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 12;
+
+  if (names.length === 0) {
+    wCtx.beginPath();
+    wCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    wCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    wCtx.fill();
+    wCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    wCtx.lineWidth = 3;
+    wCtx.stroke();
+    wCtx.fillStyle = '#0f172a';
+    wCtx.font = 'bold 14px Heebo, sans-serif';
+    wCtx.textAlign = 'center';
+    wCtx.fillText('אין תלמידים מסומנים', cx, cy);
+    wCtx.restore();
+    return;
+  }
+
+  const arc = (Math.PI * 2) / names.length;
+  names.forEach((name, i) => {
+    const start = wheelAngle + i * arc;
+    const end = start + arc;
+    wCtx.beginPath();
+    wCtx.moveTo(cx, cy);
+    wCtx.arc(cx, cy, r, start, end);
+    wCtx.closePath();
+    wCtx.fillStyle = palette[i % palette.length];
+    wCtx.fill();
+    wCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    wCtx.lineWidth = 2;
+    wCtx.stroke();
+
+    // Text along slice
+    wCtx.save();
+    wCtx.translate(cx, cy);
+    wCtx.rotate(start + arc / 2);
+    wCtx.textAlign = 'right';
+    wCtx.fillStyle = '#ffffff';
+    wCtx.font = 'bold 13px Heebo, sans-serif';
+    wCtx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    wCtx.shadowBlur = 3;
+    wCtx.fillText(name.slice(0, 14), r - 16, 5);
+    wCtx.restore();
+  });
+
+  // Outer Decorative Ring
+  wCtx.beginPath();
+  wCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  wCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  wCtx.lineWidth = 5;
+  wCtx.stroke();
+
+  // Outer Studs
+  const studCount = Math.min(24, Math.max(12, names.length * 2));
+  for (let s = 0; s < studCount; s++) {
+    const a = s * (Math.PI * 2 / studCount);
+    const sx = cx + (r + 1) * Math.cos(a);
+    const sy = cy + (r + 1) * Math.sin(a);
+    wCtx.beginPath();
+    wCtx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+    wCtx.fillStyle = '#ffffff';
+    wCtx.fill();
+  }
+
+  wCtx.restore();
+}
+
+function startSpin() {
+  if (spinning) return;
+  const names = getActiveStudents();
+  if (!names.length) {
+    showSettings = true;
+    settingsPopover.classList.remove('hidden');
+    alert('יש לסמן לפחות תלמיד אחד להגרלה ברשימת המשתתפים!');
+    return;
+  }
+  winnerOverlay.classList.add('hidden');
+  spinning = true;
+
+  if (mode === 'wheel') {
+    const spinDuration = 2400;
+    const startAngle = wheelAngle;
+    const extraSpins = (Math.PI * 2) * (5 + Math.random() * 3);
+    const startTime = performance.now();
+    let lastTickSlice = -1;
+
+    function animate(now) {
+      const t = Math.min(1, (now - startTime) / spinDuration);
+      const easeOut = 1 - Math.pow(1 - t, 3);
+      wheelAngle = startAngle + extraSpins * easeOut;
+      drawWheel();
+
+      const arc = (Math.PI * 2) / names.length;
+      const currentSlice = Math.floor((wheelAngle % (Math.PI * 2)) / arc);
+      if (currentSlice !== lastTickSlice) {
+        lastTickSlice = currentSlice;
+        SoundFX.tick();
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        // Pointer is at top: 3 * Math.PI / 2
+        const normalized = (3 * Math.PI / 2 - (wheelAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        const idx = Math.floor(normalized / arc) % names.length;
+        const winner = names[idx];
+        
+        winnerNameDisplay.textContent = winner;
+        winnerOverlay.classList.remove('hidden');
+        SoundFX.fanfare();
+
+        if (noRepeatCb.checked) {
+          excludedNames.add(winner);
+          state.excluded = Array.from(excludedNames);
+          excludedCountEl.textContent = excludedNames.size;
+          saveState();
+        }
+      }
     }
-    state.included = Array.from(includedStudents);
+    requestAnimationFrame(animate);
+  } else {
+    let count = 0;
+    const maxSteps = 18;
+    const iv = setInterval(() => {
+      const pick = names[Math.floor(Math.random() * names.length)];
+      cardWinnerEl.textContent = pick;
+      SoundFX.tick();
+      count++;
+      if (count >= maxSteps) {
+        clearInterval(iv);
+        spinning = false;
+        const finalWinner = names[Math.floor(Math.random() * names.length)];
+        cardWinnerEl.textContent = `🎉 ${finalWinner}`;
+        SoundFX.fanfare();
+        if (noRepeatCb.checked) {
+          excludedNames.add(finalWinner);
+          state.excluded = Array.from(excludedNames);
+          excludedCountEl.textContent = excludedNames.size;
+          saveState();
+        }
+      }
+    }, 90);
+  }
+}
+
+// Bind Spin Triggers
+body.querySelector('[data-act="spin-hub"]').addEventListener('click', (e) => {
+  e.stopPropagation();
+  startSpin();
+});
+
+body.querySelector('[data-act="stage-click"]').addEventListener('click', (e) => {
+  if (e.target.closest('.wheel-hud-strip, .wheel-winner-overlay, .wheel-settings-popover, .wheel-center-hub')) return;
+  startSpin();
+});
+
+body.querySelector('[data-act="spin-again"]').addEventListener('click', () => {
+  winnerOverlay.classList.add('hidden');
+  startSpin();
+});
+
+body.querySelector('[data-act="close-winner"]').addEventListener('click', () => {
+  winnerOverlay.classList.add('hidden');
+});
+
+body.querySelector('[data-act="card-spin-btn"]')?.addEventListener('click', () => {
+  startSpin();
+});
+
+// Settings & HUD triggers
+body.querySelector('[data-act="toggle-settings"]').addEventListener('click', () => {
+  showSettings = !showSettings;
+  settingsPopover.classList.toggle('hidden', !showSettings);
+});
+
+body.querySelector('[data-act="close-settings"]').addEventListener('click', () => {
+  showSettings = false;
+  settingsPopover.classList.add('hidden');
+});
+
+body.querySelector('[data-act="select-all"]').addEventListener('click', () => {
+  const all = getClassStudents();
+  includedStudents = new Set(all);
+  state.included = Array.from(includedStudents);
+  saveState();
+  renderChecklist();
+  drawWheel();
+});
+
+body.querySelector('[data-act="deselect-all"]').addEventListener('click', () => {
+  includedStudents.clear();
+  state.included = [];
+  saveState();
+  renderChecklist();
+  drawWheel();
+});
+
+selectEl.addEventListener('change', () => {
+  selectedClassId = selectEl.value;
+  state.classId = selectedClassId;
+  excludedNames.clear();
+  state.excluded = [];
+  includedStudents = null;
+  state.included = null;
+  saveState();
+  populateClasses();
+  drawWheel();
+});
+
+body.querySelectorAll('.rand-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    mode = tab.dataset.mode;
+    state.mode = mode;
     saveState();
-    rosterCountEl.textContent = `${includedStudents.size}/${allStudents.length}`;
-    cb.closest('.roster-chip').classList.toggle('excluded', !cb.checked);
+    body.querySelectorAll('.rand-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    cardView.classList.toggle('hidden', mode !== 'card');
     drawWheel();
   });
 });
-}
-function getActiveStudents() {
-const all = getClassStudents();
-let list = includedStudents ? all.filter(n => includedStudents.has(n)) : all;
-if (noRepeatCb.checked) {
-const filtered = list.filter(n => !excludedNames.has(n));
-return filtered.length > 0 ? filtered : list;
-}
-return list;
-}
-const palette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];
-function drawWheel() {
-const names = getActiveStudents();
-const cx = 100, cy = 100, r = 92;
-wCtx.clearRect(0, 0, 200, 200);
-if (names.length === 0) {
-  wCtx.beginPath();
-  wCtx.arc(cx, cy, r, 0, Math.PI * 2);
-  wCtx.fillStyle = '#f1f5f9';
-  wCtx.fill();
-  wCtx.strokeStyle = '#cbd5e1';
-  wCtx.stroke();
-  wCtx.fillStyle = '#64748b';
-  wCtx.font = 'bold 12px Heebo, sans-serif';
-  wCtx.textAlign = 'center';
-  wCtx.fillText('אין תלמידים מסומנים', cx, cy + 4);
-  return;
-}
-const arc = (Math.PI * 2) / names.length;
-names.forEach((name, i) => {
-const start = wheelAngle + i * arc;
-const end = start + arc;
-wCtx.beginPath();
-wCtx.moveTo(cx, cy);
-wCtx.arc(cx, cy, r, start, end);
-wCtx.closePath();
-wCtx.fillStyle = palette[i % palette.length];
-wCtx.fill();
-wCtx.strokeStyle = '#ffffff';
-wCtx.lineWidth = 1.5;
-wCtx.stroke();
-wCtx.save();
-wCtx.translate(cx, cy);
-wCtx.rotate(start + arc / 2);
-wCtx.textAlign = 'right';
-wCtx.fillStyle = '#ffffff';
-wCtx.font = 'bold 11px Heebo, sans-serif';
-wCtx.fillText(name.slice(0, 12), r - 10, 4);
-wCtx.restore();
-});
-wCtx.beginPath();
-wCtx.moveTo(198, 92);
-wCtx.lineTo(198, 108);
-wCtx.lineTo(180, 100);
-wCtx.closePath();
-wCtx.fillStyle = '#0f172a';
-wCtx.fill();
-}
-populateClasses();
-drawWheel();
-body.querySelector('[data-act="toggle-roster"]').addEventListener('click', () => {
-showRosterPanel = !showRosterPanel;
-selectionPanel.classList.toggle('hidden', !showRosterPanel);
-});
-body.querySelector('[data-act="select-all"]').addEventListener('click', () => {
-const all = getClassStudents();
-includedStudents = new Set(all);
-state.included = Array.from(includedStudents);
-saveState();
-renderChecklist();
-drawWheel();
-});
-body.querySelector('[data-act="deselect-all"]').addEventListener('click', () => {
-includedStudents.clear();
-state.included = [];
-saveState();
-renderChecklist();
-drawWheel();
-});
-selectEl.addEventListener('change', () => {
-selectedClassId = selectEl.value;
-state.classId = selectedClassId;
-excludedNames.clear();
-state.excluded = [];
-includedStudents = null;
-state.included = null;
-saveState();
-populateClasses();
-drawWheel();
-});
-body.querySelector('[data-act="edit-lists"]').addEventListener('click', () => {
-window.AppStore.openStudentsModal(selectedClassId, () => {
-includedStudents = null;
-populateClasses();
-drawWheel();
-});
-});
-body.querySelectorAll('.rand-tab').forEach(tab => {
-tab.addEventListener('click', () => {
-mode = tab.dataset.mode;
-state.mode = mode;
-saveState();
-body.querySelectorAll('.rand-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
-body.querySelector('[data-el="wheel-view"]').classList.toggle('hidden', mode !== 'wheel');
-body.querySelector('[data-el="card-view"]').classList.toggle('hidden', mode !== 'card');
-drawWheel();
-});
-});
+
 noRepeatCb.addEventListener('change', () => {
-state.noRepeat = noRepeatCb.checked;
-saveState();
-drawWheel();
+  state.noRepeat = noRepeatCb.checked;
+  saveState();
+  drawWheel();
 });
+
 body.querySelector('[data-act="reset-pool"]').addEventListener('click', () => {
-excludedNames.clear();
-state.excluded = [];
-saveState();
-excludedCountEl.textContent = '0';
-wheelWinnerEl.textContent = '';
-cardWinnerEl.textContent = 'לחץ להגרלה!';
-drawWheel();
+  excludedNames.clear();
+  state.excluded = [];
+  saveState();
+  excludedCountEl.textContent = '0';
+  winnerOverlay.classList.add('hidden');
+  cardWinnerEl.textContent = 'לחץ להגרלה!';
+  drawWheel();
 });
-body.querySelector('[data-act="spin"]').addEventListener('click', () => {
-if (spinning) return;
-const names = getActiveStudents();
-if (!names.length) {
-  alert('יש לסמן לפחות תלמיד אחד להגרלה ברשימת המשתתפים!');
-  return;
-}
-spinning = true;
-if (mode === 'wheel') {
-const spinDuration = 2200;
-const startAngle = wheelAngle;
-const extraSpins = (Math.PI * 2) * (4 + Math.random() * 3);
-const startTime = performance.now();
-let lastTickSlice = -1;
-function animateWheel(now) {
-const t = Math.min(1, (now - startTime) / spinDuration);
-const easeOut = 1 - Math.pow(1 - t, 3);
-wheelAngle = startAngle + extraSpins * easeOut;
+
+populateClasses();
 drawWheel();
-const arc = (Math.PI * 2) / names.length;
-const currentSlice = Math.floor((wheelAngle % (Math.PI * 2)) / arc);
-if (currentSlice !== lastTickSlice) {
-lastTickSlice = currentSlice;
-SoundFX.tick();
-}
-if (t < 1) {
-requestAnimationFrame(animateWheel);
-} else {
-spinning = false;
-const norm = ((Math.PI * 2) - (wheelAngle % (Math.PI * 2))) % (Math.PI * 2);
-const idx = Math.floor(norm / arc) % names.length;
-const winner = names[idx];
-wheelWinnerEl.textContent = `🎉 נבחר/ה: ${winner}!`;
-SoundFX.fanfare();
-if (noRepeatCb.checked) {
-excludedNames.add(winner);
-state.excluded = Array.from(excludedNames);
-excludedCountEl.textContent = excludedNames.size;
-saveState();
-}
-}
-}
-requestAnimationFrame(animateWheel);
-} else {
-let count = 0;
-const maxSteps = 18;
-const iv = setInterval(() => {
-const pick = names[Math.floor(Math.random() * names.length)];
-cardWinnerEl.textContent = pick;
-SoundFX.tick();
-count++;
-if (count >= maxSteps) {
-clearInterval(iv);
-spinning = false;
-const finalWinner = names[Math.floor(Math.random() * names.length)];
-cardWinnerEl.textContent = `🎉 ${finalWinner}`;
-SoundFX.fanfare();
-if (noRepeatCb.checked) {
-excludedNames.add(finalWinner);
-state.excluded = Array.from(excludedNames);
-excludedCountEl.textContent = excludedNames.size;
-saveState();
-}
-}
-}, 90);
-}
-});
 }
 },
 'group-maker': {

@@ -757,27 +757,41 @@ this.currentScreen.widgets = this.currentScreen.widgets.filter(w => w.id !== wDa
 this.saveState();
 win.remove();
 });
-const header = win.querySelector('.widget-header');
-header.addEventListener('pointerdown', (e) => {
-if (e.target.closest('.widget-controls')) return;
-e.preventDefault();
-const startX = e.clientX;
-const startY = e.clientY;
-const origX = wData.x;
-const origY = wData.y;
-const onMove = (ev) => {
-wData.x = Math.max(0, Math.min(window.innerWidth - 80, origX + (ev.clientX - startX)));
-wData.y = Math.max(54, Math.min(window.innerHeight - 60, origY + (ev.clientY - startY)));
-win.style.left = `${wData.x}px`;
-win.style.top = `${wData.y}px`;
-};
-const onUp = () => {
-window.removeEventListener('pointermove', onMove);
-window.removeEventListener('pointerup', onUp);
-this.saveState();
-};
-window.addEventListener('pointermove', onMove);
-window.addEventListener('pointerup', onUp);
+win.querySelectorAll('[data-wclose]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (this.activeCleanups.has(wData.id)) {
+      this.activeCleanups.get(wData.id)();
+      this.activeCleanups.delete(wData.id);
+    }
+    this.currentScreen.widgets = this.currentScreen.widgets.filter(w => w.id !== wData.id);
+    this.saveState();
+    win.remove();
+  });
+});
+const dragHandles = win.querySelectorAll('.widget-header, [data-wdrag]');
+dragHandles.forEach(header => {
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.widget-controls, button, select, input')) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const origX = wData.x;
+    const origY = wData.y;
+    const onMove = (ev) => {
+      wData.x = Math.max(0, Math.min(window.innerWidth - 80, origX + (ev.clientX - startX)));
+      wData.y = Math.max(54, Math.min(window.innerHeight - 60, origY + (ev.clientY - startY)));
+      win.style.left = `${wData.x}px`;
+      win.style.top = `${wData.y}px`;
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      this.saveState();
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
 });
 const resizeHandle = win.querySelector('.widget-resize-handle');
 resizeHandle.addEventListener('pointerdown', (e) => {
