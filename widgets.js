@@ -1,9 +1,76 @@
+const SVG_FLAGS = {
+  'il': {
+    name: 'ישראל',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#fff"/><rect y="2.5" width="32" height="3" fill="#0038b8"/><rect y="16.5" width="32" height="3" fill="#0038b8"/><polygon points="16,6.5 12,13.5 20,13.5" fill="none" stroke="#0038b8" stroke-width="0.9"/><polygon points="16,15.5 12,8.5 20,8.5" fill="none" stroke="#0038b8" stroke-width="0.9"/></svg>`
+  },
+  'us': {
+    name: 'ארה"ב',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#b22234"/><rect y="1.7" width="32" height="1.7" fill="#fff"/><rect y="5.1" width="32" height="1.7" fill="#fff"/><rect y="8.5" width="32" height="1.7" fill="#fff"/><rect y="11.9" width="32" height="1.7" fill="#fff"/><rect y="15.3" width="32" height="1.7" fill="#fff"/><rect y="18.7" width="32" height="1.7" fill="#fff"/><rect width="13" height="11.9" fill="#3c3b6e"/><circle cx="3" cy="2.5" r="0.7" fill="#fff"/><circle cx="6.5" cy="2.5" r="0.7" fill="#fff"/><circle cx="10" cy="2.5" r="0.7" fill="#fff"/><circle cx="4.8" cy="5.5" r="0.7" fill="#fff"/><circle cx="8.2" cy="5.5" r="0.7" fill="#fff"/><circle cx="3" cy="8.5" r="0.7" fill="#fff"/><circle cx="6.5" cy="8.5" r="0.7" fill="#fff"/><circle cx="10" cy="8.5" r="0.7" fill="#fff"/></svg>`
+  },
+  'gb': {
+    name: 'בריטניה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#012169"/><path d="M0 0 L32 22 M32 0 L0 22" stroke="#fff" stroke-width="3.5"/><path d="M0 0 L32 22 M32 0 L0 22" stroke="#c8102e" stroke-width="1.8"/><path d="M16 0 V22 M0 11 H32" stroke="#fff" stroke-width="5.5"/><path d="M16 0 V22 M0 11 H32" stroke="#c8102e" stroke-width="3.2"/></svg>`
+  },
+  'fr': {
+    name: 'צרפת',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="10.7" height="22" fill="#002395"/><rect x="10.7" width="10.6" height="22" fill="#fff"/><rect x="21.3" width="10.7" height="22" fill="#ed2939"/></svg>`
+  },
+  'it': {
+    name: 'איטליה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="10.7" height="22" fill="#009246"/><rect x="10.7" width="10.6" height="22" fill="#fff"/><rect x="21.3" width="10.7" height="22" fill="#ce2b37"/></svg>`
+  },
+  'de': {
+    name: 'גרמניה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#000"/><rect y="7.3" width="32" height="7.3" fill="#dd0000"/><rect y="14.6" width="32" height="7.4" fill="#ffce00"/></svg>`
+  },
+  'br': {
+    name: 'ברזיל',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#009b3a"/><polygon points="16,2.5 29,11 16,19.5 3,11" fill="#fedf00"/><circle cx="16" cy="11" r="5" fill="#002776"/></svg>`
+  },
+  'jp': {
+    name: 'יפן',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#fff"/><circle cx="16" cy="11" r="5.5" fill="#bc002d"/></svg>`
+  },
+  'ca': {
+    name: 'קנדה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="8" height="22" fill="#ff0000"/><rect x="8" width="16" height="22" fill="#fff"/><rect x="24" width="8" height="22" fill="#ff0000"/><path d="M16 6 L17.5 9 L20 8.5 L18.5 11 L20.5 12 L18.5 13.5 L17 13 L17 16 L15 16 L15 13 L13.5 13.5 L11.5 12 L13.5 11 L12 8.5 L14.5 9 Z" fill="#ff0000"/></svg>`
+  },
+  'ar': {
+    name: 'ארגנטינה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#74acdf"/><rect y="7.3" width="32" height="7.3" fill="#fff"/><rect y="14.6" width="32" height="7.4" fill="#74acdf"/><circle cx="16" cy="11" r="2.2" fill="#f6b40e"/></svg>`
+  },
+  'es': {
+    name: 'ספרד',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="5.5" fill="#aa151b"/><rect y="5.5" width="32" height="11" fill="#f1bf00"/><rect y="16.5" width="32" height="5.5" fill="#aa151b"/><circle cx="8" cy="11" r="2" fill="#aa151b"/></svg>`
+  },
+  'ch': {
+    name: 'שוויץ',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#d52b1e"/><rect x="13.5" y="5.5" width="5" height="11" fill="#fff"/><rect x="10.5" y="8.5" width="11" height="5" fill="#fff"/></svg>`
+  },
+  'nl': {
+    name: 'הולנד',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#ae1c28"/><rect y="7.3" width="32" height="7.3" fill="#fff"/><rect y="14.6" width="32" height="7.4" fill="#21468b"/></svg>`
+  },
+  'gr': {
+    name: 'יוון',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#0d5eaf"/><rect y="2.5" width="32" height="2.5" fill="#fff"/><rect y="7.5" width="32" height="2.5" fill="#fff"/><rect y="12.5" width="32" height="2.5" fill="#fff"/><rect y="17.5" width="32" height="2.5" fill="#fff"/><rect width="11" height="11" fill="#0d5eaf"/><rect x="4.2" width="2.5" height="11" fill="#fff"/><rect y="4.2" width="11" height="2.5" fill="#fff"/></svg>`
+  },
+  'se': {
+    name: 'שוודיה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#006aa7"/><rect x="9" width="3.5" height="22" fill="#fecc00"/><rect y="9.2" width="32" height="3.5" fill="#fecc00"/></svg>`
+  },
+  'au': {
+    name: 'אוסטרליה',
+    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#00008b"/><rect width="13" height="9" fill="#012169"/><path d="M0 0 L13 9 M13 0 L0 9" stroke="#fff" stroke-width="1.8"/><path d="M0 0 L13 9 M13 0 L0 9" stroke="#c8102e" stroke-width="0.9"/><path d="M6.5 0 V9 M0 4.5 H13" stroke="#fff" stroke-width="2.5"/><path d="M6.5 0 V9 M0 4.5 H13" stroke="#c8102e" stroke-width="1.3"/><circle cx="24" cy="5" r="0.9" fill="#fff"/><circle cx="21" cy="9" r="0.9" fill="#fff"/><circle cx="26" cy="11" r="0.9" fill="#fff"/><circle cx="23" cy="15" r="0.9" fill="#fff"/><circle cx="6.5" cy="16" r="1.6" fill="#fff"/></svg>`
+  }
+};
+
 const ICON_CATEGORIES = [
   {
     id: 'animals',
     name: 'בעלי חיים',
     icon: '🦁',
-    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐯','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🐙','🦋','🐝','🐘','🦒','🦓','🐺','🦩','🐳','🦔','🐸']
+    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','זברה'/*🦓*/,'🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
   },
   {
     id: 'vehicles',
@@ -13,31 +80,104 @@ const ICON_CATEGORIES = [
   },
   {
     id: 'food',
-    name: 'מאכלים',
-    icon: '🍕',
-    icons: ['🍕','🍔','🍟','🍦','🍓','🍩','🍎','🧁','🍣','🌮','🍉','🍇','🍌','🍒','🥑','🥞','🍪','🍫','🍿','🥨','🍭','🍧','🍍','🍊','🥐','🍰','🎂','🥗']
+    name: 'מאכלים ופירות',
+    icon: '🍎',
+    icons: ['🍎','🍓','🍇','🍉','🍌','🍒','🥑','🍍','🍊','🥞','🥐','🍕','🍟','🍦','🧁','🍩','🍪','🍫','🍿','🥨','🎂','🥗','🥕','🥪']
   },
   {
     id: 'sports',
     name: 'ספורט וכדורים',
     icon: '⚽',
-    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🥇','🥋','🥊','🏆','🛹','🏊‍♂️','🚴‍♂️','🎯','🎳','🏓','🏸','🏄‍♂️','⛳','🧗','⛷️','🏏','🎱','🤾','⛸️','🎿']
+    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🏓','🏸','🎳','🎯','🏆','🥇','🚴‍♂️','🛹','⛳','🥋','🎿','⛸️','🤾']
   },
   {
     id: 'flags',
     name: 'דגלי מדינות',
     icon: '🌍',
-    icons: ['🇮🇱','🇺🇸','🇬🇧','🇫🇷','🇧🇷','🇯🇵','🇩🇪','🇮🇹','🇪🇸','🇨🇦','🇦🇷','🇦🇺','🇳🇱','🇨🇭','🇬🇷','🇲🇽','🇰🇷','🇮🇳','🇵🇹','🇸🇪','🇩🇰','🇳🇴','🇵🇱','🇿🇦','🇨🇱','🇯🇲']
+    icons: ['flag:il','flag:us','flag:gb','flag:fr','flag:it','flag:de','flag:br','flag:jp','flag:ca','flag:ar','flag:es','flag:ch','flag:nl','flag:gr','flag:se','flag:au']
   },
   {
     id: 'gems',
-    name: 'סמלים וחלל',
+    name: 'יהלומים וסמלים',
     icon: '💎',
-    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎵','🎸','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️']
+    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎵','🎸','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️','📚','🏆']
   }
 ];
 
 const ALL_STUDENT_ICONS = ICON_CATEGORIES.flatMap(c => c.icons);
+
+function renderStudentIconHtml(icon, name = '') {
+  if (icon && icon.startsWith('flag:')) {
+    const key = icon.split(':')[1];
+    return SVG_FLAGS[key] ? SVG_FLAGS[key].svg : '🇮🇱';
+  }
+  if (icon) {
+    return `<span class="icon-glyph">${icon}</span>`;
+  }
+  // Fallback hash by name
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = (hash << 5) - hash + name.charCodeAt(i);
+    hash |= 0;
+  }
+  const fallback = ALL_STUDENT_ICONS[Math.abs(hash) % ALL_STUDENT_ICONS.length];
+  if (fallback.startsWith('flag:')) {
+    const k = fallback.split(':')[1];
+    return SVG_FLAGS[k] ? SVG_FLAGS[k].svg : '🇮🇱';
+  }
+  return `<span class="icon-glyph">${fallback}</span>`;
+}
+window.renderStudentIconHtml = renderStudentIconHtml;
+
+const DEFAULT_WEEKLY_SCHEDULE = {
+  0: [
+    { time: '08:00', num: '1', subject: 'תפילת בוקר ומפגש', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'עברית ולשון', teacher: 'מיכל', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר והפסקה', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'חשבון והנדסה', teacher: 'רונית', topic: '', done: false },
+    { time: '11:15', num: '4', subject: 'תורה ומורשת', teacher: 'דוד', topic: '', done: false },
+    { time: '12:00', num: '5', subject: 'חינוך גופני', teacher: 'יוסי', topic: '', done: false }
+  ],
+  1: [
+    { time: '08:00', num: '1', subject: 'תפילה ומפגש בוקר', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'חשבון והנדסה', teacher: 'רונית', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'הפסקה פעילה', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'אנגלית', teacher: 'שרה', topic: '', done: false },
+    { time: '11:15', num: '4', subject: 'מדעים וטבע', teacher: 'דנה', topic: '', done: false },
+    { time: '12:00', num: '5', subject: 'אמנות ויצירה', teacher: 'אורלי', topic: '', done: false }
+  ],
+  2: [
+    { time: '08:00', num: '1', subject: 'תפילה וקריאה מונחית', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'עברית וכתיבה', teacher: 'מיכל', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'הפסקת בוקר', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'חשבון', teacher: 'רונית', topic: '', done: false },
+    { time: '11:15', num: '4', subject: 'שירה וזמרה', teacher: 'נועם', topic: '', done: false },
+    { time: '12:00', num: '5', subject: 'מולדת וארץ ישראל', teacher: 'דוד', topic: '', done: false }
+  ],
+  3: [
+    { time: '08:00', num: '1', subject: 'תפילת שחרית ומפגש', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'אנגלית', teacher: 'שרה', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'תנ"ך ומורשת', teacher: 'דוד', topic: '', done: false },
+    { time: '11:15', num: '4', subject: 'חינוך גופני', teacher: 'יוסי', topic: '', done: false },
+    { time: '12:00', num: '5', subject: 'הבעה ושפה', teacher: 'מיכל', topic: '', done: false }
+  ],
+  4: [
+    { time: '08:00', num: '1', subject: 'תפילה ושיחת בוקר', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'חשבון והנדסה', teacher: 'רונית', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'מחשבים וטכנולוגיה', teacher: 'אלעד', topic: '', done: false },
+    { time: '11:15', num: '4', subject: 'מדעים', teacher: 'דנה', topic: '', done: false },
+    { time: '12:00', num: '5', subject: 'סיכום שבוע ומעגל', teacher: 'מחנך', topic: '', done: false }
+  ],
+  5: [
+    { time: '08:00', num: '1', subject: 'תפילה ומפגש קבלת שבת', teacher: 'מחנך', topic: '', done: false },
+    { time: '08:45', num: '2', subject: 'פרשת השבוע ומורשת', teacher: 'דוד', topic: '', done: false },
+    { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', topic: '', done: false },
+    { time: '10:15', num: '3', subject: 'עונג שבת וחידות', teacher: 'מחנך', topic: '', done: false },
+    { time: '11:00', num: '4', subject: 'חלוקת תעודות ושבת שלום', teacher: 'מחנך', topic: '', done: false }
+  ]
+};
 
 function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams') {
   let activeTab = state.activeTab ?? defaultTab;
@@ -55,22 +195,12 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   ];
 
   // Student points map: { [studentName]: { daily: number, total: number, breakdown: { [reason]: number } } }
-  let studentScores = state.studentScores ?? {};
-  // Student avatar icons map: { [studentName]: string (emoji) }
-  let studentIcons = state.studentIcons ?? {};
-
-  function getDefaultIcon(name) {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = (hash << 5) - hash + name.charCodeAt(i);
-      hash |= 0;
-    }
-    const idx = Math.abs(hash) % ALL_STUDENT_ICONS.length;
-    return ALL_STUDENT_ICONS[idx];
-  }
+  let studentScores = window.AppStore.getStudentScores ? window.AppStore.getStudentScores() : (state.studentScores ?? {});
+  // Student avatar icons map: { [studentName]: string }
+  let studentIcons = window.AppStore.getStudentIcons ? window.AppStore.getStudentIcons() : (state.studentIcons ?? {});
 
   function getStudentIcon(name) {
-    return studentIcons[name] || getDefaultIcon(name);
+    return studentIcons[name] || '';
   }
 
   const BEHAVIORS = [
@@ -113,9 +243,13 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-wrap:wrap;gap:4px;">
-        <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופי היהלומים</button>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופים</button>
+          <button class="small-btn" data-act="open-all-drawer" style="background:#e0f2fe;color:#0369a1;font-weight:800;border:1px solid #bae6fd;">✨ הוסף לכולם</button>
+          <button class="small-btn" data-act="toggle-sidebar-view" style="font-weight:700;">📌 סרגל צדי</button>
+        </div>
         <div style="display:flex;gap:4px;">
-          <button class="small-btn" data-act="randomize-all-icons" title="חלק סמלים אקראיים ומגוונים לכל התלמידים" style="font-size:0.75rem;">🎲 הגרל סמלים לכולם</button>
+          <button class="small-btn" data-act="randomize-all-icons" title="חלק סמלים אקראיים ומגוונים לכל התלמידים" style="font-size:0.75rem;">🎲 הגרל סמלים</button>
           <button class="small-btn" data-act="reset-daily" style="font-size:0.75rem;">↺ איפוס יומי</button>
         </div>
       </div>
@@ -125,7 +259,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div data-el="award-drawer" class="sp-drawer hidden">
         <div class="sp-drawer-header">
           <div style="display:flex;align-items:center;gap:8px;">
-            <span data-el="drawer-avatar" style="font-size:1.6rem;"></span>
+            <div data-el="drawer-avatar" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#f0f9ff;"></div>
             <div>
               <div data-el="drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);"></div>
               <div style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק להענקת יהלומים</div>
@@ -146,6 +280,42 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
               </span>
             </button>
           `).join('')}
+        </div>
+      </div>
+
+      <!-- Award All Class Drawer -->
+      <div data-el="award-all-drawer" class="sp-drawer hidden">
+        <div class="sp-drawer-header">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:1.3rem;">✨</span>
+            <div>
+              <div style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">הענקת יהלומים לכל הכיתה בבת אחת</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק שיוענק מיידית לכל תלמידי הכיתה</div>
+            </div>
+          </div>
+          <button class="small-btn" data-act="close-all-drawer" style="padding:2px 8px;">✕</button>
+        </div>
+        <div class="sp-behavior-grid">
+          <button class="sp-behavior-btn" data-all-pts="1" data-all-title="הקשבה והשתתפות כיתתית">
+            <span style="font-size:1.25rem;">👂</span>
+            <span>הקשבה והשתתפות כיתתית</span>
+            <span class="sp-pts-tag">+1 💎</span>
+          </button>
+          <button class="sp-behavior-btn" data-all-pts="2" data-all-title="ביצוע משימה כיתתית">
+            <span style="font-size:1.25rem;">📝</span>
+            <span>ביצוע משימה כיתתית</span>
+            <span class="sp-pts-tag">+2 💎</span>
+          </button>
+          <button class="sp-behavior-btn" data-all-pts="2" data-all-title="אווירה נעימה ושיתוף פעולה">
+            <span style="font-size:1.25rem;">🤝</span>
+            <span>אווירה נעימה ושיתוף פעולה</span>
+            <span class="sp-pts-tag">+2 💎</span>
+          </button>
+          <button class="sp-behavior-btn" data-all-pts="3" data-all-title="מאמץ כיתתי מיוחד">
+            <span style="font-size:1.25rem;">💎</span>
+            <span>מאמץ כיתתי מיוחד</span>
+            <span class="sp-pts-tag">+3 💎</span>
+          </button>
         </div>
       </div>
 
@@ -254,6 +424,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   const searchInput = body.querySelector('[data-el="sp-search"]');
   const studentsGrid = body.querySelector('[data-el="students-grid"]');
   const awardDrawer = body.querySelector('[data-el="award-drawer"]');
+  const awardAllDrawer = body.querySelector('[data-el="award-all-drawer"]');
   const drawerTitle = body.querySelector('[data-el="drawer-title"]');
   const drawerAvatar = body.querySelector('[data-el="drawer-avatar"]');
   const iconPickerDrawer = body.querySelector('[data-el="icon-picker-drawer"]');
@@ -296,20 +467,21 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       const sc = getStudentScore(name);
       const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
       const icon = getStudentIcon(name);
+      const iconHtml = renderStudentIconHtml(icon, name);
       return `
-        <div class="sp-card" data-student="${name}">
+        <div class="sp-student-bubble" data-student="${name}">
           <button class="sp-card-edit-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">✏️</button>
-          <div class="sp-avatar" data-act="pick-icon" data-student="${name}" title="לחץ לבחירת סמל">${icon}</div>
-          <div class="sp-name" title="${name}">${name}</div>
-          <div class="sp-score">💎 ${scoreVal}</div>
+          <div class="sp-bubble-avatar-wrap">
+            <div class="sp-bubble-avatar" data-act="open-drawer" data-student="${name}" title="לחץ להענקת יהלומים ל-${name}">${iconHtml}</div>
+            <span class="sp-bubble-badge" title="יהלומים">💎 ${scoreVal}</span>
+          </div>
+          <div class="sp-bubble-name" title="${name}">${name}</div>
         </div>
       `;
     }).join('');
 
-    // Click card opens Award Drawer
-    studentsGrid.querySelectorAll('.sp-card').forEach(card => {
+    studentsGrid.querySelectorAll('.sp-student-bubble').forEach(card => {
       card.addEventListener('click', (e) => {
-        // If clicked specifically on the edit button or avatar, open icon picker instead
         if (e.target.closest('[data-act="pick-icon"]')) {
           const sName = card.dataset.student;
           openIconPicker(sName);
@@ -317,32 +489,71 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         }
         selectedStudentForAward = card.dataset.student;
         drawerTitle.textContent = selectedStudentForAward;
-        drawerAvatar.textContent = getStudentIcon(selectedStudentForAward);
+        drawerAvatar.innerHTML = renderStudentIconHtml(getStudentIcon(selectedStudentForAward), selectedStudentForAward);
         iconPickerDrawer.classList.add('hidden');
+        awardAllDrawer.classList.add('hidden');
         awardDrawer.classList.remove('hidden');
       });
     });
   }
+
+  // AWARD ALL CLASS
+  body.querySelector('[data-act="open-all-drawer"]')?.addEventListener('click', () => {
+    awardDrawer.classList.add('hidden');
+    iconPickerDrawer.classList.add('hidden');
+    awardAllDrawer.classList.remove('hidden');
+  });
+
+  body.querySelector('[data-act="close-all-drawer"]')?.addEventListener('click', () => {
+    awardAllDrawer.classList.add('hidden');
+  });
+
+  awardAllDrawer.querySelectorAll('[data-all-pts]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pts = parseInt(btn.dataset.allPts, 10);
+      const title = btn.dataset.allTitle;
+      window.AppStore.addDiamondsToAll(pts, title);
+      SoundFX.bell();
+      studentScores = window.AppStore.getStudentScores();
+      state.studentScores = studentScores;
+      saveState();
+      awardAllDrawer.classList.add('hidden');
+      renderStudentsGrid();
+    });
+  });
+
+  // TOGGLE SIDEBAR
+  body.querySelector('[data-act="toggle-sidebar-view"]')?.addEventListener('click', () => {
+    window.AppStore.toggleStudentsSidebar();
+  });
 
   // ICON PICKER LOGIC
   function openIconPicker(studentName) {
     selectedStudentForIcon = studentName;
     iconPickerTitle.textContent = `בחירת סמל: ${studentName}`;
     awardDrawer.classList.add('hidden');
+    awardAllDrawer.classList.add('hidden');
     renderIconGrid();
     iconPickerDrawer.classList.remove('hidden');
   }
 
   function renderIconGrid() {
     const cat = ICON_CATEGORIES.find(c => c.id === activeIconCategory) || ICON_CATEGORIES[0];
-    iconGrid.innerHTML = cat.icons.map(ic => `
-      <button class="sp-icon-pick-btn" data-icon="${ic}">${ic}</button>
-    `).join('');
+    iconGrid.innerHTML = cat.icons.map(ic => {
+      const isFlag = ic.startsWith('flag:');
+      const inner = isFlag ? (SVG_FLAGS[ic.split(':')[1]]?.svg || '') : ic;
+      return `
+        <button class="sp-icon-pick-btn ${isFlag ? 'is-flag-btn' : ''}" data-icon="${ic}" title="${isFlag ? SVG_FLAGS[ic.split(':')[1]]?.name : ''}">${inner}</button>
+      `;
+    }).join('');
 
     iconGrid.querySelectorAll('.sp-icon-pick-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!selectedStudentForIcon) return;
         studentIcons[selectedStudentForIcon] = btn.dataset.icon;
+        if (window.AppStore.setStudentIcons) {
+          window.AppStore.setStudentIcons(studentIcons);
+        }
         state.studentIcons = studentIcons;
         saveState();
         SoundFX.pop();
@@ -367,6 +578,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     if (!selectedStudentForIcon) return;
     const randomIcon = ALL_STUDENT_ICONS[Math.floor(Math.random() * ALL_STUDENT_ICONS.length)];
     studentIcons[selectedStudentForIcon] = randomIcon;
+    if (window.AppStore.setStudentIcons) {
+      window.AppStore.setStudentIcons(studentIcons);
+    }
     state.studentIcons = studentIcons;
     saveState();
     SoundFX.pop();
@@ -384,6 +598,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       students.forEach((name, i) => {
         studentIcons[name] = shuffled[i % shuffled.length];
       });
+      if (window.AppStore.setStudentIcons) {
+        window.AppStore.setStudentIcons(studentIcons);
+      }
       state.studentIcons = studentIcons;
       saveState();
       SoundFX.pop();
@@ -435,13 +652,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       if (!selectedStudentForAward) return;
       const bId = btn.dataset.behavior;
       const pts = parseInt(btn.dataset.pts, 10);
-      const sc = getStudentScore(selectedStudentForAward);
       
-      sc.daily = Math.max(0, sc.daily + pts);
-      sc.total = Math.max(0, sc.total + pts);
-      if (!sc.breakdown) sc.breakdown = {};
-      sc.breakdown[bId] = (sc.breakdown[bId] || 0) + 1;
-
+      window.AppStore.addDiamondsToStudent(selectedStudentForAward, pts, bId);
+      studentScores = window.AppStore.getStudentScores();
       state.studentScores = studentScores;
       saveState();
 
@@ -461,6 +674,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       Object.values(studentScores).forEach(sc => {
         sc.daily = 0;
       });
+      if (window.AppStore.setStudentScores) {
+        window.AppStore.setStudentScores(studentScores);
+      }
       state.studentScores = studentScores;
       saveState();
       renderStudentsGrid();
@@ -489,7 +705,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     podiumSteps.innerHTML = `
       ${top2 ? `
         <div class="sp-step second">
-          <div style="font-size:1.6rem;margin-bottom:2px;">${top2.icon}</div>
+          <div style="margin-bottom:3px;">${renderStudentIconHtml(top2.icon, top2.name)}</div>
           <div style="font-size:1.1rem;">🥈</div>
           <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top2.name}</div>
           <div style="font-weight:900;font-size:1.1rem;color:#f8fafc;">💎 ${top2.score}</div>
@@ -498,7 +714,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       ` : '<div class="sp-step second" style="opacity:0.2;"></div>'}
 
       <div class="sp-step first">
-        <div style="font-size:2rem;margin-bottom:2px;">${top1.icon}</div>
+        <div style="margin-bottom:3px;">${renderStudentIconHtml(top1.icon, top1.name)}</div>
         <div style="font-size:1.4rem;">👑 🥇</div>
         <div style="font-weight:900;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top1.name}</div>
         <div style="font-weight:900;font-size:1.3rem;color:#fef08a;">💎 ${top1.score}</div>
@@ -507,7 +723,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
       ${top3 ? `
         <div class="sp-step third">
-          <div style="font-size:1.4rem;margin-bottom:2px;">${top3.icon}</div>
+          <div style="margin-bottom:3px;">${renderStudentIconHtml(top3.icon, top3.name)}</div>
           <div style="font-size:1rem;">🥉</div>
           <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top3.name}</div>
           <div style="font-weight:900;font-size:1rem;color:#f8fafc;">💎 ${top3.score}</div>
@@ -1893,81 +2109,33 @@ updateQR();
 }
 },
 'timetable': {
-title: 'מערכת שעות שבועית',
+title: 'מערכת שעות שבועית (הגדרה ועריכה)',
 icon: '📋',
-defaultW: 360,
-defaultH: 380,
+defaultW: 420,
+defaultH: 440,
 render(body, state, saveState) {
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const todayDayIdx = Math.min(5, Math.max(0, new Date().getDay()));
 let selectedDay = state.selectedDay ?? todayDayIdx;
-let isEditMode = false;
-
-const DEFAULT_WEEKLY = {
-0: [
-  { time: '08:00', num: '1', subject: 'תפילת בוקר ומפגש', teacher: 'מחנכת', done: false },
-  { time: '08:45', num: '2', subject: 'עברית ושפה', teacher: 'מיכל', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר והפסקה', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'חשבון והנדסה', teacher: 'רונית', done: false },
-  { time: '11:15', num: '4', subject: 'תנ"ך ומורשת', teacher: 'דוד', done: false },
-  { time: '12:00', num: '5', subject: 'חינוך גופני (ספורט)', teacher: 'יוסי', done: false }
-],
-1: [
-  { time: '08:00', num: '1', subject: 'מפגש בוקר ושיח', teacher: 'מחנכת', done: false },
-  { time: '08:45', num: '2', subject: 'חשבון והנדסה', teacher: 'רונית', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'הפסקה פעילה', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'אנגלית', teacher: 'שרה', done: false },
-  { time: '11:15', num: '4', subject: 'מדעים וטכנולוגיה', teacher: 'דנה', done: false },
-  { time: '12:00', num: '5', subject: 'אמנות ויצירה', teacher: 'אורלי', done: false }
-],
-2: [
-  { time: '08:00', num: '1', subject: 'קריאה מונחית', teacher: 'מיכל', done: false },
-  { time: '08:45', num: '2', subject: 'עברית וכתיבה', teacher: 'מיכל', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'הפסקת בוקר', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'חשבון', teacher: 'רונית', done: false },
-  { time: '11:15', num: '4', subject: 'מוזיקה ושירה', teacher: 'נועם', done: false },
-  { time: '12:00', num: '5', subject: 'גאוגרפיה ומולדת', teacher: 'דוד', done: false }
-],
-3: [
-  { time: '08:00', num: '1', subject: 'מפגש בוקר', teacher: 'מחנכת', done: false },
-  { time: '08:45', num: '2', subject: 'אנגלית', teacher: 'שרה', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'ארוחת עשר', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'תנ"ך', teacher: 'דוד', done: false },
-  { time: '11:15', num: '4', subject: 'חינוך גופני', teacher: 'יוסי', done: false },
-  { time: '12:00', num: '5', subject: 'שפה והבעה', teacher: 'מיכל', done: false }
-],
-4: [
-  { time: '08:00', num: '1', subject: 'כישורי חיים ושיח', teacher: 'מחנכת', done: false },
-  { time: '08:45', num: '2', subject: 'חשבון', teacher: 'רונית', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'מחשבים ורובוטיקה', teacher: 'אלעד', done: false },
-  { time: '11:15', num: '4', subject: 'מדעים', teacher: 'דנה', done: false },
-  { time: '12:00', num: '5', subject: 'סיכום שבוע ומעגל', teacher: 'מחנכת', done: false }
-],
-5: [
-  { time: '08:00', num: '1', subject: 'קבלת שבת ושיח חגיגי', teacher: 'מחנכת', done: false },
-  { time: '08:45', num: '2', subject: 'פרשת השבוע ומורשת', teacher: 'דוד', done: false },
-  { time: '09:45', num: 'הפסקה', subject: 'הפסקה', teacher: '', done: false },
-  { time: '10:15', num: '3', subject: 'משחקי חברה וחידות', teacher: 'מחנכת', done: false },
-  { time: '11:00', num: '4', subject: 'חלוקת תעודות ושבת שלום', teacher: 'מחנכת', done: false }
-]
-};
-
-let weekly = state.weeklySchedule || JSON.parse(JSON.stringify(DEFAULT_WEEKLY));
+let weekly = (window.AppStore.getWeeklySchedule ? window.AppStore.getWeeklySchedule() : state.weeklySchedule) || JSON.parse(JSON.stringify(DEFAULT_WEEKLY_SCHEDULE));
 
 body.innerHTML = `
 <div class="tt-wrapper">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-    <div class="tt-day-tabs" data-el="day-tabs"></div>
-    <button class="small-btn" data-act="toggle-edit" title="ערוך את המערכת">✏️ עריכה</button>
+  <div style="background:rgba(2,132,199,0.08);border:1px solid rgba(2,132,199,0.2);padding:6px 10px;border-radius:10px;font-size:0.78rem;color:#0369a1;display:flex;align-items:center;gap:6px;">
+    <span>📋</span>
+    <span><b>הגדרת מערכת שבועית:</b> השיעורים שתוסיף כאן יסונכרנו אוטומטית לווידג'ט <b>'סדר יום'</b>.</span>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.8rem;color:var(--text-muted);">
-    <span data-el="day-heading" style="font-weight:700;color:var(--text-dark);"></span>
-    <button class="small-btn" data-act="jump-today" style="font-size:0.74rem;padding:2px 8px;">חזור להיום</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px;">
+    <div class="tt-day-tabs" data-el="day-tabs"></div>
+    <button class="small-btn" data-act="jump-today" style="font-size:0.74rem;padding:2px 8px;">היום</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.82rem;">
+    <span data-el="day-heading" style="font-weight:800;color:var(--text-dark);"></span>
+    <span style="font-size:0.75rem;color:var(--text-muted);">עריכה ישירה של שיעורי היום</span>
   </div>
   <div class="timetable-list" data-el="list"></div>
-  <div data-el="edit-controls" class="hidden" style="display:flex;gap:6px;margin-top:auto;">
-    <button class="small-btn" data-act="add-period" style="flex:1;">+ הוסף שיעור ליום זה</button>
+  <div style="display:flex;gap:6px;margin-top:auto;padding-top:4px;">
+    <button class="small-btn" data-act="add-period" style="flex:1;background:#0284c7;color:#fff;font-weight:700;">+ הוסף שיעור ליום ${DAY_NAMES[selectedDay]}</button>
     <button class="small-btn" data-act="reset-day" style="font-size:0.75rem;">↺ שחזר ברירת מחדל</button>
   </div>
 </div>
@@ -1976,50 +2144,57 @@ body.innerHTML = `
 const tabsContainer = body.querySelector('[data-el="day-tabs"]');
 const dayHeadingEl = body.querySelector('[data-el="day-heading"]');
 const listEl = body.querySelector('[data-el="list"]');
-const editControls = body.querySelector('[data-el="edit-controls"]');
-const toggleEditBtn = body.querySelector('[data-act="toggle-edit"]');
-const jumpTodayBtn = body.querySelector('[data-act="jump-today"]');
+const addPeriodBtn = body.querySelector('[data-act="add-period"]');
+
+function saveSchedule() {
+  state.weeklySchedule = weekly;
+  saveState();
+  if (window.AppStore.setWeeklySchedule) {
+    window.AppStore.setWeeklySchedule(weekly);
+  }
+}
 
 function renderDayTabs() {
-tabsContainer.innerHTML = DAY_NAMES.map((name, idx) => {
-  const isSelected = idx === selectedDay;
-  const isToday = idx === todayDayIdx;
-  return `
-    <button class="tt-day-tab ${isSelected ? 'active' : ''}" data-day="${idx}">
-      ${name}
-      ${isToday ? '<span class="tt-today-dot" title="היום"></span>' : ''}
-    </button>
-  `;
-}).join('');
+  tabsContainer.innerHTML = DAY_NAMES.map((name, idx) => {
+    const isSelected = idx === selectedDay;
+    const isToday = idx === todayDayIdx;
+    return `
+      <button class="tt-day-tab ${isSelected ? 'active' : ''}" data-day="${idx}">
+        ${name}
+        ${isToday ? '<span class="tt-today-dot" title="היום"></span>' : ''}
+      </button>
+    `;
+  }).join('');
 
-tabsContainer.querySelectorAll('.tt-day-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    selectedDay = parseInt(btn.dataset.day, 10);
-    state.selectedDay = selectedDay;
-    saveState();
-    renderDayTabs();
-    renderSchedule();
+  tabsContainer.querySelectorAll('.tt-day-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedDay = parseInt(btn.dataset.day, 10);
+      state.selectedDay = selectedDay;
+      saveState();
+      addPeriodBtn.textContent = `+ הוסף שיעור ליום ${DAY_NAMES[selectedDay]}`;
+      renderDayTabs();
+      renderSchedule();
+    });
   });
-});
 }
 
 function renderSchedule() {
-const isToday = selectedDay === todayDayIdx;
-dayHeadingEl.textContent = `מערכת יום ${DAY_NAMES[selectedDay]} ${isToday ? '• (היום)' : ''}`;
-const currentList = weekly[selectedDay] || [];
+  const isToday = selectedDay === todayDayIdx;
+  dayHeadingEl.textContent = `עריכת יום ${DAY_NAMES[selectedDay]} ${isToday ? '• (היום)' : ''}`;
+  const currentList = weekly[selectedDay] || [];
 
-if (isEditMode) {
-  editControls.classList.remove('hidden');
-  toggleEditBtn.textContent = '✓ שמור וסיים';
-  toggleEditBtn.style.background = '#10b981';
-  toggleEditBtn.style.color = '#fff';
+  if (currentList.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-weight:600;">אין שיעורים מוגדרים ליום זה.<br>לחץ על 'הוסף שיעור' למטה כדי להתחיל!</div>`;
+    return;
+  }
+
   listEl.innerHTML = currentList.map((item, i) => `
-    <div class="tt-card" style="padding:6px 8px;">
-      <input type="text" data-edit-num="${i}" value="${item.num || (i + 1)}" style="width:36px;text-align:center;font-weight:700;border:1px solid #cbd5e1;border-radius:6px;padding:3px;" title="מס' שיעור" />
-      <input type="text" data-edit-time="${i}" value="${item.time || ''}" style="width:50px;text-align:center;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:6px;padding:3px;direction:ltr;" title="שעה" />
+    <div class="tt-card" style="padding:6px 8px;display:flex;align-items:center;gap:6px;">
+      <input type="text" data-edit-num="${i}" value="${item.num || (i + 1)}" style="width:34px;text-align:center;font-weight:800;border:1px solid #cbd5e1;border-radius:6px;padding:3px;" title="מס' שיעור" />
+      <input type="text" data-edit-time="${i}" value="${item.time || ''}" style="width:52px;text-align:center;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:6px;padding:3px;direction:ltr;" title="שעה" />
       <input type="text" data-edit-sub="${i}" value="${item.subject || ''}" placeholder="מקצוע/נושא" style="flex:1;font-weight:700;border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;" />
       <input type="text" data-edit-teacher="${i}" value="${item.teacher || ''}" placeholder="מורה" style="width:65px;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;" />
-      <button data-del="${i}" style="border:none;background:transparent;cursor:pointer;color:#ef4444;font-size:0.9rem;" title="מחק שיעור">✕</button>
+      <button data-del="${i}" style="border:none;background:transparent;cursor:pointer;color:#ef4444;font-size:1rem;padding:0 4px;" title="מחק שיעור">✕</button>
     </div>
   `).join('');
 
@@ -2042,86 +2217,171 @@ if (isEditMode) {
       renderSchedule();
     });
   });
-} else {
-  editControls.classList.add('hidden');
-  toggleEditBtn.textContent = '✏️ עריכה';
-  toggleEditBtn.style.background = '';
-  toggleEditBtn.style.color = '';
-  if (currentList.length === 0) {
-    listEl.innerHTML = `
-      <div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-weight:600;">
-        אין שיעורים מוגדרים ליום זה.<br>
-        <button class="small-btn" data-act="start-add" style="margin-top:8px;">+ הוסף שיעור ראשון</button>
-      </div>
-    `;
-    const startAdd = listEl.querySelector('[data-act="start-add"]');
-    if (startAdd) startAdd.addEventListener('click', () => { isEditMode = true; renderSchedule(); });
-    return;
-  }
-  listEl.innerHTML = currentList.map((item, i) => `
-    <div class="tt-card ${item.done ? 'done' : ''}">
-      <input type="checkbox" data-check="${i}" ${item.done ? 'checked' : ''} style="cursor:pointer;" />
-      <span class="tt-period-badge">${item.num || (i + 1)}</span>
-      <div style="display:flex;flex-direction:column;flex:1;">
-        <span class="tt-sub-text">${item.subject}</span>
-        ${item.teacher ? `<span class="tt-teacher-tag">מורה: ${item.teacher}</span>` : ''}
-      </div>
-      ${item.time ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-muted);direction:ltr;">${item.time}</span>` : ''}
-    </div>
-  `).join('');
+}
 
-  listEl.querySelectorAll('[data-check]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      currentList[cb.dataset.check].done = cb.checked;
-      saveSchedule();
-      renderSchedule();
-    });
+body.querySelector('[data-act="jump-today"]').addEventListener('click', () => {
+  selectedDay = todayDayIdx;
+  state.selectedDay = selectedDay;
+  saveState();
+  addPeriodBtn.textContent = `+ הוסף שיעור ליום ${DAY_NAMES[selectedDay]}`;
+  renderDayTabs();
+  renderSchedule();
+});
+
+addPeriodBtn.addEventListener('click', () => {
+  const currentList = weekly[selectedDay] || [];
+  currentList.push({
+    num: String(currentList.length + 1),
+    time: '12:45',
+    subject: 'שיעור חדש',
+    teacher: '',
+    topic: '',
+    done: false
   });
-}
-}
-
-function saveSchedule() {
-state.weeklySchedule = weekly;
-saveState();
-}
-
-toggleEditBtn.addEventListener('click', () => {
-isEditMode = !isEditMode;
-renderSchedule();
-});
-
-jumpTodayBtn.addEventListener('click', () => {
-selectedDay = todayDayIdx;
-state.selectedDay = selectedDay;
-saveState();
-renderDayTabs();
-renderSchedule();
-});
-
-body.querySelector('[data-act="add-period"]').addEventListener('click', () => {
-const currentList = weekly[selectedDay] || [];
-currentList.push({
-  num: String(currentList.length + 1),
-  time: '12:45',
-  subject: 'שיעור חדש',
-  teacher: '',
-  done: false
-});
-weekly[selectedDay] = currentList;
-saveSchedule();
-renderSchedule();
+  weekly[selectedDay] = currentList;
+  saveSchedule();
+  renderSchedule();
 });
 
 body.querySelector('[data-act="reset-day"]').addEventListener('click', () => {
-if (confirm(`האם לשחזר את מערכת יום ${DAY_NAMES[selectedDay]} לברירת המחדל המקורית?`)) {
-  weekly[selectedDay] = JSON.parse(JSON.stringify(DEFAULT_WEEKLY[selectedDay] || []));
-  saveSchedule();
-  renderSchedule();
-}
+  if (confirm(`האם לשחזר את מערכת יום ${DAY_NAMES[selectedDay]} לברירת המחדל המקורית?`)) {
+    weekly[selectedDay] = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_SCHEDULE[selectedDay] || []));
+    saveSchedule();
+    renderSchedule();
+  }
 });
 
 renderDayTabs();
 renderSchedule();
+}
+},
+'daily-agenda': {
+title: 'סדר יום כיתתי (היום)',
+icon: '📅',
+defaultW: 390,
+defaultH: 420,
+render(body, state, saveState) {
+const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
+const todayDayIdx = Math.min(5, Math.max(0, new Date().getDay()));
+let selectedDay = state.selectedDay ?? todayDayIdx;
+let customTopics = state.customTopics ?? {}; // { [day]: { [periodIdx]: topicString } }
+let doneState = state.doneState ?? {}; // { [day]: { [periodIdx]: boolean } }
+
+function getMasterSchedule() {
+  const fromStore = window.AppStore.getWeeklySchedule ? window.AppStore.getWeeklySchedule() : null;
+  return fromStore || DEFAULT_WEEKLY_SCHEDULE;
+}
+
+body.innerHTML = `
+<div class="tt-wrapper">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+    <div class="tt-day-tabs" data-el="agenda-day-tabs"></div>
+    <button class="small-btn" data-act="agenda-today" style="font-size:0.75rem;padding:3px 8px;">חזור להיום</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.82rem;">
+    <span data-el="agenda-heading" style="font-weight:800;color:var(--text-dark);"></span>
+    <span style="font-size:0.75rem;color:var(--text-muted);">סמן ביצוע וערוך את תוכן השיעור</span>
+  </div>
+  <div class="timetable-list" data-el="agenda-list"></div>
+</div>
+`;
+
+const tabsEl = body.querySelector('[data-el="agenda-day-tabs"]');
+const headingEl = body.querySelector('[data-el="agenda-heading"]');
+const listEl = body.querySelector('[data-el="agenda-list"]');
+
+function renderAgendaTabs() {
+  tabsEl.innerHTML = DAY_NAMES.map((name, idx) => {
+    const isSelected = idx === selectedDay;
+    const isToday = idx === todayDayIdx;
+    return `
+      <button class="tt-day-tab ${isSelected ? 'active' : ''}" data-day="${idx}">
+        ${name}
+        ${isToday ? '<span class="tt-today-dot" title="היום"></span>' : ''}
+      </button>
+    `;
+  }).join('');
+
+  tabsEl.querySelectorAll('.tt-day-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedDay = parseInt(btn.dataset.day, 10);
+      state.selectedDay = selectedDay;
+      saveState();
+      renderAgendaTabs();
+      renderAgendaList();
+    });
+  });
+}
+
+body.querySelector('[data-act="agenda-today"]').addEventListener('click', () => {
+  selectedDay = todayDayIdx;
+  state.selectedDay = selectedDay;
+  saveState();
+  renderAgendaTabs();
+  renderAgendaList();
+});
+
+function renderAgendaList() {
+  const isToday = selectedDay === todayDayIdx;
+  headingEl.textContent = `סדר יום • ${DAY_NAMES[selectedDay]} ${isToday ? '(היום)' : ''}`;
+  const weekly = getMasterSchedule();
+  const currentList = weekly[selectedDay] || [];
+  if (!customTopics[selectedDay]) customTopics[selectedDay] = {};
+  if (!doneState[selectedDay]) doneState[selectedDay] = {};
+
+  if (currentList.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center;padding:30px 10px;color:var(--text-muted);font-weight:600;">אין שיעורים מוגדרים ליום זה במערכת השבועית.<br><span style="font-size:0.8rem;">(פתח את ווידג'ט 'מערכת שעות שבועית' להזנת שיעורים)</span></div>`;
+    return;
+  }
+
+  listEl.innerHTML = currentList.map((item, i) => {
+    const isDone = doneState[selectedDay][i] ?? item.done;
+    const topic = customTopics[selectedDay][i] ?? item.topic ?? '';
+    return `
+      <div class="agenda-item-card ${isDone ? 'done' : ''}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" class="agenda-checkbox" data-idx="${i}" ${isDone ? 'checked' : ''} title="סמן שיעור שהסתיים" />
+          <span class="tt-period-badge">${item.num || (i + 1)}</span>
+          <span class="tt-time-badge">${item.time || ''}</span>
+          <span class="tt-subject-title">${item.subject || ''}</span>
+          ${item.teacher ? `<span class="tt-teacher-tag">${item.teacher}</span>` : ''}
+        </div>
+        <div class="agenda-topic-row">
+          <span class="agenda-topic-label">מה נלמד:</span>
+          <input type="text" class="agenda-topic-input" data-topic-idx="${i}" placeholder="הוסף נושא לשיעור (לדוגמה: כפל שלם בשבר)..." value="${topic}" />
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.agenda-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const idx = cb.dataset.idx;
+      doneState[selectedDay][idx] = cb.checked;
+      state.doneState = doneState;
+      saveState();
+      cb.closest('.agenda-item-card').classList.toggle('done', cb.checked);
+      if (cb.checked) SoundFX.pop();
+    });
+  });
+
+  listEl.querySelectorAll('.agenda-topic-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const idx = inp.dataset.topicIdx;
+      customTopics[selectedDay][idx] = inp.value;
+      state.customTopics = customTopics;
+      saveState();
+    });
+  });
+}
+
+renderAgendaTabs();
+renderAgendaList();
+
+const updateHandler = () => {
+  renderAgendaList();
+};
+window.addEventListener('cs:schedule-updated', updateHandler);
 }
 },
 'calendar': {

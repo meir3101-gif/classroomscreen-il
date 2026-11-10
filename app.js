@@ -46,6 +46,7 @@ function getWidgetHeaderCapsule(type) {
     'text': { cls: 'capsule-blue', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>' },
     'draw': { cls: 'capsule-purple', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/><path d="M18 10l-4-4"/><path d="m20.5 7.5-3-3a2.12 2.12 0 0 0-3 0l-1.5 1.5 6 6 1.5-1.5a2.12 2.12 0 0 0 0-3Z"/></svg>' },
     'qr': { cls: 'capsule-indigo', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="6" height="6" x="3" y="3" rx="1.5"/><rect width="6" height="6" x="15" y="3" rx="1.5"/><rect width="6" height="6" x="3" y="15" rx="1.5"/><path d="M21 15h-3a2 2 0 0 0-2 2v4"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/></svg>' },
+    'daily-agenda': { cls: 'capsule-indigo', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg>' },
     'timetable': { cls: 'capsule-blue', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>' },
     'calendar': { cls: 'capsule-emerald', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="12" cy="15" r="2"/></svg>' },
     'countdown': { cls: 'capsule-amber', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' },
@@ -402,13 +403,157 @@ btn.addEventListener('click', () => {
 document.getElementById(btn.dataset.close).classList.add('hidden');
 });
 });
+
+const toggleSidebarBtn = document.getElementById('btn-toggle-sidebar');
+if (toggleSidebarBtn) {
+toggleSidebarBtn.addEventListener('click', () => {
+this.toggleStudentsSidebar();
+});
+}
+window.addEventListener('cs:scores-updated', () => {
+this.renderStudentsSidebar();
+});
+window.addEventListener('cs:icons-updated', () => {
+this.renderStudentsSidebar();
+});
+
 window.AppStore = {
 getClassLists: () => this.data.classLists,
 getSelectedClassId: () => this.data.selectedClassId,
-openStudentsModal: (classId, onUpdate) => this.openStudentsModal(classId, onUpdate)
+openStudentsModal: (classId, onUpdate) => this.openStudentsModal(classId, onUpdate),
+getWeeklySchedule: () => this.data.weeklySchedule,
+setWeeklySchedule: (sched) => {
+  this.data.weeklySchedule = sched;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:schedule-updated', { detail: sched }));
+},
+getStudentScores: () => this.data.studentScores || {},
+setStudentScores: (scores) => {
+  this.data.studentScores = scores;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: scores }));
+},
+getStudentIcons: () => this.data.studentIcons || {},
+setStudentIcons: (icons) => {
+  this.data.studentIcons = icons;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:icons-updated', { detail: icons }));
+},
+addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק') => {
+  if (!this.data.studentScores) this.data.studentScores = {};
+  const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
+  sc.daily = Math.max(0, sc.daily + pts);
+  sc.total = Math.max(0, sc.total + pts);
+  if (!sc.breakdown) sc.breakdown = {};
+  sc.breakdown[reason] = (sc.breakdown[reason] || 0) + 1;
+  this.data.studentScores[name] = sc;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
+  this.renderStudentsSidebar();
+},
+addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי') => {
+  if (!this.data.studentScores) this.data.studentScores = {};
+  const currentClass = this.data.classLists.find(c => c.id === this.data.selectedClassId) || this.data.classLists[0];
+  const students = (currentClass ? currentClass.students : []).filter(Boolean);
+  students.forEach(name => {
+    const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
+    sc.daily = Math.max(0, sc.daily + pts);
+    sc.total = Math.max(0, sc.total + pts);
+    if (!sc.breakdown) sc.breakdown = {};
+    sc.breakdown[reason] = (sc.breakdown[reason] || 0) + 1;
+    this.data.studentScores[name] = sc;
+  });
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
+  this.renderStudentsSidebar();
+},
+toggleStudentsSidebar: (show) => {
+  this.toggleStudentsSidebar(show);
+}
 };
 this.initBackgroundModalEvents();
 this.initStudentModalEvents();
+}
+
+toggleStudentsSidebar(forceState) {
+  const sidebar = document.getElementById('students-sidebar');
+  if (!sidebar) return;
+  const isHidden = forceState !== undefined ? !forceState : !sidebar.classList.contains('hidden');
+  sidebar.classList.toggle('hidden', isHidden);
+  const toggleBtn = document.getElementById('btn-toggle-sidebar');
+  if (toggleBtn) toggleBtn.classList.toggle('active', !isHidden);
+  if (!isHidden) {
+    this.renderStudentsSidebar();
+  }
+}
+
+renderStudentsSidebar() {
+  const sidebar = document.getElementById('students-sidebar');
+  if (!sidebar || sidebar.classList.contains('hidden')) return;
+
+  const currentClass = this.data.classLists.find(c => c.id === this.data.selectedClassId) || this.data.classLists[0];
+  const students = (currentClass ? currentClass.students : []).filter(Boolean);
+  const scores = this.data.studentScores || {};
+  const icons = this.data.studentIcons || {};
+
+  sidebar.innerHTML = `
+    <div class="sidebar-header">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="font-size:1.15rem;">💎</span>
+        <span style="font-weight:800;font-size:0.82rem;color:var(--text-dark);">יהלומים</span>
+      </div>
+      <div style="display:flex;gap:3px;align-items:center;">
+        <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף יהלום לכל תלמידי הכיתה בבת אחת">+כולם</button>
+        <button class="mini-icon-btn" data-act="sidebar-close" title="סגור סרגל">✕</button>
+      </div>
+    </div>
+    <div class="sidebar-students-scroll">
+      ${students.map(name => {
+        const sc = scores[name] || { daily: 0, total: 0 };
+        const iconKey = icons[name];
+        const iconHtml = (window.renderStudentIconHtml ? window.renderStudentIconHtml(iconKey, name) : (iconKey || '⭐'));
+        return `
+          <div class="sidebar-student-item" data-student="${name}" title="${name} (לחץ להוספת יהלום)">
+            <div class="sidebar-avatar-wrapper">
+              <div class="sidebar-avatar">${iconHtml}</div>
+              <span class="sidebar-badge">💎 ${sc.daily}</span>
+            </div>
+            <div class="sidebar-name">${name}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  sidebar.querySelector('[data-act="sidebar-close"]')?.addEventListener('click', () => {
+    this.toggleStudentsSidebar(false);
+  });
+
+  sidebar.querySelector('[data-act="sidebar-all"]')?.addEventListener('click', () => {
+    window.AppStore.addDiamondsToAll(1, 'חיזוק כיתתי');
+    SoundFX.bell();
+    this.showFloatingAward(sidebar, 'לכל הכיתה +1 💎');
+  });
+
+  sidebar.querySelectorAll('.sidebar-student-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const studentName = item.dataset.student;
+      window.AppStore.addDiamondsToStudent(studentName, 1, 'חיזוק מהיר');
+      SoundFX.bell();
+      this.showFloatingAward(item, '+1 💎');
+    });
+  });
+}
+
+showFloatingAward(targetEl, text) {
+  const floater = document.createElement('div');
+  floater.className = 'floating-award-pill';
+  floater.textContent = text;
+  document.body.appendChild(floater);
+  const rect = targetEl.getBoundingClientRect();
+  floater.style.left = `${rect.left + rect.width / 2}px`;
+  floater.style.top = `${rect.top}px`;
+  setTimeout(() => floater.remove(), 1000);
 }
 renderScreenTabs() {
 this.screensTabsEl.innerHTML = this.data.screens.map(scr => `
