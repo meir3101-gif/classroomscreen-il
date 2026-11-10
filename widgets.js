@@ -1,353 +1,546 @@
+const ICON_CATEGORIES = [
+  {
+    id: 'animals',
+    name: 'בעלי חיים',
+    icon: '🦁',
+    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐯','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🐙','🦋','🐝','🐘','🦒','🦓','🐺','🦩','🐳','🦔','🐸']
+  },
+  {
+    id: 'vehicles',
+    name: 'כלי תחבורה',
+    icon: '🚀',
+    icons: ['🚀','🚗','✈️','🏎️','🚁','🚲','🚂','⛵','🛸','🏍️','🚜','🚢','🛹','🛵','🚒','🚑','🚓','🚊','🚤','🛰️','🛩️','🚠','🛴','🚌','🚚']
+  },
+  {
+    id: 'food',
+    name: 'מאכלים',
+    icon: '🍕',
+    icons: ['🍕','🍔','🍟','🍦','🍓','🍩','🍎','🧁','🍣','🌮','🍉','🍇','🍌','🍒','🥑','🥞','🍪','🍫','🍿','🥨','🍭','🍧','🍍','🍊','🥐','🍰','🎂','🥗']
+  },
+  {
+    id: 'sports',
+    name: 'ספורט וכדורים',
+    icon: '⚽',
+    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🥇','🥋','🥊','🏆','🛹','🏊‍♂️','🚴‍♂️','🎯','🎳','🏓','🏸','🏄‍♂️','⛳','🧗','⛷️','🏏','🎱','🤾','⛸️','🎿']
+  },
+  {
+    id: 'flags',
+    name: 'דגלי מדינות',
+    icon: '🌍',
+    icons: ['🇮🇱','🇺🇸','🇬🇧','🇫🇷','🇧🇷','🇯🇵','🇩🇪','🇮🇹','🇪🇸','🇨🇦','🇦🇷','🇦🇺','🇳🇱','🇨🇭','🇬🇷','🇲🇽','🇰🇷','🇮🇳','🇵🇹','🇸🇪','🇩🇰','🇳🇴','🇵🇱','🇿🇦','🇨🇱','🇯🇲']
+  },
+  {
+    id: 'gems',
+    name: 'סמלים וחלל',
+    icon: '💎',
+    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎵','🎸','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️']
+  }
+];
+
+const ALL_STUDENT_ICONS = ICON_CATEGORIES.flatMap(c => c.icons);
+
 function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams') {
-let activeTab = state.activeTab ?? defaultTab;
-let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
-let scoreMode = state.scoreMode ?? 'daily'; // 'daily' or 'total'
-let searchQuery = '';
-let selectedStudentForAward = null;
+  let activeTab = state.activeTab ?? defaultTab;
+  let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+  let scoreMode = state.scoreMode ?? 'daily'; // 'daily' or 'total'
+  let searchQuery = '';
+  let selectedStudentForAward = null;
+  let selectedStudentForIcon = null;
+  let activeIconCategory = 'animals';
 
-const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
-let teams = state.teams ?? [
-{ name: 'קבוצה א׳', score: 0 },
-{ name: 'קבוצה ב׳', score: 0 }
-];
+  const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+  let teams = state.teams ?? [
+    { name: 'קבוצה א׳', score: 0 },
+    { name: 'קבוצה ב׳', score: 0 }
+  ];
 
-// Student points map: { [studentName]: { daily: number, total: number, breakdown: { [reason]: number } } }
-let studentScores = state.studentScores ?? {};
+  // Student points map: { [studentName]: { daily: number, total: number, breakdown: { [reason]: number } } }
+  let studentScores = state.studentScores ?? {};
+  // Student avatar icons map: { [studentName]: string (emoji) }
+  let studentIcons = state.studentIcons ?? {};
 
-const BEHAVIORS = [
-{ id: 'ready', icon: '🎒', title: 'מוכנות לשיעור', pts: 1 },
-{ id: 'task', icon: '📝', title: 'ביצוע מטלה', pts: 1 },
-{ id: 'listen', icon: '👂', title: 'הקשבה והשתתפות', pts: 1 },
-{ id: 'help', icon: '🤝', title: 'עזרה לחבר', pts: 2 },
-{ id: 'polite', icon: '💬', title: 'דיבור בנימוס', pts: 1 },
-{ id: 'order', icon: '🧹', title: 'סדר וארגון', pts: 1 },
-{ id: 'excel', icon: '⭐', title: 'מצוינות והשקעה', pts: 2 },
-{ id: 'free', icon: '➕', title: 'נקודת חיזוק חופשית', pts: 1 },
-{ id: 'penalty', icon: '➖', title: 'בירור/משמעת (-1)', pts: -1 }
-];
+  function getDefaultIcon(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = (hash << 5) - hash + name.charCodeAt(i);
+      hash |= 0;
+    }
+    const idx = Math.abs(hash) % ALL_STUDENT_ICONS.length;
+    return ALL_STUDENT_ICONS[idx];
+  }
 
-body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
-  <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
-    <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
-    <button class="rand-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students" style="flex:1;">⭐ כוכבי הכיתה (אישי)</button>
+  function getStudentIcon(name) {
+    return studentIcons[name] || getDefaultIcon(name);
+  }
+
+  const BEHAVIORS = [
+    { id: 'ready', icon: '🎒', title: 'מוכנות לשיעור', pts: 1 },
+    { id: 'task', icon: '📝', title: 'ביצוע מטלה', pts: 2 },
+    { id: 'listen', icon: '👂', title: 'הקשבה והשתתפות', pts: 1 },
+    { id: 'help', icon: '🤝', title: 'עזרה לחבר', pts: 2 },
+    { id: 'polite', icon: '💬', title: 'דיבור בנימוס', pts: 1 },
+    { id: 'order', icon: '🧹', title: 'סדר וארגון', pts: 1 },
+    { id: 'excel', icon: '💎', title: 'הצטיינות מיוחדת', pts: 3 },
+    { id: 'behavior', icon: '⚡', title: 'התנהגות מופתית', pts: 2 },
+    { id: 'free', icon: '➕', title: 'יהלום בונוס חופשי', pts: 1 },
+    { id: 'penalty', icon: '➖', title: 'בירור / משמעת (-1)', pts: -1 }
+  ];
+
+  body.innerHTML = `
+  <div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
+    <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
+      <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
+      <button class="rand-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students" style="flex:1;">💎 יהלומים (אישי)</button>
+    </div>
+
+    <!-- 1. TEAMS VIEW -->
+    <div data-el="teams-view" class="${activeTab === 'teams' ? '' : 'hidden'}" style="display:flex;flex-direction:column;height:100%;gap:10px;">
+      <div class="scoreboard-teams" data-el="teams-container"></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:auto;">
+        <button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
+        <button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס ניקוד קבוצות</button>
+      </div>
+    </div>
+
+    <!-- 2. STUDENTS INDIVIDUAL POINTS VIEW (DIAMONDS) -->
+    <div data-el="students-view" class="sp-container ${activeTab === 'students' ? '' : 'hidden'}">
+      <div class="sp-toolbar">
+        <select data-el="sp-class-sel" style="max-width:130px;padding:5px 8px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;font-size:0.8rem;"></select>
+        <input type="text" class="sp-search" data-el="sp-search" placeholder="🔍 חיפוש תלמיד..." />
+        <div style="display:flex;gap:3px;">
+          <button class="sp-mode-pill ${scoreMode === 'daily' ? 'active' : ''}" data-mode="daily" title="הצג יהלומים שנצברו היום">היום</button>
+          <button class="sp-mode-pill ${scoreMode === 'total' ? 'active' : ''}" data-mode="total" title="הצג סך כל היהלומים המצטבר">מצטבר</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-wrap:wrap;gap:4px;">
+        <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופי היהלומים</button>
+        <div style="display:flex;gap:4px;">
+          <button class="small-btn" data-act="randomize-all-icons" title="חלק סמלים אקראיים ומגוונים לכל התלמידים" style="font-size:0.75rem;">🎲 הגרל סמלים לכולם</button>
+          <button class="small-btn" data-act="reset-daily" style="font-size:0.75rem;">↺ איפוס יומי</button>
+        </div>
+      </div>
+      <div class="sp-grid" data-el="students-grid"></div>
+
+      <!-- Award Drawer (Opens on clicking student) -->
+      <div data-el="award-drawer" class="sp-drawer hidden">
+        <div class="sp-drawer-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span data-el="drawer-avatar" style="font-size:1.6rem;"></span>
+            <div>
+              <div data-el="drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);"></div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק להענקת יהלומים</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <button class="small-btn" data-act="open-icon-from-drawer" style="font-size:0.75rem;padding:3px 8px;">🎨 החלף סמל</button>
+            <button class="small-btn" data-act="close-drawer" style="padding:2px 8px;">✕</button>
+          </div>
+        </div>
+        <div class="sp-behavior-grid">
+          ${BEHAVIORS.map(b => `
+            <button class="sp-behavior-btn" data-behavior="${b.id}" data-pts="${b.pts}">
+              <span style="font-size:1.25rem;">${b.icon}</span>
+              <span>${b.title}</span>
+              <span class="sp-pts-tag" style="${b.pts < 0 ? 'background:#fee2e2;color:#dc2626;' : 'background:#e0f2fe;color:#0284c7;'}">
+                ${b.pts > 0 ? '+' + b.pts : b.pts} 💎
+              </span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Icon Picker Drawer -->
+      <div data-el="icon-picker-drawer" class="sp-drawer hidden">
+        <div class="sp-drawer-header">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:1.3rem;">🎨</span>
+            <span data-el="icon-picker-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">בחירת סמל לתלמיד</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <button class="small-btn" data-act="random-icon-one" title="הגרל סמל אקראי לתלמיד זה" style="font-size:0.75rem;">🎲 הגרל סמל</button>
+            <button class="small-btn" data-act="close-icon-picker" style="padding:2px 8px;">✕</button>
+          </div>
+        </div>
+        <div class="sp-icon-cat-bar" data-el="icon-cat-bar">
+          ${ICON_CATEGORIES.map(c => `
+            <button class="sp-icon-cat-btn ${c.id === 'animals' ? 'active' : ''}" data-cat="${c.id}">
+              <span>${c.icon}</span>
+              <span>${c.name}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="sp-icon-grid" data-el="icon-grid"></div>
+      </div>
+
+      <!-- Podium Celebratory Overlay -->
+      <div data-el="podium-overlay" class="sp-podium-overlay hidden">
+        <button class="small-btn" data-act="close-podium" style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.2);color:#fff;border:none;">✕ סגור</button>
+        <div class="sp-podium-title">🎉 מצעד אלופי היהלומים! 💎</div>
+        <div style="font-size:0.85rem;color:#bae6fd;margin-bottom:6px;">מצטייני היום שצברו הכי הרבה יהלומים בכיתה</div>
+        <div class="sp-podium-steps" data-el="podium-steps"></div>
+        <div data-el="podium-category-leaders" style="font-size:0.8rem;text-align:center;margin-top:6px;max-width:90%;"></div>
+      </div>
+    </div>
   </div>
+  `;
 
-  <!-- 1. TEAMS VIEW -->
-  <div data-el="teams-view" class="${activeTab === 'teams' ? '' : 'hidden'}" style="display:flex;flex-direction:column;height:100%;gap:10px;">
-    <div class="scoreboard-teams" data-el="teams-container"></div>
-    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:auto;">
-      <button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
-      <button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס ניקוד קבוצות</button>
-    </div>
-  </div>
-
-  <!-- 2. STUDENTS INDIVIDUAL POINTS VIEW -->
-  <div data-el="students-view" class="sp-container ${activeTab === 'students' ? '' : 'hidden'}">
-    <div class="sp-toolbar">
-      <select data-el="sp-class-sel" style="max-width:140px;padding:5px 8px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;font-size:0.8rem;"></select>
-      <input type="text" class="sp-search" data-el="sp-search" placeholder="🔍 חיפוש תלמיד..." />
-      <div style="display:flex;gap:3px;">
-        <button class="sp-mode-pill ${scoreMode === 'daily' ? 'active' : ''}" data-mode="daily" title="הצג ניקוד שנצבר היום">היום</button>
-        <button class="sp-mode-pill ${scoreMode === 'total' ? 'active' : ''}" data-mode="total" title="הצג ניקוד מצטבר כולל">מצטבר</button>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
-      <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:800;border:none;">🏆 מצעד מצטייני היום</button>
-      <button class="small-btn" data-act="reset-daily" style="font-size:0.75rem;">↺ איפוס יומי</button>
-    </div>
-    <div class="sp-grid" data-el="students-grid"></div>
-
-    <!-- Award Drawer (Opens on clicking student) -->
-    <div data-el="award-drawer" class="sp-drawer hidden">
-      <div class="sp-drawer-header">
-        <span data-el="drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);"></span>
-        <button class="small-btn" data-act="close-drawer" style="padding:2px 8px;">✕</button>
-      </div>
-      <div class="sp-behavior-grid">
-        ${BEHAVIORS.map(b => `
-          <button class="sp-behavior-btn" data-behavior="${b.id}" data-pts="${b.pts}">
-            <span style="font-size:1.2rem;">${b.icon}</span>
-            <span>${b.title}</span>
-            <span class="sp-pts-tag" style="${b.pts < 0 ? 'background:#fee2e2;color:#dc2626;' : ''}">${b.pts > 0 ? '+' + b.pts : b.pts}</span>
-          </button>
-        `).join('')}
-      </div>
-    </div>
-
-    <!-- Podium Celebratory Overlay -->
-    <div data-el="podium-overlay" class="sp-podium-overlay hidden">
-      <button class="small-btn" data-act="close-podium" style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.2);color:#fff;border:none;">✕ סגור</button>
-      <div class="sp-podium-title">🎉 מצעד כוכבי הכיתה! 🎉</div>
-      <div style="font-size:0.85rem;color:#fef08a;margin-bottom:6px;">מצטייני היום שצברו הכי הרבה נקודות</div>
-      <div class="sp-podium-steps" data-el="podium-steps"></div>
-      <div data-el="podium-category-leaders" style="font-size:0.8rem;text-align:center;margin-top:6px;max-width:90%;"></div>
-    </div>
-  </div>
-</div>
-`;
-
-// TAB TOGGLING
-body.querySelectorAll('[data-sptab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    activeTab = btn.dataset.sptab;
-    state.activeTab = activeTab;
-    saveState();
-    body.querySelectorAll('[data-sptab]').forEach(b => b.classList.toggle('active', b.dataset.sptab === activeTab));
-    body.querySelector('[data-el="teams-view"]').classList.toggle('hidden', activeTab !== 'teams');
-    body.querySelector('[data-el="students-view"]').classList.toggle('hidden', activeTab !== 'students');
-    if (activeTab === 'teams') renderTeamsBoard();
-    else renderStudentsGrid();
-  });
-});
-
-// 1. TEAMS LOGIC
-const teamsContainer = body.querySelector('[data-el="teams-container"]');
-function renderTeamsBoard() {
-  teamsContainer.innerHTML = teams.map((t, idx) => `
-    <div class="team-column" style="border-top-color:${colors[idx % colors.length]}">
-      <input class="team-name-input" data-idx="${idx}" value="${t.name}" />
-      <div class="team-score-val">${t.score}</div>
-      <div class="team-score-btns">
-        <button class="score-step-btn plus" data-step="1" data-idx="${idx}">+1</button>
-        <button class="score-step-btn minus" data-step="-1" data-idx="${idx}">-1</button>
-      </div>
-    </div>
-  `).join('');
-
-  teamsContainer.querySelectorAll('.team-name-input').forEach(inp => {
-    inp.addEventListener('change', () => {
-      teams[inp.dataset.idx].name = inp.value;
-      state.teams = teams;
-      saveState();
-    });
-  });
-  teamsContainer.querySelectorAll('.score-step-btn').forEach(btn => {
+  // TAB TOGGLING
+  body.querySelectorAll('[data-sptab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.idx, 10);
-      const step = parseInt(btn.dataset.step, 10);
-      teams[i].score += step;
-      state.teams = teams;
+      activeTab = btn.dataset.sptab;
+      state.activeTab = activeTab;
       saveState();
-      if (step > 0) SoundFX.pop();
-      renderTeamsBoard();
+      body.querySelectorAll('[data-sptab]').forEach(b => b.classList.toggle('active', b.dataset.sptab === activeTab));
+      body.querySelector('[data-el="teams-view"]').classList.toggle('hidden', activeTab !== 'teams');
+      body.querySelector('[data-el="students-view"]').classList.toggle('hidden', activeTab !== 'students');
+      if (activeTab === 'teams') renderTeamsBoard();
+      else renderStudentsGrid();
     });
   });
-}
 
-body.querySelector('[data-act="add-team"]').addEventListener('click', () => {
-  if (teams.length >= 6) return;
-  teams.push({ name: `קבוצה ${teams.length + 1}`, score: 0 });
-  state.teams = teams;
-  saveState();
-  renderTeamsBoard();
-});
+  // 1. TEAMS LOGIC
+  const teamsContainer = body.querySelector('[data-el="teams-container"]');
+  function renderTeamsBoard() {
+    teamsContainer.innerHTML = teams.map((t, idx) => `
+      <div class="team-column" style="border-top-color:${colors[idx % colors.length]}">
+        <input class="team-name-input" data-idx="${idx}" value="${t.name}" />
+        <div class="team-score-val">${t.score}</div>
+        <div class="team-score-btns">
+          <button class="score-step-btn plus" data-step="1" data-idx="${idx}">+1</button>
+          <button class="score-step-btn minus" data-step="-1" data-idx="${idx}">-1</button>
+        </div>
+      </div>
+    `).join('');
 
-body.querySelector('[data-act="reset-scores"]').addEventListener('click', () => {
-  if (confirm('האם לאפס את ניקוד כל הקבוצות?')) {
-    teams.forEach(t => t.score = 0);
+    teamsContainer.querySelectorAll('.team-name-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        teams[inp.dataset.idx].name = inp.value;
+        state.teams = teams;
+        saveState();
+      });
+    });
+    teamsContainer.querySelectorAll('.score-step-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.idx, 10);
+        const step = parseInt(btn.dataset.step, 10);
+        teams[i].score += step;
+        state.teams = teams;
+        saveState();
+        if (step > 0) SoundFX.pop();
+        renderTeamsBoard();
+      });
+    });
+  }
+
+  body.querySelector('[data-act="add-team"]').addEventListener('click', () => {
+    if (teams.length >= 6) return;
+    teams.push({ name: `קבוצה ${teams.length + 1}`, score: 0 });
     state.teams = teams;
     saveState();
     renderTeamsBoard();
-  }
-});
-
-// 2. STUDENTS LOGIC
-const classSel = body.querySelector('[data-el="sp-class-sel"]');
-const searchInput = body.querySelector('[data-el="sp-search"]');
-const studentsGrid = body.querySelector('[data-el="students-grid"]');
-const awardDrawer = body.querySelector('[data-el="award-drawer"]');
-const drawerTitle = body.querySelector('[data-el="drawer-title"]');
-const podiumOverlay = body.querySelector('[data-el="podium-overlay"]');
-const podiumSteps = body.querySelector('[data-el="podium-steps"]');
-const categoryLeadersEl = body.querySelector('[data-el="podium-category-leaders"]');
-
-function populateClassSelect() {
-  const lists = window.AppStore.getClassLists();
-  classSel.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
-}
-
-function getStudentsList() {
-  const lists = window.AppStore.getClassLists();
-  const found = lists.find(c => c.id === selectedClassId) || lists[0];
-  return (found ? found.students : []).filter(Boolean);
-}
-
-function getStudentScore(name) {
-  if (!studentScores[name]) {
-    studentScores[name] = { daily: 0, total: 0, breakdown: {} };
-  }
-  return studentScores[name];
-}
-
-function renderStudentsGrid() {
-  const students = getStudentsList();
-  const filtered = searchQuery.trim() 
-    ? students.filter(n => n.includes(searchQuery.trim())) 
-    : students;
-
-  if (filtered.length === 0) {
-    studentsGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-muted);font-weight:600;">לא נמצאו תלמידים</div>`;
-    return;
-  }
-
-  studentsGrid.innerHTML = filtered.map(name => {
-    const sc = getStudentScore(name);
-    const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
-    const initial = name.charAt(0);
-    return `
-      <div class="sp-card" data-student="${name}">
-        <div class="sp-avatar">${initial}</div>
-        <div class="sp-name" title="${name}">${name}</div>
-        <div class="sp-score">⭐ ${scoreVal}</div>
-      </div>
-    `;
-  }).join('');
-
-  studentsGrid.querySelectorAll('.sp-card').forEach(card => {
-    card.addEventListener('click', () => {
-      selectedStudentForAward = card.dataset.student;
-      drawerTitle.textContent = `חיזוק והענקת נקודות: ${selectedStudentForAward}`;
-      awardDrawer.classList.remove('hidden');
-    });
   });
-}
 
-// Mode toggle (Daily vs Total)
-body.querySelectorAll('.sp-mode-pill').forEach(btn => {
-  btn.addEventListener('click', () => {
-    scoreMode = btn.dataset.mode;
-    state.scoreMode = scoreMode;
-    saveState();
-    body.querySelectorAll('.sp-mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === scoreMode));
-    renderStudentsGrid();
-  });
-});
-
-searchInput.addEventListener('input', () => {
-  searchQuery = searchInput.value;
-  renderStudentsGrid();
-});
-
-classSel.addEventListener('change', () => {
-  selectedClassId = classSel.value;
-  state.classId = selectedClassId;
-  saveState();
-  renderStudentsGrid();
-});
-
-body.querySelector('[data-act="close-drawer"]').addEventListener('click', () => {
-  awardDrawer.classList.add('hidden');
-  selectedStudentForAward = null;
-});
-
-// Award points clicked
-awardDrawer.querySelectorAll('.sp-behavior-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (!selectedStudentForAward) return;
-    const bId = btn.dataset.behavior;
-    const pts = parseInt(btn.dataset.pts, 10);
-    const sc = getStudentScore(selectedStudentForAward);
-    
-    sc.daily = Math.max(0, sc.daily + pts);
-    sc.total = Math.max(0, sc.total + pts);
-    if (!sc.breakdown) sc.breakdown = {};
-    sc.breakdown[bId] = (sc.breakdown[bId] || 0) + 1;
-
-    state.studentScores = studentScores;
-    saveState();
-
-    if (pts > 0) {
-      SoundFX.pop();
+  body.querySelector('[data-act="reset-scores"]').addEventListener('click', () => {
+    if (confirm('האם לאפס את ניקוד כל הקבוצות?')) {
+      teams.forEach(t => t.score = 0);
+      state.teams = teams;
+      saveState();
+      renderTeamsBoard();
     }
+  });
+
+  // 2. STUDENTS LOGIC
+  const classSel = body.querySelector('[data-el="sp-class-sel"]');
+  const searchInput = body.querySelector('[data-el="sp-search"]');
+  const studentsGrid = body.querySelector('[data-el="students-grid"]');
+  const awardDrawer = body.querySelector('[data-el="award-drawer"]');
+  const drawerTitle = body.querySelector('[data-el="drawer-title"]');
+  const drawerAvatar = body.querySelector('[data-el="drawer-avatar"]');
+  const iconPickerDrawer = body.querySelector('[data-el="icon-picker-drawer"]');
+  const iconPickerTitle = body.querySelector('[data-el="icon-picker-title"]');
+  const iconGrid = body.querySelector('[data-el="icon-grid"]');
+  const podiumOverlay = body.querySelector('[data-el="podium-overlay"]');
+  const podiumSteps = body.querySelector('[data-el="podium-steps"]');
+  const categoryLeadersEl = body.querySelector('[data-el="podium-category-leaders"]');
+
+  function populateClassSelect() {
+    const lists = window.AppStore.getClassLists();
+    classSel.innerHTML = lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('');
+  }
+
+  function getStudentsList() {
+    const lists = window.AppStore.getClassLists();
+    const found = lists.find(c => c.id === selectedClassId) || lists[0];
+    return (found ? found.students : []).filter(Boolean);
+  }
+
+  function getStudentScore(name) {
+    if (!studentScores[name]) {
+      studentScores[name] = { daily: 0, total: 0, breakdown: {} };
+    }
+    return studentScores[name];
+  }
+
+  function renderStudentsGrid() {
+    const students = getStudentsList();
+    const filtered = searchQuery.trim() 
+      ? students.filter(n => n.includes(searchQuery.trim())) 
+      : students;
+
+    if (filtered.length === 0) {
+      studentsGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);font-weight:600;">לא נמצאו תלמידים</div>`;
+      return;
+    }
+
+    studentsGrid.innerHTML = filtered.map(name => {
+      const sc = getStudentScore(name);
+      const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
+      const icon = getStudentIcon(name);
+      return `
+        <div class="sp-card" data-student="${name}">
+          <button class="sp-card-edit-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">✏️</button>
+          <div class="sp-avatar" data-act="pick-icon" data-student="${name}" title="לחץ לבחירת סמל">${icon}</div>
+          <div class="sp-name" title="${name}">${name}</div>
+          <div class="sp-score">💎 ${scoreVal}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Click card opens Award Drawer
+    studentsGrid.querySelectorAll('.sp-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // If clicked specifically on the edit button or avatar, open icon picker instead
+        if (e.target.closest('[data-act="pick-icon"]')) {
+          const sName = card.dataset.student;
+          openIconPicker(sName);
+          return;
+        }
+        selectedStudentForAward = card.dataset.student;
+        drawerTitle.textContent = selectedStudentForAward;
+        drawerAvatar.textContent = getStudentIcon(selectedStudentForAward);
+        iconPickerDrawer.classList.add('hidden');
+        awardDrawer.classList.remove('hidden');
+      });
+    });
+  }
+
+  // ICON PICKER LOGIC
+  function openIconPicker(studentName) {
+    selectedStudentForIcon = studentName;
+    iconPickerTitle.textContent = `בחירת סמל: ${studentName}`;
     awardDrawer.classList.add('hidden');
+    renderIconGrid();
+    iconPickerDrawer.classList.remove('hidden');
+  }
+
+  function renderIconGrid() {
+    const cat = ICON_CATEGORIES.find(c => c.id === activeIconCategory) || ICON_CATEGORIES[0];
+    iconGrid.innerHTML = cat.icons.map(ic => `
+      <button class="sp-icon-pick-btn" data-icon="${ic}">${ic}</button>
+    `).join('');
+
+    iconGrid.querySelectorAll('.sp-icon-pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!selectedStudentForIcon) return;
+        studentIcons[selectedStudentForIcon] = btn.dataset.icon;
+        state.studentIcons = studentIcons;
+        saveState();
+        SoundFX.pop();
+        iconPickerDrawer.classList.add('hidden');
+        selectedStudentForIcon = null;
+        renderStudentsGrid();
+      });
+    });
+  }
+
+  // Category tab switching in icon picker
+  body.querySelectorAll('.sp-icon-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeIconCategory = btn.dataset.cat;
+      body.querySelectorAll('.sp-icon-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === activeIconCategory));
+      renderIconGrid();
+    });
+  });
+
+  // Randomize icon for single student
+  body.querySelector('[data-act="random-icon-one"]').addEventListener('click', () => {
+    if (!selectedStudentForIcon) return;
+    const randomIcon = ALL_STUDENT_ICONS[Math.floor(Math.random() * ALL_STUDENT_ICONS.length)];
+    studentIcons[selectedStudentForIcon] = randomIcon;
+    state.studentIcons = studentIcons;
+    saveState();
+    SoundFX.pop();
+    iconPickerDrawer.classList.add('hidden');
+    selectedStudentForIcon = null;
     renderStudentsGrid();
   });
-});
 
-// Reset daily points
-body.querySelector('[data-act="reset-daily"]').addEventListener('click', () => {
-  if (confirm('האם לאפס את הניקוד היומי של כל התלמידים? (הניקוד המצטבר יישמר)')) {
-    Object.values(studentScores).forEach(sc => {
-      sc.daily = 0;
+  // Randomize icons for ALL students in class
+  body.querySelector('[data-act="randomize-all-icons"]').addEventListener('click', () => {
+    const students = getStudentsList();
+    if (students.length === 0) return;
+    if (confirm('האם להגריל סמלים מגוונים לכל תלמידי הכיתה?')) {
+      const shuffled = [...ALL_STUDENT_ICONS].sort(() => 0.5 - Math.random());
+      students.forEach((name, i) => {
+        studentIcons[name] = shuffled[i % shuffled.length];
+      });
+      state.studentIcons = studentIcons;
+      saveState();
+      SoundFX.pop();
+      renderStudentsGrid();
+    }
+  });
+
+  body.querySelector('[data-act="close-icon-picker"]').addEventListener('click', () => {
+    iconPickerDrawer.classList.add('hidden');
+    selectedStudentForIcon = null;
+  });
+
+  body.querySelector('[data-act="open-icon-from-drawer"]').addEventListener('click', () => {
+    if (!selectedStudentForAward) return;
+    openIconPicker(selectedStudentForAward);
+  });
+
+  // Mode toggle (Daily vs Total)
+  body.querySelectorAll('.sp-mode-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      scoreMode = btn.dataset.mode;
+      state.scoreMode = scoreMode;
+      saveState();
+      body.querySelectorAll('.sp-mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === scoreMode));
+      renderStudentsGrid();
     });
-    state.studentScores = studentScores;
+  });
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    renderStudentsGrid();
+  });
+
+  classSel.addEventListener('change', () => {
+    selectedClassId = classSel.value;
+    state.classId = selectedClassId;
     saveState();
     renderStudentsGrid();
-  }
-});
+  });
 
-// Celebration Podium
-body.querySelector('[data-act="open-podium"]').addEventListener('click', () => {
-  const students = getStudentsList();
-  if (students.length === 0) return;
+  body.querySelector('[data-act="close-drawer"]').addEventListener('click', () => {
+    awardDrawer.classList.add('hidden');
+    selectedStudentForAward = null;
+  });
 
-  const sorted = [...students].map(name => {
-    const sc = getStudentScore(name);
-    return { name, score: sc.daily, total: sc.total, breakdown: sc.breakdown || {} };
-  }).sort((a, b) => b.score - a.score);
+  // Award points clicked
+  awardDrawer.querySelectorAll('.sp-behavior-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!selectedStudentForAward) return;
+      const bId = btn.dataset.behavior;
+      const pts = parseInt(btn.dataset.pts, 10);
+      const sc = getStudentScore(selectedStudentForAward);
+      
+      sc.daily = Math.max(0, sc.daily + pts);
+      sc.total = Math.max(0, sc.total + pts);
+      if (!sc.breakdown) sc.breakdown = {};
+      sc.breakdown[bId] = (sc.breakdown[bId] || 0) + 1;
 
-  const top1 = sorted[0] && sorted[0].score > 0 ? sorted[0] : null;
-  const top2 = sorted[1] && sorted[1].score > 0 ? sorted[1] : null;
-  const top3 = sorted[2] && sorted[2].score > 0 ? sorted[2] : null;
+      state.studentScores = studentScores;
+      saveState();
 
-  if (!top1) {
-    alert('עדיין לא נצברו נקודות היום. הענק נקודות לתלמידים ולאחר מכן לחץ על מצעד המצטיינים!');
-    return;
-  }
+      if (pts > 0) {
+        SoundFX.bell();
+      } else {
+        SoundFX.pop();
+      }
+      awardDrawer.classList.add('hidden');
+      renderStudentsGrid();
+    });
+  });
 
-  podiumSteps.innerHTML = `
-    ${top2 ? `
-      <div class="sp-step second">
-        <div style="font-size:1.4rem;">🥈</div>
-        <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top2.name}</div>
-        <div style="font-weight:900;font-size:1.1rem;color:#f8fafc;">${top2.score}</div>
-        <div style="font-size:0.7rem;opacity:0.8;">נקודות</div>
+  // Reset daily points
+  body.querySelector('[data-act="reset-daily"]').addEventListener('click', () => {
+    if (confirm('האם לאפס את היהלומים היומיים של כל התלמידים? (הניקוד המצטבר יישמר)')) {
+      Object.values(studentScores).forEach(sc => {
+        sc.daily = 0;
+      });
+      state.studentScores = studentScores;
+      saveState();
+      renderStudentsGrid();
+    }
+  });
+
+  // Celebration Podium
+  body.querySelector('[data-act="open-podium"]').addEventListener('click', () => {
+    const students = getStudentsList();
+    if (students.length === 0) return;
+
+    const sorted = [...students].map(name => {
+      const sc = getStudentScore(name);
+      return { name, score: sc.daily, total: sc.total, breakdown: sc.breakdown || {}, icon: getStudentIcon(name) };
+    }).sort((a, b) => b.score - a.score);
+
+    const top1 = sorted[0] && sorted[0].score > 0 ? sorted[0] : null;
+    const top2 = sorted[1] && sorted[1].score > 0 ? sorted[1] : null;
+    const top3 = sorted[2] && sorted[2].score > 0 ? sorted[2] : null;
+
+    if (!top1) {
+      alert('עדיין לא נצברו יהלומים היום. הענק יהלומים לתלמידים ולאחר מכן לחץ על מצעד אלופי היהלומים!');
+      return;
+    }
+
+    podiumSteps.innerHTML = `
+      ${top2 ? `
+        <div class="sp-step second">
+          <div style="font-size:1.6rem;margin-bottom:2px;">${top2.icon}</div>
+          <div style="font-size:1.1rem;">🥈</div>
+          <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top2.name}</div>
+          <div style="font-weight:900;font-size:1.1rem;color:#f8fafc;">💎 ${top2.score}</div>
+          <div style="font-size:0.7rem;opacity:0.8;">יהלומים</div>
+        </div>
+      ` : '<div class="sp-step second" style="opacity:0.2;"></div>'}
+
+      <div class="sp-step first">
+        <div style="font-size:2rem;margin-bottom:2px;">${top1.icon}</div>
+        <div style="font-size:1.4rem;">👑 🥇</div>
+        <div style="font-weight:900;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top1.name}</div>
+        <div style="font-weight:900;font-size:1.3rem;color:#fef08a;">💎 ${top1.score}</div>
+        <div style="font-size:0.72rem;opacity:0.95;font-weight:700;">אלוף/ת היהלומים!</div>
       </div>
-    ` : '<div class="sp-step second" style="opacity:0.2;"></div>'}
 
-    <div class="sp-step first">
-      <div style="font-size:1.8rem;">👑 🥇</div>
-      <div style="font-weight:900;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top1.name}</div>
-      <div style="font-weight:900;font-size:1.3rem;color:#fef08a;">${top1.score}</div>
-      <div style="font-size:0.7rem;opacity:0.9;">כוכב/ת היום!</div>
-    </div>
+      ${top3 ? `
+        <div class="sp-step third">
+          <div style="font-size:1.4rem;margin-bottom:2px;">${top3.icon}</div>
+          <div style="font-size:1rem;">🥉</div>
+          <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top3.name}</div>
+          <div style="font-weight:900;font-size:1rem;color:#f8fafc;">💎 ${top3.score}</div>
+          <div style="font-size:0.7rem;opacity:0.8;">יהלומים</div>
+        </div>
+      ` : '<div class="sp-step third" style="opacity:0.2;"></div>'}
+    `;
 
-    ${top3 ? `
-      <div class="sp-step third">
-        <div style="font-size:1.2rem;">🥉</div>
-        <div style="font-weight:800;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:85px;">${top3.name}</div>
-        <div style="font-weight:900;font-size:1rem;color:#f8fafc;">${top3.score}</div>
-        <div style="font-size:0.7rem;opacity:0.8;">נקודות</div>
-      </div>
-    ` : '<div class="sp-step third" style="opacity:0.2;"></div>'}
-  `;
+    // Check top category achievers
+    const helpLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.help || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
+    const readyLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.ready || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
 
-  // Check top category achievers
-  const helpLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.help || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
-  const readyLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.ready || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
+    let catLeadersText = '';
+    if (helpLeader && helpLeader.cnt > 0) {
+      catLeadersText += `🤝 <b>אלופ/ת העזרה:</b> ${helpLeader.name} (${helpLeader.cnt} פעמים) &nbsp; `;
+    }
+    if (readyLeader && readyLeader.cnt > 0) {
+      catLeadersText += `🎒 <b>אלופ/ת המוכנות:</b> ${readyLeader.name} (${readyLeader.cnt} פעמים)`;
+    }
+    categoryLeadersEl.innerHTML = catLeadersText;
 
-  let catLeadersText = '';
-  if (helpLeader && helpLeader.cnt > 0) {
-    catLeadersText += `🤝 <b>אלופ/ת העזרה לחבר:</b> ${helpLeader.name} (${helpLeader.cnt} פעמים) &nbsp; `;
-  }
-  if (readyLeader && readyLeader.cnt > 0) {
-    catLeadersText += `🎒 <b>אלופ/ת המוכנות:</b> ${readyLeader.name} (${readyLeader.cnt} פעמים)`;
-  }
-  categoryLeadersEl.innerHTML = catLeadersText;
+    SoundFX.fanfare();
+    podiumOverlay.classList.remove('hidden');
+  });
 
-  SoundFX.fanfare();
-  podiumOverlay.classList.remove('hidden');
-});
+  body.querySelector('[data-act="close-podium"]').addEventListener('click', () => {
+    podiumOverlay.classList.add('hidden');
+  });
 
-body.querySelector('[data-act="close-podium"]').addEventListener('click', () => {
-  podiumOverlay.classList.add('hidden');
-});
-
-// Init
-populateClassSelect();
-if (activeTab === 'teams') renderTeamsBoard();
-else renderStudentsGrid();
+  // Init
+  populateClassSelect();
+  if (activeTab === 'teams') renderTeamsBoard();
+  else renderStudentsGrid();
 }
 
 const WIDGET_REGISTRY = {
@@ -1367,15 +1560,15 @@ render(body, state, saveState) {
 renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'teams');
 }
 },
-'student-points': {
-title: 'כוכבי הכיתה - ניקוד אישי',
-icon: '⭐',
-defaultW: 420,
-defaultH: 390,
-render(body, state, saveState) {
-renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'students');
-}
-},
+  'student-points': {
+    title: 'יהלומים - ניקוד אישי',
+    icon: '💎',
+    defaultW: 440,
+    defaultH: 420,
+    render(body, state, saveState) {
+      renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'students');
+    }
+  },
 'poll': {
 title: 'סקר והצבעה כיתתית (חי מהנייד)',
 icon: '📊',
