@@ -495,17 +495,16 @@ renderStudentsSidebar() {
   const currentClass = classLists.find(c => c.id === this.data.selectedClassId) || classLists[0];
   const students = (currentClass ? currentClass.students : []).filter(Boolean);
   const scores = this.data.studentScores || {};
-  const icons = this.data.studentIcons || {};
 
   sidebar.innerHTML = `
     <div class="sidebar-header">
       <div class="sidebar-header-top">
-        <div style="display:flex;align-items:center;gap:4px;">
+        <div style="display:flex;align-items:center;gap:5px;">
           <span style="font-size:1.15rem;">💎</span>
-          <span style="font-weight:800;font-size:0.82rem;color:var(--text-dark);">יהלומים</span>
+          <span style="font-weight:800;font-size:0.88rem;color:var(--text-dark);">ניקוד כיתתי</span>
         </div>
-        <div style="display:flex;gap:3px;align-items:center;">
-          <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף יהלום לכל תלמידי הכיתה בבת אחת">+כולם</button>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף נקודה לכל תלמידי הכיתה בבת אחת">+כולם</button>
           <button class="mini-icon-btn" data-act="sidebar-close" title="סגור סרגל">✕</button>
         </div>
       </div>
@@ -521,20 +520,19 @@ renderStudentsSidebar() {
     </div>
     <div class="sidebar-students-scroll">
       ${students.length === 0 ? `
-        <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:12px 4px;">
+        <div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:16px 8px;">
           אין תלמידים בכיתה זו
         </div>
       ` : students.map(name => {
         const sc = scores[name] || { daily: 0, total: 0 };
-        const iconKey = icons[name];
-        const iconHtml = (window.renderStudentIconHtml ? window.renderStudentIconHtml(iconKey, name) : (iconKey || '⭐'));
         return `
-          <div class="sidebar-student-item" data-student="${name}" title="${name} (לחץ להוספת יהלום)">
-            <div class="sidebar-avatar-wrapper">
-              <div class="sidebar-avatar">${iconHtml}</div>
-              <span class="sidebar-badge">💎 ${sc.daily}</span>
+          <div class="sidebar-student-row" data-student="${name}">
+            <span class="sidebar-student-name" title="${name}">${name}</span>
+            <div class="sidebar-actions-group">
+              <span class="sidebar-student-score" title="יהלומים יומיים">💎 ${sc.daily}</span>
+              <button class="sidebar-score-btn plus" data-student="${name}" data-action="plus" title="הוסף נקודה">+</button>
+              <button class="sidebar-score-btn minus" data-student="${name}" data-action="minus" title="הורד נקודה">-</button>
             </div>
-            <div class="sidebar-name">${name}</div>
           </div>
         `;
       }).join('')}
@@ -555,28 +553,39 @@ renderStudentsSidebar() {
   sidebar.querySelector('[data-act="sidebar-all"]')?.addEventListener('click', () => {
     window.AppStore.addDiamondsToAll(1, 'חיזוק כיתתי');
     SoundFX.bell();
-    this.showFloatingAward(sidebar, 'לכל הכיתה +1 💎');
+    this.showFloatingAward(sidebar, 'לכל הכיתה +1 💎', 'positive');
   });
 
-  sidebar.querySelectorAll('.sidebar-student-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const studentName = item.dataset.student;
+  sidebar.querySelectorAll('.sidebar-score-btn.plus').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const studentName = btn.dataset.student;
       window.AppStore.addDiamondsToStudent(studentName, 1, 'חיזוק מהיר');
       SoundFX.bell();
-      this.showFloatingAward(item, '+1 💎');
+      this.showFloatingAward(btn, '+1 💎', 'positive');
+    });
+  });
+
+  sidebar.querySelectorAll('.sidebar-score-btn.minus').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const studentName = btn.dataset.student;
+      window.AppStore.addDiamondsToStudent(studentName, -1, 'הפחתה');
+      SoundFX.pop();
+      this.showFloatingAward(btn, '-1 💎', 'negative');
     });
   });
 }
 
-showFloatingAward(targetEl, text) {
+showFloatingAward(targetEl, text, type = 'positive') {
   const floater = document.createElement('div');
-  floater.className = 'floating-award-pill';
+  floater.className = `floating-award-pill ${type}`;
   floater.textContent = text;
   document.body.appendChild(floater);
   const rect = targetEl.getBoundingClientRect();
   floater.style.left = `${rect.left + rect.width / 2}px`;
   floater.style.top = `${rect.top}px`;
-  setTimeout(() => floater.remove(), 1000);
+  setTimeout(() => floater.remove(), 900);
 }
 renderScreenTabs() {
 this.screensTabsEl.innerHTML = this.data.screens.map(scr => `
