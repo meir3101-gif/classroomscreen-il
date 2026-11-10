@@ -491,24 +491,40 @@ renderStudentsSidebar() {
   const sidebar = document.getElementById('students-sidebar');
   if (!sidebar || sidebar.classList.contains('hidden')) return;
 
-  const currentClass = this.data.classLists.find(c => c.id === this.data.selectedClassId) || this.data.classLists[0];
+  const classLists = this.data.classLists || [];
+  const currentClass = classLists.find(c => c.id === this.data.selectedClassId) || classLists[0];
   const students = (currentClass ? currentClass.students : []).filter(Boolean);
   const scores = this.data.studentScores || {};
   const icons = this.data.studentIcons || {};
 
   sidebar.innerHTML = `
     <div class="sidebar-header">
-      <div style="display:flex;align-items:center;gap:4px;">
-        <span style="font-size:1.15rem;">💎</span>
-        <span style="font-weight:800;font-size:0.82rem;color:var(--text-dark);">יהלומים</span>
+      <div class="sidebar-header-top">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:1.15rem;">💎</span>
+          <span style="font-weight:800;font-size:0.82rem;color:var(--text-dark);">יהלומים</span>
+        </div>
+        <div style="display:flex;gap:3px;align-items:center;">
+          <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף יהלום לכל תלמידי הכיתה בבת אחת">+כולם</button>
+          <button class="mini-icon-btn" data-act="sidebar-close" title="סגור סרגל">✕</button>
+        </div>
       </div>
-      <div style="display:flex;gap:3px;align-items:center;">
-        <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף יהלום לכל תלמידי הכיתה בבת אחת">+כולם</button>
-        <button class="mini-icon-btn" data-act="sidebar-close" title="סגור סרגל">✕</button>
-      </div>
+      ${classLists.length > 0 ? `
+        <div class="sidebar-class-picker-wrap">
+          <select class="sidebar-class-sel" title="בחר כיתה">
+            ${classLists.map(c => `
+              <option value="${c.id}" ${c.id === (currentClass ? currentClass.id : '') ? 'selected' : ''}>${c.name}</option>
+            `).join('')}
+          </select>
+        </div>
+      ` : ''}
     </div>
     <div class="sidebar-students-scroll">
-      ${students.map(name => {
+      ${students.length === 0 ? `
+        <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:12px 4px;">
+          אין תלמידים בכיתה זו
+        </div>
+      ` : students.map(name => {
         const sc = scores[name] || { daily: 0, total: 0 };
         const iconKey = icons[name];
         const iconHtml = (window.renderStudentIconHtml ? window.renderStudentIconHtml(iconKey, name) : (iconKey || '⭐'));
@@ -524,6 +540,13 @@ renderStudentsSidebar() {
       }).join('')}
     </div>
   `;
+
+  sidebar.querySelector('.sidebar-class-sel')?.addEventListener('change', (e) => {
+    this.data.selectedClassId = e.target.value;
+    this.saveState();
+    this.renderStudentsSidebar();
+    window.dispatchEvent(new CustomEvent('cs:class-changed', { detail: { classId: e.target.value } }));
+  });
 
   sidebar.querySelector('[data-act="sidebar-close"]')?.addEventListener('click', () => {
     this.toggleStudentsSidebar(false);

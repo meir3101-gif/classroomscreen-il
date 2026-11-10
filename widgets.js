@@ -1,76 +1,9 @@
-const SVG_FLAGS = {
-  'il': {
-    name: 'ישראל',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#fff"/><rect y="2.5" width="32" height="3" fill="#0038b8"/><rect y="16.5" width="32" height="3" fill="#0038b8"/><polygon points="16,6.5 12,13.5 20,13.5" fill="none" stroke="#0038b8" stroke-width="0.9"/><polygon points="16,15.5 12,8.5 20,8.5" fill="none" stroke="#0038b8" stroke-width="0.9"/></svg>`
-  },
-  'us': {
-    name: 'ארה"ב',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#b22234"/><rect y="1.7" width="32" height="1.7" fill="#fff"/><rect y="5.1" width="32" height="1.7" fill="#fff"/><rect y="8.5" width="32" height="1.7" fill="#fff"/><rect y="11.9" width="32" height="1.7" fill="#fff"/><rect y="15.3" width="32" height="1.7" fill="#fff"/><rect y="18.7" width="32" height="1.7" fill="#fff"/><rect width="13" height="11.9" fill="#3c3b6e"/><circle cx="3" cy="2.5" r="0.7" fill="#fff"/><circle cx="6.5" cy="2.5" r="0.7" fill="#fff"/><circle cx="10" cy="2.5" r="0.7" fill="#fff"/><circle cx="4.8" cy="5.5" r="0.7" fill="#fff"/><circle cx="8.2" cy="5.5" r="0.7" fill="#fff"/><circle cx="3" cy="8.5" r="0.7" fill="#fff"/><circle cx="6.5" cy="8.5" r="0.7" fill="#fff"/><circle cx="10" cy="8.5" r="0.7" fill="#fff"/></svg>`
-  },
-  'gb': {
-    name: 'בריטניה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#012169"/><path d="M0 0 L32 22 M32 0 L0 22" stroke="#fff" stroke-width="3.5"/><path d="M0 0 L32 22 M32 0 L0 22" stroke="#c8102e" stroke-width="1.8"/><path d="M16 0 V22 M0 11 H32" stroke="#fff" stroke-width="5.5"/><path d="M16 0 V22 M0 11 H32" stroke="#c8102e" stroke-width="3.2"/></svg>`
-  },
-  'fr': {
-    name: 'צרפת',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="10.7" height="22" fill="#002395"/><rect x="10.7" width="10.6" height="22" fill="#fff"/><rect x="21.3" width="10.7" height="22" fill="#ed2939"/></svg>`
-  },
-  'it': {
-    name: 'איטליה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="10.7" height="22" fill="#009246"/><rect x="10.7" width="10.6" height="22" fill="#fff"/><rect x="21.3" width="10.7" height="22" fill="#ce2b37"/></svg>`
-  },
-  'de': {
-    name: 'גרמניה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#000"/><rect y="7.3" width="32" height="7.3" fill="#dd0000"/><rect y="14.6" width="32" height="7.4" fill="#ffce00"/></svg>`
-  },
-  'br': {
-    name: 'ברזיל',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#009b3a"/><polygon points="16,2.5 29,11 16,19.5 3,11" fill="#fedf00"/><circle cx="16" cy="11" r="5" fill="#002776"/></svg>`
-  },
-  'jp': {
-    name: 'יפן',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#fff"/><circle cx="16" cy="11" r="5.5" fill="#bc002d"/></svg>`
-  },
-  'ca': {
-    name: 'קנדה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="8" height="22" fill="#ff0000"/><rect x="8" width="16" height="22" fill="#fff"/><rect x="24" width="8" height="22" fill="#ff0000"/><path d="M16 6 L17.5 9 L20 8.5 L18.5 11 L20.5 12 L18.5 13.5 L17 13 L17 16 L15 16 L15 13 L13.5 13.5 L11.5 12 L13.5 11 L12 8.5 L14.5 9 Z" fill="#ff0000"/></svg>`
-  },
-  'ar': {
-    name: 'ארגנטינה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#74acdf"/><rect y="7.3" width="32" height="7.3" fill="#fff"/><rect y="14.6" width="32" height="7.4" fill="#74acdf"/><circle cx="16" cy="11" r="2.2" fill="#f6b40e"/></svg>`
-  },
-  'es': {
-    name: 'ספרד',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="5.5" fill="#aa151b"/><rect y="5.5" width="32" height="11" fill="#f1bf00"/><rect y="16.5" width="32" height="5.5" fill="#aa151b"/><circle cx="8" cy="11" r="2" fill="#aa151b"/></svg>`
-  },
-  'ch': {
-    name: 'שוויץ',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#d52b1e"/><rect x="13.5" y="5.5" width="5" height="11" fill="#fff"/><rect x="10.5" y="8.5" width="11" height="5" fill="#fff"/></svg>`
-  },
-  'nl': {
-    name: 'הולנד',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="7.3" fill="#ae1c28"/><rect y="7.3" width="32" height="7.3" fill="#fff"/><rect y="14.6" width="32" height="7.4" fill="#21468b"/></svg>`
-  },
-  'gr': {
-    name: 'יוון',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#0d5eaf"/><rect y="2.5" width="32" height="2.5" fill="#fff"/><rect y="7.5" width="32" height="2.5" fill="#fff"/><rect y="12.5" width="32" height="2.5" fill="#fff"/><rect y="17.5" width="32" height="2.5" fill="#fff"/><rect width="11" height="11" fill="#0d5eaf"/><rect x="4.2" width="2.5" height="11" fill="#fff"/><rect y="4.2" width="11" height="2.5" fill="#fff"/></svg>`
-  },
-  'se': {
-    name: 'שוודיה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#006aa7"/><rect x="9" width="3.5" height="22" fill="#fecc00"/><rect y="9.2" width="32" height="3.5" fill="#fecc00"/></svg>`
-  },
-  'au': {
-    name: 'אוסטרליה',
-    svg: `<svg viewBox="0 0 32 22" width="30" height="20" style="border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.18);display:inline-block;vertical-align:middle;"><rect width="32" height="22" fill="#00008b"/><rect width="13" height="9" fill="#012169"/><path d="M0 0 L13 9 M13 0 L0 9" stroke="#fff" stroke-width="1.8"/><path d="M0 0 L13 9 M13 0 L0 9" stroke="#c8102e" stroke-width="0.9"/><path d="M6.5 0 V9 M0 4.5 H13" stroke="#fff" stroke-width="2.5"/><path d="M6.5 0 V9 M0 4.5 H13" stroke="#c8102e" stroke-width="1.3"/><circle cx="24" cy="5" r="0.9" fill="#fff"/><circle cx="21" cy="9" r="0.9" fill="#fff"/><circle cx="26" cy="11" r="0.9" fill="#fff"/><circle cx="23" cy="15" r="0.9" fill="#fff"/><circle cx="6.5" cy="16" r="1.6" fill="#fff"/></svg>`
-  }
-};
-
 const ICON_CATEGORIES = [
   {
     id: 'animals',
     name: 'בעלי חיים',
     icon: '🦁',
-    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','זברה'/*🦓*/,'🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
+    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','זברה','🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
   },
   {
     id: 'vehicles',
@@ -88,43 +21,34 @@ const ICON_CATEGORIES = [
     id: 'sports',
     name: 'ספורט וכדורים',
     icon: '⚽',
-    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🏓','🏸','🎳','🎯','🏆','🥇','🚴‍♂️','🛹','⛳','🥋','🎿','⛸️','🤾']
+    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🏓','🏸','🎳','🎯','🏆','🥇','🛹','⛳','🥋','🎿','⛸️']
   },
   {
-    id: 'flags',
-    name: 'דגלי מדינות',
-    icon: '🌍',
-    icons: ['flag:il','flag:us','flag:gb','flag:fr','flag:it','flag:de','flag:br','flag:jp','flag:ca','flag:ar','flag:es','flag:ch','flag:nl','flag:gr','flag:se','flag:au']
+    id: 'music',
+    name: 'כלי נגינה ומוזיקה',
+    icon: '🎵',
+    icons: ['🎸','🎻','🎹','🎺','🎷','🥁','🪘','🪕','🪗','📯','🪈','🔔','🎵','🎶','🎼','📻','🎤','🪇']
   },
   {
     id: 'gems',
     name: 'יהלומים וסמלים',
     icon: '💎',
-    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎵','🎸','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️','📚','🏆']
+    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️','📚']
   }
 ];
 
 const ALL_STUDENT_ICONS = ICON_CATEGORIES.flatMap(c => c.icons);
 
 function renderStudentIconHtml(icon, name = '') {
-  if (icon && icon.startsWith('flag:')) {
-    const key = icon.split(':')[1];
-    return SVG_FLAGS[key] ? SVG_FLAGS[key].svg : '🇮🇱';
-  }
-  if (icon) {
+  if (icon && !icon.startsWith('flag:')) {
     return `<span class="icon-glyph">${icon}</span>`;
   }
-  // Fallback hash by name
   let hash = 0;
   for (let i = 0; i < (name || '').length; i++) {
     hash = (hash << 5) - hash + name.charCodeAt(i);
     hash |= 0;
   }
   const fallback = ALL_STUDENT_ICONS[Math.abs(hash) % ALL_STUDENT_ICONS.length];
-  if (fallback.startsWith('flag:')) {
-    const k = fallback.split(':')[1];
-    return SVG_FLAGS[k] ? SVG_FLAGS[k].svg : '🇮🇱';
-  }
   return `<span class="icon-glyph">${fallback}</span>`;
 }
 window.renderStudentIconHtml = renderStudentIconHtml;
@@ -539,13 +463,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
   function renderIconGrid() {
     const cat = ICON_CATEGORIES.find(c => c.id === activeIconCategory) || ICON_CATEGORIES[0];
-    iconGrid.innerHTML = cat.icons.map(ic => {
-      const isFlag = ic.startsWith('flag:');
-      const inner = isFlag ? (SVG_FLAGS[ic.split(':')[1]]?.svg || '') : ic;
-      return `
-        <button class="sp-icon-pick-btn ${isFlag ? 'is-flag-btn' : ''}" data-icon="${ic}" title="${isFlag ? SVG_FLAGS[ic.split(':')[1]]?.name : ''}">${inner}</button>
-      `;
-    }).join('');
+    iconGrid.innerHTML = cat.icons.map(ic => `
+      <button class="sp-icon-pick-btn" data-icon="${ic}">${ic}</button>
+    `).join('');
 
     iconGrid.querySelectorAll('.sp-icon-pick-btn').forEach(btn => {
       btn.addEventListener('click', () => {
