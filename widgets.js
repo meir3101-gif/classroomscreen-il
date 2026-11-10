@@ -2,8 +2,8 @@ const WIDGET_REGISTRY = {
 'timer': {
 title: 'טיימר ספירה לאחור',
 icon: '⏳',
-defaultW: 320,
-defaultH: 250,
+defaultW: 330,
+defaultH: 260,
 render(body, state, saveState) {
 let totalSeconds = state.totalSeconds ?? 300;
 let remaining = state.remaining ?? totalSeconds;
@@ -11,24 +11,35 @@ let running = false;
 let interval = null;
 body.innerHTML = `
 <div class="timer-display-wrap">
-<div class="time-digits" data-el="digits">05:00</div>
-<div class="timer-presets">
-<button class="preset-chip" data-sec="60">דקה</button>
-<button class="preset-chip" data-sec="180">3 דק'</button>
-<button class="preset-chip" data-sec="300">5 דק'</button>
-<button class="preset-chip" data-sec="600">10 דק'</button>
-<button class="preset-chip" data-sec="900">15 דק'</button>
-</div>
-<div class="timer-controls">
-<button class="secondary-btn" data-act="minus30">-30ש'</button>
-<button class="primary-btn" data-act="toggle" style="min-width:90px">▶ הפעל</button>
-<button class="secondary-btn" data-act="reset">↺ איפוס</button>
-<button class="secondary-btn" data-act="plus60">+1ד'</button>
-</div>
+  <div class="timer-hero-card">
+    <div class="time-digits" data-el="digits">05:00</div>
+    <div class="timer-sublabel">ספירה לאחור</div>
+  </div>
+  <div class="timer-presets">
+    <button class="preset-chip ${totalSeconds === 60 ? 'active' : ''}" data-sec="60">דקה</button>
+    <button class="preset-chip ${totalSeconds === 180 ? 'active' : ''}" data-sec="180">3 דק'</button>
+    <button class="preset-chip ${totalSeconds === 300 ? 'active' : ''}" data-sec="300">5 דק'</button>
+    <button class="preset-chip ${totalSeconds === 600 ? 'active' : ''}" data-sec="600">10 דק'</button>
+    <button class="preset-chip ${totalSeconds === 900 ? 'active' : ''}" data-sec="900">15 דק'</button>
+  </div>
+  <div class="timer-controls">
+    <button class="timer-action-btn" data-act="minus30" title="הורד 30 שניות">-30ש'</button>
+    <button class="timer-play-btn" data-act="toggle">
+      <span class="btn-icon">▶</span>
+      <span class="btn-text">הפעל</span>
+    </button>
+    <button class="timer-action-btn" data-act="reset" title="אפס טיימר">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>איפוס</span>
+    </button>
+    <button class="timer-action-btn" data-act="plus60" title="הוסף דקה">+1ד'</button>
+  </div>
 </div>
 `;
 const digitsEl = body.querySelector('[data-el="digits"]');
 const toggleBtn = body.querySelector('[data-act="toggle"]');
+const btnIcon = toggleBtn.querySelector('.btn-icon');
+const btnText = toggleBtn.querySelector('.btn-text');
 function formatTime(sec) {
 const m = Math.floor(sec / 60);
 const s = sec % 60;
@@ -37,7 +48,9 @@ return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 function updateUI() {
 digitsEl.textContent = formatTime(remaining);
 digitsEl.style.color = remaining <= 10 && remaining > 0 ? '#ef4444' : '';
-toggleBtn.textContent = running ? '⏸ השהה' : '▶ הפעל';
+toggleBtn.classList.toggle('running', running);
+btnIcon.textContent = running ? '⏸' : '▶';
+btnText.textContent = running ? 'השהה' : 'הפעל';
 }
 function stopTimer() {
 running = false;
@@ -48,6 +61,8 @@ updateUI();
 body.querySelectorAll('.preset-chip').forEach(btn => {
 btn.addEventListener('click', () => {
 stopTimer();
+body.querySelectorAll('.preset-chip').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
 totalSeconds = parseInt(btn.dataset.sec, 10);
 remaining = totalSeconds;
 state.totalSeconds = totalSeconds;
@@ -96,50 +111,70 @@ return () => stopTimer();
 'visual-timer': {
 title: 'טיימר ויזואלי',
 icon: '⭕',
-defaultW: 290,
-defaultH: 310,
+defaultW: 300,
+defaultH: 330,
 render(body, state, saveState) {
 let total = state.total ?? 300;
 let rem = state.rem ?? total;
 let running = false;
 let timerId = null;
-const radius = 70;
+const radius = 68;
 const circumference = 2 * Math.PI * radius;
 body.innerHTML = `
 <div class="timer-display-wrap">
-<div class="visual-timer-svg-wrap">
-<svg class="visual-timer-svg" viewBox="0 0 160 160">
-<circle cx="80" cy="80" r="${radius}" fill="none" stroke="rgba(148,163,184,0.25)" stroke-width="14" />
-<circle data-el="arc" cx="80" cy="80" r="${radius}" fill="none" stroke="#10b981" stroke-width="14"
-stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="0" />
-</svg>
-<div class="vt-center-text" data-el="txt">05:00</div>
-</div>
-<div class="timer-presets">
-<button class="preset-chip" data-m="2">2 דק'</button>
-<button class="preset-chip" data-m="5">5 דק'</button>
-<button class="preset-chip" data-m="10">10 דק'</button>
-<button class="preset-chip" data-m="20">20 דק'</button>
-</div>
-<div class="timer-controls">
-<button class="primary-btn" data-act="play">▶ הפעל</button>
-<button class="secondary-btn" data-act="reset">↺ איפוס</button>
-</div>
+  <div class="visual-timer-svg-wrap">
+    <svg class="visual-timer-svg" viewBox="0 0 160 160">
+      <defs>
+        <linearGradient id="vtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4f46e5" />
+          <stop offset="100%" stop-color="#06b6d4" />
+        </linearGradient>
+      </defs>
+      <circle cx="80" cy="80" r="${radius}" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="12" />
+      <circle data-el="arc" cx="80" cy="80" r="${radius}" fill="none" stroke="url(#vtGrad)" stroke-width="12"
+        stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="0" />
+    </svg>
+    <div class="vt-center-content">
+      <div class="vt-center-text" data-el="txt">05:00</div>
+      <div class="vt-sublabel">זמן נותר</div>
+    </div>
+  </div>
+  <div class="timer-presets">
+    <button class="preset-chip ${total === 120 ? 'active' : ''}" data-m="2">2 דק'</button>
+    <button class="preset-chip ${total === 300 ? 'active' : ''}" data-m="5">5 דק'</button>
+    <button class="preset-chip ${total === 600 ? 'active' : ''}" data-m="10">10 דק'</button>
+    <button class="preset-chip ${total === 900 ? 'active' : ''}" data-m="15">15 דק'</button>
+    <button class="preset-chip ${total === 1200 ? 'active' : ''}" data-m="20">20 דק'</button>
+  </div>
+  <div class="timer-controls">
+    <button class="timer-play-btn" data-act="play">
+      <span class="btn-icon">▶</span>
+      <span class="btn-text">הפעל</span>
+    </button>
+    <button class="timer-action-btn" data-act="reset">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>איפוס</span>
+    </button>
+  </div>
 </div>
 `;
 const arc = body.querySelector('[data-el="arc"]');
 const txt = body.querySelector('[data-el="txt"]');
 const playBtn = body.querySelector('[data-act="play"]');
+const btnIcon = playBtn.querySelector('.btn-icon');
+const btnText = playBtn.querySelector('.btn-text');
 function renderRing() {
 const m = Math.floor(rem / 60);
 const s = rem % 60;
 txt.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 const ratio = total > 0 ? rem / total : 0;
 arc.style.strokeDashoffset = `${circumference * (1 - ratio)}`;
-if (ratio > 0.5) arc.style.stroke = '#10b981';
-else if (ratio > 0.2) arc.style.stroke = '#f59e0b';
+if (ratio > 0.4) arc.style.stroke = 'url(#vtGrad)';
+else if (ratio > 0.15) arc.style.stroke = '#f59e0b';
 else arc.style.stroke = '#ef4444';
-playBtn.textContent = running ? '⏸ השהה' : '▶ הפעל';
+playBtn.classList.toggle('running', running);
+btnIcon.textContent = running ? '⏸' : '▶';
+btnText.textContent = running ? 'השהה' : 'הפעל';
 }
 function stop() {
 running = false;
@@ -150,6 +185,8 @@ renderRing();
 body.querySelectorAll('.preset-chip').forEach(b => {
 b.addEventListener('click', () => {
 stop();
+body.querySelectorAll('.preset-chip').forEach(x => x.classList.remove('active'));
+b.classList.add('active');
 total = parseInt(b.dataset.m, 10) * 60;
 rem = total;
 state.total = total;
@@ -188,8 +225,8 @@ return () => stop();
 'stopwatch': {
 title: 'שעון עצר (סטופר)',
 icon: '⏱️',
-defaultW: 310,
-defaultH: 260,
+defaultW: 320,
+defaultH: 270,
 render(body) {
 let elapsedMs = 0;
 let running = false;
@@ -198,17 +235,31 @@ let rafId = null;
 let laps = [];
 body.innerHTML = `
 <div class="timer-display-wrap">
-<div class="time-digits" data-el="sw-digits" style="font-size:2.7rem">00:00.0</div>
-<div class="timer-controls">
-<button class="primary-btn" data-act="start">▶ התחל</button>
-<button class="secondary-btn" data-act="lap">🚩 הקפה</button>
-<button class="secondary-btn" data-act="reset">↺ איפוס</button>
-</div>
-<div data-el="laps" style="width:100%;max-height:85px;overflow-y:auto;font-size:0.82rem;margin-top:4px;"></div>
+  <div class="timer-hero-card">
+    <div class="time-digits" data-el="sw-digits" style="font-size:3.1rem">00:00.0</div>
+    <div class="timer-sublabel">שעון עצר</div>
+  </div>
+  <div class="timer-controls">
+    <button class="timer-play-btn" data-act="start">
+      <span class="btn-icon">▶</span>
+      <span class="btn-text">התחל</span>
+    </button>
+    <button class="timer-action-btn" data-act="lap">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <span>הקפה</span>
+    </button>
+    <button class="timer-action-btn" data-act="reset">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>איפוס</span>
+    </button>
+  </div>
+  <div data-el="laps" class="sw-laps-box"></div>
 </div>
 `;
 const digits = body.querySelector('[data-el="sw-digits"]');
 const startBtn = body.querySelector('[data-act="start"]');
+const btnIcon = startBtn.querySelector('.btn-icon');
+const btnText = startBtn.querySelector('.btn-text');
 const lapsBox = body.querySelector('[data-el="laps"]');
 function formatMs(ms) {
 const totalSec = Math.floor(ms / 1000);
@@ -228,18 +279,22 @@ startBtn.addEventListener('click', () => {
 if (running) {
 running = false;
 cancelAnimationFrame(rafId);
-startBtn.textContent = '▶ המשך';
+startBtn.classList.remove('running');
+btnIcon.textContent = '▶';
+btnText.textContent = 'המשך';
 } else {
 running = true;
 lastTick = performance.now();
-startBtn.textContent = '⏸ עצור';
+startBtn.classList.add('running');
+btnIcon.textContent = '⏸';
+btnText.textContent = 'עצור';
 rafId = requestAnimationFrame(loop);
 }
 });
 body.querySelector('[data-act="lap"]').addEventListener('click', () => {
 if (elapsedMs === 0) return;
 laps.unshift(`הקפה ${laps.length + 1}: ${formatMs(elapsedMs)}`);
-lapsBox.innerHTML = laps.map(l => `<div style="padding:2px 6px;border-bottom:1px solid rgba(0,0,0,0.06)">${l}</div>`).join('');
+lapsBox.innerHTML = laps.map(l => `<div class="sw-lap-row">${l}</div>`).join('');
 });
 body.querySelector('[data-act="reset"]').addEventListener('click', () => {
 running = false;
@@ -247,7 +302,9 @@ cancelAnimationFrame(rafId);
 elapsedMs = 0;
 laps = [];
 digits.textContent = '00:00.0';
-startBtn.textContent = '▶ התחל';
+startBtn.classList.remove('running');
+btnIcon.textContent = '▶';
+btnText.textContent = 'התחל';
 lapsBox.innerHTML = '';
 });
 return () => cancelAnimationFrame(rafId);
@@ -346,8 +403,8 @@ return () => clearInterval(id);
 'traffic-light': {
 title: 'רמזור כיתתי',
 icon: '🚦',
-defaultW: 210,
-defaultH: 340,
+defaultW: 220,
+defaultH: 350,
 render(body, state, saveState) {
 let activeLight = state.activeLight ?? 'green';
 const labels = {
@@ -356,13 +413,19 @@ yellow: '⚠️ התארגנות / שיח שקט',
 green: '✅ עבודה פעילה בכיתה'
 };
 body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;justify-content:center;">
-<div class="traffic-light-container">
-<div class="tl-bulb red ${activeLight === 'red' ? 'active' : ''}" data-color="red" title="אדום - עצור והקשב"></div>
-<div class="tl-bulb yellow ${activeLight === 'yellow' ? 'active' : ''}" data-color="yellow" title="צהוב - התארגנות"></div>
-<div class="tl-bulb green ${activeLight === 'green' ? 'active' : ''}" data-color="green" title="ירוק - עבודה פעילה"></div>
-</div>
-<div class="tl-caption" data-el="caption">${labels[activeLight] || ''}</div>
+<div class="traffic-light-layout">
+  <div class="traffic-light-casing">
+    <div class="tl-bulb red ${activeLight === 'red' ? 'active' : ''}" data-color="red" title="אדום - עצור והקשב">
+      <div class="tl-glare"></div>
+    </div>
+    <div class="tl-bulb yellow ${activeLight === 'yellow' ? 'active' : ''}" data-color="yellow" title="צהוב - התארגנות">
+      <div class="tl-glare"></div>
+    </div>
+    <div class="tl-bulb green ${activeLight === 'green' ? 'active' : ''}" data-color="green" title="ירוק - עבודה פעילה">
+      <div class="tl-glare"></div>
+    </div>
+  </div>
+  <div class="tl-caption-capsule" data-el="caption">${labels[activeLight] || 'בחר אור ברמזור'}</div>
 </div>
 `;
 const caption = body.querySelector('[data-el="caption"]');
@@ -382,8 +445,8 @@ caption.textContent = labels[activeLight] || 'בחר אור ברמזור';
 'work-symbols': {
 title: 'סמלי עבודה',
 icon: '🤫',
-defaultW: 310,
-defaultH: 270,
+defaultW: 320,
+defaultH: 280,
 render(body, state, saveState) {
 const modes = {
 silence: { icon: '🤫', title: 'דממה מוחלטת', sub: 'עובדים לבד בשקט מוחלט' },
@@ -394,19 +457,19 @@ together: { icon: '👥', title: 'עבודה בקבוצות', sub: 'שיתוף �
 let current = state.mode ?? 'silence';
 body.innerHTML = `
 <div class="work-symbols-wrap">
-<div class="ws-active-display">
-<div class="ws-big-icon" data-el="icon"></div>
-<div class="ws-big-title" data-el="title"></div>
-<div class="ws-big-sub" data-el="sub"></div>
-</div>
-<div class="ws-selector">
-${Object.entries(modes).map(([k, v]) => `
-<button class="ws-btn ${k === current ? 'active' : ''}" data-mode="${k}">
-<span style="font-size:1.3rem">${v.icon}</span>
-<span>${v.title.split(' ')[0]}</span>
-</button>
-`).join('')}
-</div>
+  <div class="ws-active-display">
+    <div class="ws-big-icon" data-el="icon"></div>
+    <div class="ws-big-title" data-el="title"></div>
+    <div class="ws-big-sub" data-el="sub"></div>
+  </div>
+  <div class="ws-selector">
+    ${Object.entries(modes).map(([k, v]) => `
+    <button class="ws-btn ${k === current ? 'active' : ''}" data-mode="${k}">
+      <span class="ws-btn-icon">${v.icon}</span>
+      <span class="ws-btn-text">${v.title.split(' ')[0]}</span>
+    </button>
+    `).join('')}
+  </div>
 </div>
 `;
 function updateView() {
