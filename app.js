@@ -69,6 +69,8 @@ this.user = null;
 this.googleClientId = '';
 this.syncTimeout = null;
 this.loadLocalState();
+this.checkDailyReset();
+setInterval(() => this.checkDailyReset(), 60000);
 this.initDOM();
 this.renderScreenTabs();
 this.applyCurrentScreen();
@@ -79,6 +81,9 @@ getDefaultWorkspaceData() {
 return {
 activeScreenId: 'scr-1',
 selectedClassId: 'cls-1',
+studentPhotos: {},
+classGoals: {},
+lastDailyResetDate: new Date().toLocaleDateString('sv-SE'),
 classLists: [
 { id: 'cls-1', name: "כיתה ה'1", students: [...DEFAULT_STUDENTS] },
 { id: 'cls-2', name: "כיתה ו'2", students: ['אדם', 'אביב', 'אלה', 'בן', 'גלי', 'דור', 'הילה', 'זוהר', 'חן', 'טל', 'יובל', 'כרמל'] }
@@ -461,7 +466,22 @@ setStudentIcons: (icons) => {
   this.saveState();
   window.dispatchEvent(new CustomEvent('cs:icons-updated', { detail: icons }));
 },
-addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק') => {
+getStudentPhotos: () => this.data.studentPhotos || {},
+setStudentPhotos: (photos) => {
+  this.data.studentPhotos = photos;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:photos-updated', { detail: photos }));
+  this.renderStudentsSidebar();
+},
+getClassGoals: () => this.data.classGoals || {},
+setClassGoals: (goals) => {
+  this.data.classGoals = goals;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:goals-updated', { detail: goals }));
+},
+checkDailyReset: () => this.checkDailyReset(),
+triggerStudentAwardEffect: (name, pts, sourceEl) => this.triggerStudentAwardEffect(name, pts, sourceEl),
+addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק', sourceEl = null) => {
   if (!this.data.studentScores) this.data.studentScores = {};
   const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
   sc.daily = Math.max(0, sc.daily + pts);
@@ -472,8 +492,11 @@ addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק') => {
   this.saveState();
   window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
   this.renderStudentsSidebar();
+  if (pts > 0) {
+    this.triggerStudentAwardEffect(name, pts, sourceEl);
+  }
 },
-addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי') => {
+addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי', sourceEl = null) => {
   if (!this.data.studentScores) this.data.studentScores = {};
   const currentClass = this.data.classLists.find(c => c.id === this.data.selectedClassId) || this.data.classLists[0];
   const students = (currentClass ? currentClass.students : []).filter(Boolean);
@@ -488,6 +511,11 @@ addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי') => {
   this.saveState();
   window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
   this.renderStudentsSidebar();
+  if (pts > 0) {
+    students.forEach(name => {
+      this.triggerStudentAwardEffect(name, pts, sourceEl);
+    });
+  }
 },
 toggleStudentsSidebar: (show) => {
   this.toggleStudentsSidebar(show);
@@ -495,6 +523,29 @@ toggleStudentsSidebar: (show) => {
 };
 this.initBackgroundModalEvents();
 this.initStudentModalEvents();
+}
+
+checkDailyReset() {
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  if (!this.data.lastDailyResetDate) {
+    this.data.lastDailyResetDate = todayStr;
+    this.saveState();
+    return;
+  }
+  if (this.data.lastDailyResetDate !== todayStr) {
+    // 12:00 Midnight has passed! Reset daily points to 0, keep total intact
+    if (this.data.studentScores && typeof this.data.studentScores === 'object') {
+      Object.keys(this.data.studentScores).forEach(name => {
+        if (this.data.studentScores[name]) {
+          this.data.studentScores[name].daily = 0;
+        }
+      });
+    }
+    this.data.lastDailyResetDate = todayStr;
+    this.saveState();
+    window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
+    this.renderStudentsSidebar();
+  }
 }
 
 toggleStudentsSidebar(forceState) {
@@ -517,6 +568,8 @@ renderStudentsSidebar() {
   const currentClass = classLists.find(c => c.id === this.data.selectedClassId) || classLists[0];
   const students = (currentClass ? currentClass.students : []).filter(Boolean);
   const scores = this.data.studentScores || {};
+  const photos = this.data.studentPhotos || {};
+  const icons = this.data.studentIcons || {};
 
   sidebar.innerHTML = `
     <div class="sidebar-header">
@@ -547,8 +600,15 @@ renderStudentsSidebar() {
         </div>
       ` : students.map(name => {
         const sc = scores[name] || { daily: 0, total: 0 };
+        const photo = photos[name];
+        const iconHtml = photo 
+          ? `<img src="${photo}" alt="${name}" class="sidebar-student-photo" />`
+          : `<span class="sidebar-student-icon">${window.renderStudentIconHtml ? window.renderStudentIconHtml(icons[name], name) : '⭐'}</span>`;
         return `
           <div class="sidebar-student-row" data-student="${name}">
+            <div class="sidebar-student-avatar-wrap">
+              ${iconHtml}
+            </div>
             <span class="sidebar-student-name" title="${name}">${name}</span>
             <div class="sidebar-actions-group">
               <span class="sidebar-student-score" title="יהלומים יומיים">💎 ${sc.daily}</span>
@@ -572,8 +632,8 @@ renderStudentsSidebar() {
     this.toggleStudentsSidebar(false);
   });
 
-  sidebar.querySelector('[data-act="sidebar-all"]')?.addEventListener('click', () => {
-    window.AppStore.addDiamondsToAll(1, 'חיזוק כיתתי');
+  sidebar.querySelector('[data-act="sidebar-all"]')?.addEventListener('click', (e) => {
+    window.AppStore.addDiamondsToAll(1, 'חיזוק כיתתי', e.currentTarget);
     SoundFX.bell();
     this.showFloatingAward(sidebar, 'לכל הכיתה +1 💎', 'positive');
   });
@@ -582,9 +642,8 @@ renderStudentsSidebar() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const studentName = btn.dataset.student;
-      window.AppStore.addDiamondsToStudent(studentName, 1, 'חיזוק מהיר');
+      window.AppStore.addDiamondsToStudent(studentName, 1, 'חיזוק מהיר', btn);
       SoundFX.bell();
-      this.showFloatingAward(btn, '+1 💎', 'positive');
     });
   });
 
@@ -592,11 +651,68 @@ renderStudentsSidebar() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const studentName = btn.dataset.student;
+      // Subtract point - strictly without animation as requested: "בהורדה בלי אפקט"
       window.AppStore.addDiamondsToStudent(studentName, -1, 'הפחתה');
       SoundFX.pop();
-      this.showFloatingAward(btn, '-1 💎', 'negative');
     });
   });
+}
+
+triggerStudentAwardEffect(name, pts = 1, sourceEl = null) {
+  if (pts <= 0) return; // user requested: "בהורדה בלי אפקט"
+
+  // 1. Pop & zoom the student's avatar image/card
+  const selectors = [
+    `.sp-student-bubble[data-student="${CSS.escape(name)}"] .sp-bubble-avatar`,
+    `.sidebar-student-row[data-student="${CSS.escape(name)}"] .sidebar-student-avatar-wrap`,
+    `.sp-student-bubble[data-student="${CSS.escape(name)}"]`
+  ];
+  const targets = document.querySelectorAll(selectors.join(','));
+  targets.forEach(el => {
+    el.classList.remove('sp-pop-zoom-active');
+    void el.offsetWidth; // trigger reflow
+    el.classList.add('sp-pop-zoom-active');
+    setTimeout(() => el.classList.remove('sp-pop-zoom-active'), 800);
+  });
+
+  // 2. Floating badge with +X 💎
+  const origin = sourceEl || targets[0];
+  if (origin) {
+    this.showFloatingAward(origin, `+${pts} 💎`, 'positive');
+  }
+
+  // 3. Flying diamonds particle burst
+  this.spawnFlyingDiamonds(origin || document.body, pts);
+}
+
+spawnFlyingDiamonds(targetEl, count = 1) {
+  if (!targetEl) return;
+  const rect = targetEl.getBoundingClientRect();
+  const startX = rect.left + rect.width / 2;
+  const startY = rect.top + rect.height / 2;
+  const numDiamonds = Math.min(Math.max(count * 3, 5), 18);
+
+  for (let i = 0; i < numDiamonds; i++) {
+    const d = document.createElement('div');
+    d.className = 'flying-diamond-particle';
+    d.textContent = '💎';
+    d.style.left = `${startX}px`;
+    d.style.top = `${startY}px`;
+    
+    // Random trajectory flying towards screen
+    const angle = (Math.PI * 2 * i) / numDiamonds + (Math.random() - 0.5) * 0.4;
+    const distance = 80 + Math.random() * 150;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance - 50;
+    const rot = Math.round((Math.random() - 0.5) * 360);
+    
+    d.style.setProperty('--tx', `${tx}px`);
+    d.style.setProperty('--ty', `${ty}px`);
+    d.style.setProperty('--rot', `${rot}deg`);
+    d.style.animationDelay = `${i * 30}ms`;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 1200);
+  }
 }
 
 showFloatingAward(targetEl, text, type = 'positive') {

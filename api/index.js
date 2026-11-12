@@ -304,7 +304,13 @@ function sanitizeWorkspace(body) {
     activeScreenId: body.activeScreenId ?? null,
     selectedClassId: body.selectedClassId ?? null,
     classLists: Array.isArray(body.classLists) ? body.classLists : [],
-    screens: body.screens
+    screens: body.screens,
+    weeklySchedule: (body.weeklySchedule && typeof body.weeklySchedule === 'object') ? body.weeklySchedule : undefined,
+    studentScores: (body.studentScores && typeof body.studentScores === 'object') ? body.studentScores : undefined,
+    studentIcons: (body.studentIcons && typeof body.studentIcons === 'object') ? body.studentIcons : undefined,
+    studentPhotos: (body.studentPhotos && typeof body.studentPhotos === 'object') ? body.studentPhotos : undefined,
+    classGoals: (body.classGoals && typeof body.classGoals === 'object') ? body.classGoals : undefined,
+    lastDailyResetDate: typeof body.lastDailyResetDate === 'string' ? body.lastDailyResetDate : undefined
   };
 }
 

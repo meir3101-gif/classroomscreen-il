@@ -53,6 +53,169 @@ function renderStudentIconHtml(icon, name = '') {
 }
 window.renderStudentIconHtml = renderStudentIconHtml;
 
+function renderStudentAvatarHtml(name, size = 58) {
+  const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+  const photo = photos[name];
+  if (photo) {
+    return `<div class="student-avatar-circle" style="width:${size}px;height:${size}px;"><img src="${photo}" alt="${name}" class="student-avatar-img" /></div>`;
+  }
+  const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+  const icon = icons[name] || '';
+  const iconHtml = renderStudentIconHtml(icon, name);
+  return `<div class="student-avatar-circle icon-mode" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.52)}px;">${iconHtml}</div>`;
+}
+window.renderStudentAvatarHtml = renderStudentAvatarHtml;
+
+function startConfettiAnimation(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const confettiPieces = [];
+  const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#38bdf8', '#fef08a'];
+
+  for (let i = 0; i < 90; i++) {
+    confettiPieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      w: 8 + Math.random() * 8,
+      h: 6 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vy: 2 + Math.random() * 4,
+      vx: (Math.random() - 0.5) * 3,
+      rot: Math.random() * 360,
+      vrot: (Math.random() - 0.5) * 8
+    });
+  }
+
+  const render = () => {
+    if (!document.getElementById(canvasId)) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiPieces.forEach(p => {
+      p.y += p.vy;
+      p.x += p.vx;
+      p.rot += p.vrot;
+      if (p.y > canvas.height) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    requestAnimationFrame(render);
+  };
+  render();
+}
+
+function openGrandPodium(top1, top2, top3, categoryLeadersHtml = '') {
+  let overlay = document.getElementById('grand-podium-fullscreen');
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement('div');
+  overlay.id = 'grand-podium-fullscreen';
+  overlay.className = 'grand-podium-overlay';
+
+  function renderWinnerAvatar(student, size) {
+    if (!student) return '';
+    const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+    const photo = photos[student.name];
+    if (photo) {
+      return `<div class="grand-podium-photo-circle" style="width:${size}px;height:${size}px;"><img src="${photo}" alt="${student.name}" /></div>`;
+    }
+    const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+    const icon = icons[student.name] || '';
+    const glyph = window.renderStudentIconHtml ? window.renderStudentIconHtml(icon, student.name) : '⭐';
+    return `<div class="grand-podium-photo-circle icon-mode" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.52)}px;">${glyph}</div>`;
+  }
+
+  overlay.innerHTML = `
+    <canvas id="grand-podium-confetti" class="grand-confetti-canvas"></canvas>
+    <div class="grand-podium-content">
+      <div class="grand-podium-topbar">
+        <button class="grand-podium-close-btn" data-act="close-grand-podium">✕ חזור למסך הכיתה</button>
+      </div>
+      <div class="grand-podium-header">
+        <h1 class="grand-podium-title">🎉 מצעד אלופי הכיתה! 💎</h1>
+        <p class="grand-podium-subtitle">מצטייני היום שצברו הכי הרבה יהלומים בכיתה</p>
+      </div>
+
+      <div class="grand-podium-stage">
+        ${top2 ? `
+          <div class="grand-podium-col second">
+            <div class="grand-winner-header">
+              <span class="grand-medal">🥈</span>
+              ${renderWinnerAvatar(top2, 90)}
+              <div class="grand-winner-name">${top2.name}</div>
+            </div>
+            <div class="grand-pedestal silver">
+              <div class="grand-rank-badge">2</div>
+              <div class="grand-score-badge">💎 ${top2.score}</div>
+              <div class="grand-score-sub">יהלומים היום</div>
+            </div>
+          </div>
+        ` : '<div class="grand-podium-col second empty"></div>'}
+
+        <div class="grand-podium-col first">
+          <div class="grand-winner-header">
+            <div class="grand-crown">👑</div>
+            <span class="grand-medal first">🥇</span>
+            ${renderWinnerAvatar(top1, 116)}
+            <div class="grand-winner-name first">${top1.name}</div>
+          </div>
+          <div class="grand-pedestal gold">
+            <div class="grand-rank-badge first">1</div>
+            <div class="grand-score-badge first">💎 ${top1.score}</div>
+            <div class="grand-score-sub first">אלוף/ת היהלומים! 🏆</div>
+          </div>
+        </div>
+
+        ${top3 ? `
+          <div class="grand-podium-col third">
+            <div class="grand-winner-header">
+              <span class="grand-medal">🥉</span>
+              ${renderWinnerAvatar(top3, 90)}
+              <div class="grand-winner-name">${top3.name}</div>
+            </div>
+            <div class="grand-pedestal bronze">
+              <div class="grand-rank-badge">3</div>
+              <div class="grand-score-badge">💎 ${top3.score}</div>
+              <div class="grand-score-sub">יהלומים היום</div>
+            </div>
+          </div>
+        ` : '<div class="grand-podium-col third empty"></div>'}
+      </div>
+
+      ${categoryLeadersHtml ? `
+        <div class="grand-category-leaders">
+          ${categoryLeadersHtml}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  SoundFX.fanfare();
+  startConfettiAnimation('grand-podium-confetti');
+
+  const closeFn = () => {
+    overlay.remove();
+    document.removeEventListener('keydown', keyHandler);
+  };
+  const keyHandler = (e) => {
+    if (e.key === 'Escape') closeFn();
+  };
+  document.addEventListener('keydown', keyHandler);
+
+  overlay.querySelector('[data-act="close-grand-podium"]').addEventListener('click', closeFn);
+}
+window.openGrandPodium = openGrandPodium;
+
 const DEFAULT_WEEKLY_SCHEDULE = {
   0: [
     { time: '08:00', num: '1', subject: 'תפילת בוקר ומפגש', teacher: 'מחנך', topic: '', done: false },
@@ -111,6 +274,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   let selectedStudentForAward = null;
   let selectedStudentForIcon = null;
   let activeIconCategory = 'animals';
+  let targetStudentForUpload = null;
 
   const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
   let teams = state.teams ?? [
@@ -122,9 +286,29 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   let studentScores = window.AppStore.getStudentScores ? window.AppStore.getStudentScores() : (state.studentScores ?? {});
   // Student avatar icons map: { [studentName]: string }
   let studentIcons = window.AppStore.getStudentIcons ? window.AppStore.getStudentIcons() : (state.studentIcons ?? {});
+  // Student photos map: { [studentName]: base64DataUrl }
+  let studentPhotos = window.AppStore.getStudentPhotos ? window.AppStore.getStudentPhotos() : (state.studentPhotos ?? {});
+  // Class goals map: { [classId]: { target: number, prize: string, teamTarget: number, teamPrize: string } }
+  let classGoals = window.AppStore.getClassGoals ? window.AppStore.getClassGoals() : (state.classGoals ?? {});
 
   function getStudentIcon(name) {
     return studentIcons[name] || '';
+  }
+
+  function getStudentPhoto(name) {
+    return studentPhotos[name] || '';
+  }
+
+  function getCurGoal() {
+    if (!classGoals[selectedClassId]) {
+      classGoals[selectedClassId] = {
+        target: 100,
+        prize: '🍕 מסיבת פיצה כיתתית',
+        teamTarget: 25,
+        teamPrize: '🏆 גביע השבוע'
+      };
+    }
+    return classGoals[selectedClassId];
   }
 
   const BEHAVIORS = [
@@ -141,6 +325,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   ];
 
   body.innerHTML = `
+  <input type="file" accept="image/*" data-el="sp-photo-file-input" style="display:none;" />
   <div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
     <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
       <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
@@ -148,7 +333,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     </div>
 
     <!-- 1. TEAMS VIEW -->
-    <div data-el="teams-view" class="${activeTab === 'teams' ? '' : 'hidden'}" style="display:flex;flex-direction:column;height:100%;gap:10px;">
+    <div data-el="teams-view" class="${activeTab === 'teams' ? '' : 'hidden'}" style="display:flex;flex-direction:column;height:100%;gap:8px;">
+      <div data-el="team-goal-banner" class="team-goal-banner"></div>
       <div class="scoreboard-teams" data-el="teams-container"></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:auto;">
         <button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
@@ -166,6 +352,10 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           <button class="sp-mode-pill ${scoreMode === 'total' ? 'active' : ''}" data-mode="total" title="הצג סך כל היהלומים המצטבר">מצטבר</button>
         </div>
       </div>
+
+      <!-- Class Goal Progress Banner -->
+      <div data-el="class-goal-banner" class="class-goal-banner"></div>
+
       <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-wrap:wrap;gap:4px;">
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופים</button>
@@ -183,14 +373,16 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div data-el="award-drawer" class="sp-drawer hidden">
         <div class="sp-drawer-header">
           <div style="display:flex;align-items:center;gap:8px;">
-            <div data-el="drawer-avatar" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#f0f9ff;"></div>
+            <div data-el="drawer-avatar" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#f0f9ff;border:2px solid #bae6fd;"></div>
             <div>
               <div data-el="drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);"></div>
               <div style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק להענקת יהלומים</div>
             </div>
           </div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <button class="small-btn" data-act="open-icon-from-drawer" style="font-size:0.75rem;padding:3px 8px;">🎨 החלף סמל</button>
+            <button class="small-btn" data-act="upload-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;" title="העלה תמונה מהמחשב">📷 תמונה</button>
+            <button class="small-btn danger hidden" data-el="remove-photo-btn" data-act="remove-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;color:#dc2626;" title="מחק תמונה">🗑️</button>
+            <button class="small-btn" data-act="open-icon-from-drawer" style="font-size:0.75rem;padding:3px 8px;">🎨 סמל</button>
             <button class="small-btn" data-act="close-drawer" style="padding:2px 8px;">✕</button>
           </div>
         </div>
@@ -265,18 +457,48 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         </div>
         <div class="sp-icon-grid" data-el="icon-grid"></div>
       </div>
-
-      <!-- Podium Celebratory Overlay -->
-      <div data-el="podium-overlay" class="sp-podium-overlay hidden">
-        <button class="small-btn" data-act="close-podium" style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.2);color:#fff;border:none;">✕ סגור</button>
-        <div class="sp-podium-title">🎉 מצעד אלופי היהלומים! 💎</div>
-        <div style="font-size:0.85rem;color:#bae6fd;margin-bottom:6px;">מצטייני היום שצברו הכי הרבה יהלומים בכיתה</div>
-        <div class="sp-podium-steps" data-el="podium-steps"></div>
-        <div data-el="podium-category-leaders" style="font-size:0.8rem;text-align:center;margin-top:6px;max-width:90%;"></div>
-      </div>
     </div>
   </div>
   `;
+
+  // Hidden photo file input
+  const fileInput = body.querySelector('[data-el="sp-photo-file-input"]');
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file || !targetStudentForUpload) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 160;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/webp', 0.82);
+        studentPhotos[targetStudentForUpload] = dataUrl;
+        if (window.AppStore && window.AppStore.setStudentPhotos) {
+          window.AppStore.setStudentPhotos(studentPhotos);
+        }
+        state.studentPhotos = studentPhotos;
+        saveState();
+        SoundFX.pop();
+        fileInput.value = '';
+        renderStudentsGrid();
+        if (selectedStudentForAward === targetStudentForUpload) {
+          drawerAvatar.innerHTML = `<img src="${dataUrl}" class="sp-drawer-img-circle" />`;
+          body.querySelector('[data-el="remove-photo-btn"]')?.classList.remove('hidden');
+        }
+        targetStudentForUpload = null;
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
   // TAB TOGGLING
   body.querySelectorAll('[data-sptab]').forEach(btn => {
@@ -288,13 +510,17 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       body.querySelector('[data-el="teams-view"]').classList.toggle('hidden', activeTab !== 'teams');
       body.querySelector('[data-el="students-view"]').classList.toggle('hidden', activeTab !== 'students');
       if (activeTab === 'teams') renderTeamsBoard();
-      else renderStudentsGrid();
+      else {
+        renderClassGoalBanner();
+        renderStudentsGrid();
+      }
     });
   });
 
   // 1. TEAMS LOGIC
   const teamsContainer = body.querySelector('[data-el="teams-container"]');
   function renderTeamsBoard() {
+    renderTeamGoalBanner();
     teamsContainer.innerHTML = teams.map((t, idx) => `
       <div class="team-column" style="border-top-color:${colors[idx % colors.length]}">
         <input class="team-name-input" data-idx="${idx}" value="${t.name}" />
@@ -320,9 +546,51 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         teams[i].score += step;
         state.teams = teams;
         saveState();
-        if (step > 0) SoundFX.pop();
+        if (step > 0) {
+          SoundFX.pop();
+          const curG = getCurGoal();
+          if (teams[i].score >= (curG.teamTarget || 25)) {
+            SoundFX.bell();
+          }
+        }
         renderTeamsBoard();
       });
+    });
+  }
+
+  function renderTeamGoalBanner() {
+    const banner = body.querySelector('[data-el="team-goal-banner"]');
+    if (!banner) return;
+    const curGoal = getCurGoal();
+    banner.innerHTML = `
+      <div class="team-goal-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:1.15rem;">🏆</span>
+            <span style="font-weight:800;font-size:0.84rem;">יעד קבוצה מנצחת: ${curGoal.teamTarget || 25} נק'</span>
+            <span class="team-goal-prize-badge">פרס: ${curGoal.teamPrize || '🏆 גביע השבוע'}</span>
+          </div>
+          <button class="class-goal-edit-btn" data-act="edit-team-goal" title="עריכת יעד ופרס לקבוצות">✏️ ערוך יעד</button>
+        </div>
+      </div>
+    `;
+
+    banner.querySelector('[data-act="edit-team-goal"]')?.addEventListener('click', () => {
+      const newTargetStr = prompt('יעד נקודות לקבוצה מנצחת:', curGoal.teamTarget || 25);
+      if (newTargetStr === null) return;
+      const newTarget = parseInt(newTargetStr, 10);
+      if (isNaN(newTarget) || newTarget <= 0) return;
+      const newPrize = prompt('מה הפרס לקבוצה המנצחת?', curGoal.teamPrize || '🏆 גביע השבוע');
+      if (newPrize === null) return;
+      curGoal.teamTarget = newTarget;
+      curGoal.teamPrize = newPrize.trim() || 'גביע';
+      classGoals[selectedClassId] = curGoal;
+      if (window.AppStore && window.AppStore.setClassGoals) {
+        window.AppStore.setClassGoals(classGoals);
+      }
+      state.classGoals = classGoals;
+      saveState();
+      renderTeamGoalBanner();
     });
   }
 
@@ -354,9 +622,6 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   const iconPickerDrawer = body.querySelector('[data-el="icon-picker-drawer"]');
   const iconPickerTitle = body.querySelector('[data-el="icon-picker-title"]');
   const iconGrid = body.querySelector('[data-el="icon-grid"]');
-  const podiumOverlay = body.querySelector('[data-el="podium-overlay"]');
-  const podiumSteps = body.querySelector('[data-el="podium-steps"]');
-  const categoryLeadersEl = body.querySelector('[data-el="podium-category-leaders"]');
 
   function populateClassSelect() {
     const lists = window.AppStore.getClassLists();
@@ -376,7 +641,68 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     return studentScores[name];
   }
 
+  function renderClassGoalBanner() {
+    const banner = body.querySelector('[data-el="class-goal-banner"]');
+    if (!banner) return;
+    const curGoal = getCurGoal();
+    const students = getStudentsList();
+    const currentScores = window.AppStore.getStudentScores ? window.AppStore.getStudentScores() : studentScores;
+    let sumPoints = 0;
+    students.forEach(n => {
+      const sc = currentScores[n];
+      if (sc) {
+        sumPoints += (scoreMode === 'daily' ? sc.daily : sc.total);
+      }
+    });
+
+    const target = Math.max(1, curGoal.target || 100);
+    const percent = Math.min(100, Math.round((sumPoints / target) * 100));
+    const isReached = sumPoints >= target;
+
+    banner.innerHTML = `
+      <div class="class-goal-wrap ${isReached ? 'reached' : ''}">
+        <div class="class-goal-top">
+          <div class="class-goal-title-group">
+            <span class="class-goal-icon">${isReached ? '🎉' : '🎯'}</span>
+            <span class="class-goal-title">יעד כיתתי:</span>
+            <span class="class-goal-prize" title="הפרס שהכיתה תזכה בו">${curGoal.prize || '🍕 מסיבת פיצה כיתתית'}</span>
+          </div>
+          <button class="class-goal-edit-btn" data-act="edit-class-goal" title="עריכת יעד ופרס">✏️ ערוך יעד</button>
+        </div>
+        <div class="class-goal-progress-bar">
+          <div class="class-goal-progress-fill" style="width: ${percent}%;"></div>
+        </div>
+        <div class="class-goal-bottom">
+          <span class="class-goal-count">💎 ${sumPoints} / ${target} (${percent}%)</span>
+          ${isReached ? `<span class="class-goal-badge success">✨ היעד הושג! מגיע לכם הפרס! 🎁</span>` : `<span class="class-goal-badge">נותרו עוד ${Math.max(0, target - sumPoints)} 💎</span>`}
+        </div>
+      </div>
+    `;
+
+    banner.querySelector('[data-act="edit-class-goal"]')?.addEventListener('click', () => {
+      const newTargetStr = prompt('כמות יהלומים להשגת היעד הכיתתי:', curGoal.target || 100);
+      if (newTargetStr === null) return;
+      const newTarget = parseInt(newTargetStr, 10);
+      if (isNaN(newTarget) || newTarget <= 0) {
+        alert('נא להזין מספר חיובי תקין');
+        return;
+      }
+      const newPrize = prompt('מה הפרס שהכיתה רוצה להשיג? (למשל: 🍕 מסיבת פיצה / 🎬 צפייה בסרט / ⚽ יציאה למגרש):', curGoal.prize || '🍕 מסיבת פיצה כיתתית');
+      if (newPrize === null) return;
+      curGoal.target = newTarget;
+      curGoal.prize = newPrize.trim() || 'פרס כיתתי';
+      classGoals[selectedClassId] = curGoal;
+      if (window.AppStore && window.AppStore.setClassGoals) {
+        window.AppStore.setClassGoals(classGoals);
+      }
+      state.classGoals = classGoals;
+      saveState();
+      renderClassGoalBanner();
+    });
+  }
+
   function renderStudentsGrid() {
+    renderClassGoalBanner();
     const students = getStudentsList();
     const filtered = searchQuery.trim() 
       ? students.filter(n => n.includes(searchQuery.trim())) 
@@ -391,12 +717,18 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       const sc = getStudentScore(name);
       const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
       const icon = getStudentIcon(name);
+      const photo = getStudentPhoto(name);
       const iconHtml = renderStudentIconHtml(icon, name);
       return `
         <div class="sp-student-bubble" data-student="${name}">
-          <button class="sp-card-edit-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">✏️</button>
+          <div class="sp-card-tools-bar">
+            <button class="sp-card-tool-btn" data-act="upload-photo" data-student="${name}" title="העלה תמונה מהמחשב">📷</button>
+            <button class="sp-card-tool-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">🎨</button>
+          </div>
           <div class="sp-bubble-avatar-wrap">
-            <div class="sp-bubble-avatar" data-act="open-drawer" data-student="${name}" title="לחץ להענקת יהלומים ל-${name}">${iconHtml}</div>
+            <div class="sp-bubble-avatar ${photo ? 'has-custom-photo' : ''}" data-act="open-drawer" data-student="${name}" title="לחץ להענקת יהלומים ל-${name}">
+              ${photo ? `<img src="${photo}" alt="${name}" class="sp-bubble-photo-img" />` : iconHtml}
+            </div>
             <span class="sp-bubble-badge" title="יהלומים">💎 ${scoreVal}</span>
           </div>
           <div class="sp-bubble-name" title="${name}">${name}</div>
@@ -406,14 +738,28 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
     studentsGrid.querySelectorAll('.sp-student-bubble').forEach(card => {
       card.addEventListener('click', (e) => {
+        const sName = card.dataset.student;
+        if (e.target.closest('[data-act="upload-photo"]')) {
+          e.stopPropagation();
+          targetStudentForUpload = sName;
+          fileInput.click();
+          return;
+        }
         if (e.target.closest('[data-act="pick-icon"]')) {
-          const sName = card.dataset.student;
+          e.stopPropagation();
           openIconPicker(sName);
           return;
         }
-        selectedStudentForAward = card.dataset.student;
+        selectedStudentForAward = sName;
         drawerTitle.textContent = selectedStudentForAward;
-        drawerAvatar.innerHTML = renderStudentIconHtml(getStudentIcon(selectedStudentForAward), selectedStudentForAward);
+        const curPhoto = getStudentPhoto(selectedStudentForAward);
+        if (curPhoto) {
+          drawerAvatar.innerHTML = `<img src="${curPhoto}" class="sp-drawer-img-circle" />`;
+          body.querySelector('[data-el="remove-photo-btn"]')?.classList.remove('hidden');
+        } else {
+          drawerAvatar.innerHTML = renderStudentIconHtml(getStudentIcon(selectedStudentForAward), selectedStudentForAward);
+          body.querySelector('[data-el="remove-photo-btn"]')?.classList.add('hidden');
+        }
         iconPickerDrawer.classList.add('hidden');
         awardAllDrawer.classList.add('hidden');
         awardDrawer.classList.remove('hidden');
@@ -433,10 +779,10 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   });
 
   awardAllDrawer.querySelectorAll('[data-all-pts]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
       const pts = parseInt(btn.dataset.allPts, 10);
       const title = btn.dataset.allTitle;
-      window.AppStore.addDiamondsToAll(pts, title);
+      window.AppStore.addDiamondsToAll(pts, title, e.currentTarget);
       SoundFX.bell();
       studentScores = window.AppStore.getStudentScores();
       state.studentScores = studentScores;
@@ -538,6 +884,27 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     openIconPicker(selectedStudentForAward);
   });
 
+  // Upload/Remove photo from drawer
+  body.querySelector('[data-act="upload-photo-from-drawer"]')?.addEventListener('click', () => {
+    if (!selectedStudentForAward) return;
+    targetStudentForUpload = selectedStudentForAward;
+    fileInput.click();
+  });
+
+  body.querySelector('[data-act="remove-photo-from-drawer"]')?.addEventListener('click', () => {
+    if (!selectedStudentForAward) return;
+    delete studentPhotos[selectedStudentForAward];
+    if (window.AppStore && window.AppStore.setStudentPhotos) {
+      window.AppStore.setStudentPhotos(studentPhotos);
+    }
+    state.studentPhotos = studentPhotos;
+    saveState();
+    SoundFX.pop();
+    drawerAvatar.innerHTML = renderStudentIconHtml(getStudentIcon(selectedStudentForAward), selectedStudentForAward);
+    body.querySelector('[data-el="remove-photo-btn"]')?.classList.add('hidden');
+    renderStudentsGrid();
+  });
+
   // Mode toggle (Daily vs Total)
   body.querySelectorAll('.sp-mode-pill').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -545,6 +912,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       state.scoreMode = scoreMode;
       saveState();
       body.querySelectorAll('.sp-mode-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === scoreMode));
+      renderClassGoalBanner();
       renderStudentsGrid();
     });
   });
@@ -558,6 +926,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     selectedClassId = classSel.value;
     state.classId = selectedClassId;
     saveState();
+    renderClassGoalBanner();
     renderStudentsGrid();
   });
 
@@ -568,12 +937,12 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
   // Award points clicked
   awardDrawer.querySelectorAll('.sp-behavior-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
       if (!selectedStudentForAward) return;
       const bId = btn.dataset.behavior;
       const pts = parseInt(btn.dataset.pts, 10);
       
-      window.AppStore.addDiamondsToStudent(selectedStudentForAward, pts, bId);
+      window.AppStore.addDiamondsToStudent(selectedStudentForAward, pts, bId, e.currentTarget);
       studentScores = window.AppStore.getStudentScores();
       state.studentScores = studentScores;
       saveState();
@@ -588,7 +957,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     });
   });
 
-  // Reset daily points
+  // Reset daily points manually
   body.querySelector('[data-act="reset-daily"]').addEventListener('click', () => {
     if (confirm('האם לאפס את היהלומים היומיים של כל התלמידים? (הניקוד המצטבר יישמר)')) {
       Object.values(studentScores).forEach(sc => {
@@ -603,14 +972,21 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     }
   });
 
-  // Celebration Podium
+  // Grand Celebration Podium
   body.querySelector('[data-act="open-podium"]').addEventListener('click', () => {
     const students = getStudentsList();
     if (students.length === 0) return;
 
     const sorted = [...students].map(name => {
       const sc = getStudentScore(name);
-      return { name, score: sc.daily, total: sc.total, breakdown: sc.breakdown || {}, icon: getStudentIcon(name) };
+      return { 
+        name, 
+        score: sc.daily, 
+        total: sc.total, 
+        breakdown: sc.breakdown || {}, 
+        icon: getStudentIcon(name),
+        photo: getStudentPhoto(name)
+      };
     }).sort((a, b) => b.score - a.score);
 
     const top1 = sorted[0] && sorted[0].score > 0 ? sorted[0] : null;
@@ -622,77 +998,29 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       return;
     }
 
-    podiumSteps.innerHTML = `
-      ${top2 ? `
-        <div class="sp-podium-col second">
-          <div class="sp-podium-winner">
-            <div class="sp-podium-medal">🥈</div>
-            <div class="sp-podium-avatar">${renderStudentIconHtml(top2.icon, top2.name)}</div>
-            <div class="sp-podium-name" title="${top2.name}">${top2.name}</div>
-          </div>
-          <div class="sp-pedestal">
-            <div class="sp-pedestal-rank">2</div>
-            <div class="sp-pedestal-score">💎 ${top2.score}</div>
-            <div class="sp-pedestal-label">יהלומים</div>
-          </div>
-        </div>
-      ` : '<div class="sp-podium-col second" style="opacity:0.2;"></div>'}
-
-      <div class="sp-podium-col first">
-        <div class="sp-podium-winner">
-          <div class="sp-podium-crown">👑</div>
-          <div class="sp-podium-medal">🥇</div>
-          <div class="sp-podium-avatar first-avatar">${renderStudentIconHtml(top1.icon, top1.name)}</div>
-          <div class="sp-podium-name first-name" title="${top1.name}">${top1.name}</div>
-        </div>
-        <div class="sp-pedestal">
-          <div class="sp-pedestal-rank">1</div>
-          <div class="sp-pedestal-score">💎 ${top1.score}</div>
-          <div class="sp-pedestal-label">אלוף/ת היהלומים!</div>
-        </div>
-      </div>
-
-      ${top3 ? `
-        <div class="sp-podium-col third">
-          <div class="sp-podium-winner">
-            <div class="sp-podium-medal">🥉</div>
-            <div class="sp-podium-avatar">${renderStudentIconHtml(top3.icon, top3.name)}</div>
-            <div class="sp-podium-name" title="${top3.name}">${top3.name}</div>
-          </div>
-          <div class="sp-pedestal">
-            <div class="sp-pedestal-rank">3</div>
-            <div class="sp-pedestal-score">💎 ${top3.score}</div>
-            <div class="sp-pedestal-label">יהלומים</div>
-          </div>
-        </div>
-      ` : '<div class="sp-podium-col third" style="opacity:0.2;"></div>'}
-    `;
-
     // Check top category achievers
     const helpLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.help || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
     const readyLeader = [...students].map(n => ({ name: n, cnt: (studentScores[n]?.breakdown?.ready || 0) })).sort((a,b)=>b.cnt-a.cnt)[0];
 
     let catLeadersText = '';
     if (helpLeader && helpLeader.cnt > 0) {
-      catLeadersText += `🤝 <b>אלופ/ת העזרה:</b> ${helpLeader.name} (${helpLeader.cnt} פעמים) &nbsp; `;
+      catLeadersText += `🤝 <b>אלופ/ת העזרה:</b> ${helpLeader.name} (${helpLeader.cnt} פעמים) &nbsp;•&nbsp; `;
     }
     if (readyLeader && readyLeader.cnt > 0) {
       catLeadersText += `🎒 <b>אלופ/ת המוכנות:</b> ${readyLeader.name} (${readyLeader.cnt} פעמים)`;
     }
-    categoryLeadersEl.innerHTML = catLeadersText;
 
-    SoundFX.fanfare();
-    podiumOverlay.classList.remove('hidden');
-  });
-
-  body.querySelector('[data-act="close-podium"]').addEventListener('click', () => {
-    podiumOverlay.classList.add('hidden');
+    // Open Grand Fullscreen Podium with classroom background & confetti
+    openGrandPodium(top1, top2, top3, catLeadersText);
   });
 
   // Init
   populateClassSelect();
   if (activeTab === 'teams') renderTeamsBoard();
-  else renderStudentsGrid();
+  else {
+    renderClassGoalBanner();
+    renderStudentsGrid();
+  }
 }
 
 const WIDGET_REGISTRY = {
