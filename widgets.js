@@ -660,21 +660,36 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     const isReached = sumPoints >= target;
 
     banner.innerHTML = `
-      <div class="class-goal-wrap ${isReached ? 'reached' : ''}">
-        <div class="class-goal-top">
-          <div class="class-goal-title-group">
-            <span class="class-goal-icon">${isReached ? '🎉' : '🎯'}</span>
-            <span class="class-goal-title">יעד כיתתי:</span>
-            <span class="class-goal-prize" title="הפרס שהכיתה תזכה בו">${curGoal.prize || '🍕 מסיבת פיצה כיתתית'}</span>
+      <div class="arena-goal-card ${isReached ? 'reached' : ''}">
+        <div class="diamond-jar-widget" title="צנצנת היהלומים הכיתתית: ${percent}% מהיעד">
+          <div class="diamond-jar-lid"></div>
+          <div class="diamond-jar-body">
+            <div class="diamond-jar-fill" style="height: ${Math.max(8, percent)}%;">
+              <div class="diamond-jar-gems">
+                ${percent >= 15 ? '<span>💎</span>' : ''}
+                ${percent >= 45 ? '<span>💎</span>' : ''}
+                ${percent >= 75 ? '<span>💎</span>' : ''}
+              </div>
+            </div>
+            <div class="diamond-jar-percent">${percent}%</div>
           </div>
-          <button class="class-goal-edit-btn" data-act="edit-class-goal" title="עריכת יעד ופרס">✏️ ערוך יעד</button>
         </div>
-        <div class="class-goal-progress-bar">
-          <div class="class-goal-progress-fill" style="width: ${percent}%;"></div>
-        </div>
-        <div class="class-goal-bottom">
-          <span class="class-goal-count">💎 ${sumPoints} / ${target} (${percent}%)</span>
-          ${isReached ? `<span class="class-goal-badge success">✨ היעד הושג! מגיע לכם הפרס! 🎁</span>` : `<span class="class-goal-badge">נותרו עוד ${Math.max(0, target - sumPoints)} 💎</span>`}
+        <div class="arena-goal-main">
+          <div class="class-goal-top">
+            <div class="class-goal-title-group">
+              <span class="class-goal-icon">${isReached ? '🎉' : '🎯'}</span>
+              <span class="class-goal-title">יעד כיתתי:</span>
+              <span class="class-goal-prize" title="הפרס שהכיתה תזכה בו">${curGoal.prize || '🍕 מסיבת פיצה כיתתית'}</span>
+            </div>
+            <button class="class-goal-edit-btn" data-act="edit-class-goal" title="עריכת יעד ופרס">✏️ ערוך יעד</button>
+          </div>
+          <div class="class-goal-progress-bar arena-lightbar">
+            <div class="class-goal-progress-fill" style="width: ${percent}%;"></div>
+          </div>
+          <div class="class-goal-bottom">
+            <span class="class-goal-count">💎 ${sumPoints} / ${target}</span>
+            ${isReached ? `<span class="class-goal-badge success">✨ היעד הושג! מגיע לכם הפרס! 🎁</span>` : `<span class="class-goal-badge">עוד ${Math.max(0, target - sumPoints)} 💎 לפרס</span>`}
+          </div>
         </div>
       </div>
     `;
@@ -713,14 +728,27 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       return;
     }
 
-    studentsGrid.innerHTML = filtered.map(name => {
+    function getHaloTierClass(scoreVal) {
+      if (scoreVal >= 10) return 'halo-high';
+      if (scoreVal >= 5) return 'halo-mid';
+      if (scoreVal >= 1) return 'halo-low';
+      return 'halo-none';
+    }
+
+    function renderStudentBubbleHtml(name, rank = 0) {
       const sc = getStudentScore(name);
       const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
       const icon = getStudentIcon(name);
       const photo = getStudentPhoto(name);
       const iconHtml = renderStudentIconHtml(icon, name);
+      const haloClass = getHaloTierClass(scoreVal);
+      const rankClass = rank > 0 ? `rank-${rank} is-top-leader` : '';
+      const medalMap = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
       return `
-        <div class="sp-student-bubble" data-student="${name}">
+        <div class="sp-student-bubble ${rankClass} ${haloClass}" data-student="${name}">
+          ${rank === 1 ? '<div class="arena-live-crown" title="מוביל/ת הכיתה!">👑</div>' : ''}
+          ${rank > 0 ? `<div class="arena-rank-medal" title="מקום ${rank}">${medalMap[rank]}</div>` : ''}
           <div class="sp-card-tools-bar">
             <button class="sp-card-tool-btn" data-act="upload-photo" data-student="${name}" title="העלה תמונה מהמחשב">📷</button>
             <button class="sp-card-tool-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">🎨</button>
@@ -734,7 +762,49 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           <div class="sp-bubble-name" title="${name}">${name}</div>
         </div>
       `;
-    }).join('');
+    }
+
+    const isSearching = Boolean(searchQuery.trim());
+    let top3Names = [];
+    if (!isSearching) {
+      top3Names = students
+        .map(name => {
+          const sc = getStudentScore(name);
+          return { name, score: scoreMode === 'daily' ? sc.daily : sc.total };
+        })
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(item => item.name);
+    }
+
+    let html = '';
+    if (top3Names.length > 0) {
+      // Arrange in podium-like arch: 2nd - 1st - 3rd
+      const orderedTop = [];
+      if (top3Names[1]) orderedTop.push({ name: top3Names[1], rank: 2 });
+      orderedTop.push({ name: top3Names[0], rank: 1 });
+      if (top3Names[2]) orderedTop.push({ name: top3Names[2], rank: 3 });
+
+      html += `
+        <div class="arena-top3-section">
+          <div class="arena-section-pill">⭐ מובילי הכיתה</div>
+          <div class="arena-top3-stage">
+            ${orderedTop.map(t => renderStudentBubbleHtml(t.name, t.rank)).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    const remainingStudents = isSearching
+      ? filtered
+      : filtered.filter(n => !top3Names.includes(n));
+
+    if (remainingStudents.length > 0) {
+      html += remainingStudents.map(name => renderStudentBubbleHtml(name, 0)).join('');
+    }
+
+    studentsGrid.innerHTML = html;
 
     studentsGrid.querySelectorAll('.sp-student-bubble').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -2207,8 +2277,8 @@ renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'teams');
   'student-points': {
     title: 'יהלומים - ניקוד אישי',
     icon: '💎',
-    defaultW: 440,
-    defaultH: 420,
+    defaultW: 510,
+    defaultH: 540,
     render(body, state, saveState) {
       renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'students');
     }
