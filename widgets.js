@@ -878,7 +878,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     studentScores = window.AppStore.getStudentScores();
     state.studentScores = studentScores;
     saveState();
-    SoundFX.pop();
+    if (SoundFX.undo) SoundFX.undo();
+    else SoundFX.pop();
     renderStudentsGrid();
   });
 
@@ -916,8 +917,13 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       const pts = parseInt(btn.dataset.allPts, 10);
       const title = btn.dataset.allTitle;
       window.AppStore.addDiamondsToAll(pts, title, e.currentTarget, selectedClassId);
-      if (pts > 0) SoundFX.bell();
-      else SoundFX.pop();
+      if (pts > 0) {
+        if (SoundFX.allClassAward) SoundFX.allClassAward();
+        else SoundFX.bell();
+      } else {
+        if (SoundFX.deduct) SoundFX.deduct();
+        else SoundFX.pop();
+      }
       studentScores = window.AppStore.getStudentScores();
       state.studentScores = studentScores;
       saveState();
@@ -1082,9 +1088,11 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       saveState();
 
       if (pts > 0) {
-        SoundFX.bell();
+        if (SoundFX.diamondAward) SoundFX.diamondAward(pts);
+        else SoundFX.bell();
       } else {
-        SoundFX.pop();
+        if (SoundFX.deduct) SoundFX.deduct();
+        else SoundFX.pop();
       }
       awardDrawer.classList.add('hidden');
       renderStudentsGrid();

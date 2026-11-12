@@ -658,7 +658,8 @@ renderStudentsSidebar() {
 
   sidebar.querySelector('[data-act="sidebar-all"]')?.addEventListener('click', (e) => {
     window.AppStore.addDiamondsToAll(1, 'חיזוק כיתתי', e.currentTarget);
-    SoundFX.bell();
+    if (SoundFX.allClassAward) SoundFX.allClassAward();
+    else SoundFX.bell();
     this.showFloatingAward(sidebar, 'לכל הכיתה +1 💎', 'positive');
   });
 
@@ -667,7 +668,8 @@ renderStudentsSidebar() {
       e.stopPropagation();
       const studentName = btn.dataset.student;
       window.AppStore.addDiamondsToStudent(studentName, 1, 'חיזוק מהיר', btn);
-      SoundFX.bell();
+      if (SoundFX.diamondAward) SoundFX.diamondAward(1);
+      else SoundFX.bell();
     });
   });
 
@@ -677,7 +679,8 @@ renderStudentsSidebar() {
       const studentName = btn.dataset.student;
       // Subtract point - strictly without animation as requested: "בהורדה בלי אפקט"
       window.AppStore.addDiamondsToStudent(studentName, -1, 'הפחתה');
-      SoundFX.pop();
+      if (SoundFX.deduct) SoundFX.deduct();
+      else SoundFX.pop();
     });
   });
 }
@@ -696,8 +699,21 @@ triggerStudentAwardEffect(name, pts = 1, sourceEl = null) {
     el.classList.remove('sp-pop-zoom-active');
     void el.offsetWidth; // trigger reflow
     el.classList.add('sp-pop-zoom-active');
-    setTimeout(() => el.classList.remove('sp-pop-zoom-active'), 800);
+    setTimeout(() => el.classList.remove('sp-pop-zoom-active'), 850);
   });
+
+  // 1b. Flash sidebar row & launch unclipped Pop-Out Avatar Showcase if triggered from sidebar
+  const sidebarRow = document.querySelector(`.sidebar-student-row[data-student="${CSS.escape(name)}"]`);
+  if (sidebarRow) {
+    sidebarRow.classList.remove('sidebar-row-award-flash');
+    void sidebarRow.offsetWidth;
+    sidebarRow.classList.add('sidebar-row-award-flash');
+    setTimeout(() => sidebarRow.classList.remove('sidebar-row-award-flash'), 900);
+
+    if (sourceEl && sourceEl.closest('.students-sidebar')) {
+      this.spawnSidebarAvatarShowcase(name, pts, sidebarRow);
+    }
+  }
 
   // 2. Floating badge with +X 💎
   const origin = sourceEl || targets[0];
@@ -707,6 +723,29 @@ triggerStudentAwardEffect(name, pts = 1, sourceEl = null) {
 
   // 3. Flying diamonds particle burst
   this.spawnFlyingDiamonds(origin || document.body, pts);
+}
+
+spawnSidebarAvatarShowcase(name, pts, rowEl) {
+  if (!rowEl) return;
+  const rect = rowEl.getBoundingClientRect();
+  const photos = this.data.studentPhotos || {};
+  const icons = this.data.studentIcons || {};
+  const photo = photos[name];
+  const avatarInner = photo
+    ? `<img src="${photo}" alt="${name}" class="sidebar-showcase-img" />`
+    : `<span class="sidebar-showcase-icon">${window.renderStudentIconHtml ? window.renderStudentIconHtml(icons[name], name) : '⭐'}</span>`;
+
+  const showcase = document.createElement('div');
+  showcase.className = 'sidebar-avatar-showcase';
+  showcase.style.left = `${Math.max(90, rect.left - 55)}px`;
+  showcase.style.top = `${Math.max(80, Math.min(window.innerHeight - 130, rect.top + rect.height / 2))}px`;
+  showcase.innerHTML = `
+    <div class="sidebar-showcase-ring"></div>
+    <div class="sidebar-showcase-circle">${avatarInner}</div>
+    <div class="sidebar-showcase-label">${name} <span>+${pts} 💎</span></div>
+  `;
+  document.body.appendChild(showcase);
+  setTimeout(() => showcase.remove(), 1150);
 }
 
 spawnFlyingDiamonds(targetEl, count = 1) {
