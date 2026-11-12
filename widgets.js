@@ -1084,6 +1084,34 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     openGrandPodium(top1, top2, top3, catLeadersText);
   });
 
+  // Escape key support for full-screen points arena
+  const escHandler = (e) => {
+    if (e.key !== 'Escape') return;
+    if (!document.body.contains(body)) {
+      document.removeEventListener('keydown', escHandler);
+      return;
+    }
+    if (document.getElementById('grand-podium-fullscreen')) return;
+    if (!awardDrawer.classList.contains('hidden')) {
+      awardDrawer.classList.add('hidden');
+      return;
+    }
+    if (!awardAllDrawer.classList.contains('hidden')) {
+      awardAllDrawer.classList.add('hidden');
+      return;
+    }
+    if (!iconPickerDrawer.classList.contains('hidden')) {
+      iconPickerDrawer.classList.add('hidden');
+      return;
+    }
+    const win = body.closest('.widget-window[data-type="student-points"]');
+    if (win) {
+      document.removeEventListener('keydown', escHandler);
+      win.querySelector('[data-wact="close"]')?.click();
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+
   // Init
   populateClassSelect();
   if (activeTab === 'teams') renderTeamsBoard();

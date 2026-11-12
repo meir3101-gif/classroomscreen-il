@@ -5719,8 +5719,117 @@ button {
    Floating Glass Arena + Diamond Jar + Top 3 Stage + Halo Rings (Combo 1+4)
    ========================================================================== */
 
-/* 1. Transparent Floating Window (No solid white box!) */
-.widget-window[data-type="student-points"],
+/* 1. Transparent Floating Window & Full-Screen Arena for Student Points */
+.widget-window[data-type="student-points"]:not(.minimized) {
+  position: fixed !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  z-index: 1500 !important;
+  background: rgba(15, 23, 42, 0.36) !important;
+  backdrop-filter: blur(14px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(170%) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 18px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  animation: grandFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .widget-resize-handle {
+  display: none !important;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .widget-header {
+  width: 100% !important;
+  max-width: 1120px !important;
+  cursor: default !important;
+  flex-shrink: 0;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .widget-controls [data-wact="min"] {
+  display: none !important;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn {
+  width: auto !important;
+  padding: 5px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn::after {
+  content: 'חזור למסך הכיתה';
+  font-size: 0.82rem;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn:hover {
+  background: #ffffff !important;
+  transform: scale(1.04);
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .widget-body {
+  width: 100% !important;
+  max-width: 1120px !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 6px 4px 16px !important;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-grid {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)) !important;
+  gap: 16px !important;
+  padding: 10px 4px !important;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-bubble-avatar {
+  width: 76px;
+  height: 76px;
+  font-size: 2.3rem;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-student-bubble.rank-1 .sp-bubble-avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 2.8rem;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-student-bubble.rank-2 .sp-bubble-avatar,
+.widget-window[data-type="student-points"]:not(.minimized) .sp-student-bubble.rank-3 .sp-bubble-avatar {
+  width: 82px;
+  height: 82px;
+  font-size: 2.45rem;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-bubble-name {
+  font-size: 0.92rem;
+  max-width: 104px;
+  padding: 3px 10px;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-bubble-badge {
+  font-size: 0.82rem;
+  padding: 2px 10px;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) .sp-drawer {
+  max-width: 660px;
+  margin: 0 auto;
+  border-radius: 22px;
+  bottom: 18px;
+}
+
 .widget-window[data-type="scoreboard"] {
   background: transparent !important;
   border: none !important;
