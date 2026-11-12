@@ -751,6 +751,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     }
 
     function getHaloTierClass(scoreVal) {
+      if (scoreVal >= 30) return 'halo-legend';
       if (scoreVal >= 10) return 'halo-high';
       if (scoreVal >= 5) return 'halo-mid';
       if (scoreVal >= 1) return 'halo-low';

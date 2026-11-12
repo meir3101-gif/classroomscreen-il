@@ -6105,20 +6105,36 @@ button {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
 
-/* 4. Score-Based Glowing Halo Rings for All Students */
+/* 4. Score-Based Glowing Halo Rings for All Students (Prominent + 30+ Legend Tier) */
 .sp-student-bubble:not(.is-top-leader).halo-low .sp-bubble-avatar {
-  border-color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45), 0 4px 12px rgba(2, 132, 199, 0.15);
+  border: 3.5px solid #0ea5e9;
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.8), 0 0 0 3px rgba(186, 230, 253, 0.6);
 }
 
 .sp-student-bubble:not(.is-top-leader).halo-mid .sp-bubble-avatar {
-  border-color: #10b981;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.55), 0 4px 14px rgba(5, 150, 105, 0.2);
+  border: 3.5px solid #10b981;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.85), 0 0 0 3px rgba(167, 243, 208, 0.65);
 }
 
 .sp-student-bubble:not(.is-top-leader).halo-high .sp-bubble-avatar {
-  border-color: #a855f7;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.65), 0 0 0 2px rgba(216, 180, 254, 0.5);
+  border: 4px solid #a855f7;
+  box-shadow: 0 0 26px rgba(168, 85, 247, 0.9), 0 0 0 4px rgba(233, 213, 255, 0.7);
+}
+
+/* 30+ Diamonds: Vivid Neon Magenta-Cyan Aura (applies even to Top 3!) */
+.sp-student-bubble.halo-legend .sp-bubble-avatar {
+  border: 4.5px solid #ec4899 !important;
+  box-shadow: 0 0 30px rgba(236, 72, 153, 0.95), 0 0 14px rgba(56, 189, 248, 0.85), 0 0 0 4px rgba(251, 207, 232, 0.8) !important;
+  animation: legendHaloPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes legendHaloPulse {
+  0%, 100% {
+    box-shadow: 0 0 28px rgba(236, 72, 153, 0.9), 0 0 14px rgba(56, 189, 248, 0.75), 0 0 0 4px rgba(251, 207, 232, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(236, 72, 153, 1), 0 0 24px rgba(56, 189, 248, 0.95), 0 0 0 6px rgba(244, 114, 182, 0.9);
+  }
 }
 
 
