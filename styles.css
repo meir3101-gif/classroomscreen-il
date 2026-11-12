@@ -5736,10 +5736,10 @@ button {
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 18px 24px !important;
+  padding: 14px 28px !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
+  align-items: stretch !important;
   animation: grandFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -5749,7 +5749,8 @@ button {
 
 .widget-window[data-type="student-points"]:not(.minimized) .widget-header {
   width: 100% !important;
-  max-width: 1120px !important;
+  max-width: 100% !important;
+  padding-left: 58px !important;
   cursor: default !important;
   flex-shrink: 0;
 }
@@ -5759,29 +5760,39 @@ button {
 }
 
 .widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn {
-  width: auto !important;
-  padding: 5px 14px !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.85) !important;
+  position: fixed !important;
+  top: 16px !important;
+  left: 20px !important;
+  z-index: 1600 !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   color: #0f172a !important;
-  font-weight: 800 !important;
-  gap: 6px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+  font-weight: 900 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
 }
 
-.widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn::after {
-  content: 'חזור למסך הכיתה';
-  font-size: 0.82rem;
+.widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn svg {
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .widget-window[data-type="student-points"]:not(.minimized) .w-ctrl-btn.close-btn:hover {
-  background: #ffffff !important;
-  transform: scale(1.04);
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  transform: scale(1.08);
 }
 
 .widget-window[data-type="student-points"]:not(.minimized) .widget-body {
   width: 100% !important;
-  max-width: 1120px !important;
+  max-width: 100% !important;
   flex: 1 !important;
   overflow-y: auto !important;
   padding: 6px 4px 16px !important;
