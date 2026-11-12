@@ -360,6 +360,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופים</button>
           <button class="small-btn" data-act="open-all-drawer" style="background:#e0f2fe;color:#0369a1;font-weight:800;border:1px solid #bae6fd;">✨ הוסף לכולם</button>
+          <button class="small-btn" data-act="open-deduct-all-drawer" style="background:#fee2e2;color:#dc2626;font-weight:800;border:1px solid #fecaca;">➖ הורד לכולם</button>
+          <button class="small-btn" data-act="undo-score" title="בטל את פעולת הניקוד האחרונה" style="font-weight:800;background:#fef3c7;color:#92400e;border:1px solid #fde68a;" disabled>↩️ בטל אחורה</button>
           <button class="small-btn" data-act="toggle-sidebar-view" style="font-weight:700;">📌 סרגל צדי</button>
         </div>
         <div style="display:flex;gap:4px;">
@@ -399,38 +401,58 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         </div>
       </div>
 
-      <!-- Award All Class Drawer -->
+      <!-- Award / Deduct All Class Drawer -->
       <div data-el="award-all-drawer" class="sp-drawer hidden">
         <div class="sp-drawer-header">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:1.3rem;">✨</span>
+            <span data-el="all-drawer-icon" style="font-size:1.3rem;">✨</span>
             <div>
-              <div style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">הענקת יהלומים לכל הכיתה בבת אחת</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק שיוענק מיידית לכל תלמידי הכיתה</div>
+              <div data-el="all-drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">הענקת יהלומים לכל הכיתה בבת אחת</div>
+              <div data-el="all-drawer-sub" style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק שיוענק מיידית לכל תלמידי הכיתה</div>
             </div>
           </div>
           <button class="small-btn" data-act="close-all-drawer" style="padding:2px 8px;">✕</button>
         </div>
         <div class="sp-behavior-grid">
-          <button class="sp-behavior-btn" data-all-pts="1" data-all-title="הקשבה והשתתפות כיתתית">
+          <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="1" data-all-title="הקשבה והשתתפות כיתתית">
             <span style="font-size:1.25rem;">👂</span>
             <span>הקשבה והשתתפות כיתתית</span>
             <span class="sp-pts-tag">+1 💎</span>
           </button>
-          <button class="sp-behavior-btn" data-all-pts="2" data-all-title="ביצוע משימה כיתתית">
+          <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="2" data-all-title="ביצוע משימה כיתתית">
             <span style="font-size:1.25rem;">📝</span>
             <span>ביצוע משימה כיתתית</span>
             <span class="sp-pts-tag">+2 💎</span>
           </button>
-          <button class="sp-behavior-btn" data-all-pts="2" data-all-title="אווירה נעימה ושיתוף פעולה">
+          <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="2" data-all-title="אווירה נעימה ושיתוף פעולה">
             <span style="font-size:1.25rem;">🤝</span>
             <span>אווירה נעימה ושיתוף פעולה</span>
             <span class="sp-pts-tag">+2 💎</span>
           </button>
-          <button class="sp-behavior-btn" data-all-pts="3" data-all-title="מאמץ כיתתי מיוחד">
+          <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="3" data-all-title="מאמץ כיתתי מיוחד">
             <span style="font-size:1.25rem;">💎</span>
             <span>מאמץ כיתתי מיוחד</span>
             <span class="sp-pts-tag">+3 💎</span>
+          </button>
+          <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-1" data-all-title="רעש / חוסר הקשבה כיתתי">
+            <span style="font-size:1.25rem;">🔇</span>
+            <span>רעש / חוסר הקשבה</span>
+            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-1 💎</span>
+          </button>
+          <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-2" data-all-title="הפרעה / אי עמידה במשימה">
+            <span style="font-size:1.25rem;">⚠️</span>
+            <span>אי עמידה במשימה / הפרעה</span>
+            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-2 💎</span>
+          </button>
+          <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-1" data-all-title="הורדה כיתתית כללית">
+            <span style="font-size:1.25rem;">➖</span>
+            <span>הורדת יהלום לכל הכיתה</span>
+            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-1 💎</span>
+          </button>
+          <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-3" data-all-title="הורדת 3 יהלומים לכל הכיתה">
+            <span style="font-size:1.25rem;">⬇️</span>
+            <span>הורדת 3 יהלומים לכולם</span>
+            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-3 💎</span>
           </button>
         </div>
       </div>
@@ -835,13 +857,53 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         awardDrawer.classList.remove('hidden');
       });
     });
+    syncUndoButtonState();
   }
 
-  // AWARD ALL CLASS
-  body.querySelector('[data-act="open-all-drawer"]')?.addEventListener('click', () => {
+  function syncUndoButtonState() {
+    const undoBtn = body.querySelector('[data-act="undo-score"]');
+    if (!undoBtn) return;
+    const canUndo = !!(window.AppStore && window.AppStore.canUndoScore && window.AppStore.canUndoScore());
+    undoBtn.disabled = !canUndo;
+    undoBtn.style.opacity = canUndo ? '1' : '0.45';
+    undoBtn.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+  }
+
+  // UNDO LAST SCORE ACTION
+  body.querySelector('[data-act="undo-score"]')?.addEventListener('click', () => {
+    if (!window.AppStore || !window.AppStore.undoLastScore) return;
+    const undone = window.AppStore.undoLastScore();
+    if (!undone) return;
+    studentScores = window.AppStore.getStudentScores();
+    state.studentScores = studentScores;
+    saveState();
+    SoundFX.pop();
+    renderStudentsGrid();
+  });
+
+  function openAllClassDrawer(mode = 'positive') {
     awardDrawer.classList.add('hidden');
     iconPickerDrawer.classList.add('hidden');
+    const isNeg = mode === 'negative';
+    const iconEl = awardAllDrawer.querySelector('[data-el="all-drawer-icon"]');
+    const titleEl = awardAllDrawer.querySelector('[data-el="all-drawer-title"]');
+    const subEl = awardAllDrawer.querySelector('[data-el="all-drawer-sub"]');
+    if (iconEl) iconEl.textContent = isNeg ? '➖' : '✨';
+    if (titleEl) titleEl.textContent = isNeg ? 'הורדת יהלומים לכל הכיתה' : 'הענקת יהלומים לכל הכיתה בבת אחת';
+    if (subEl) subEl.textContent = isNeg ? 'בחר סיבה להורדת יהלומים לכל תלמידי הכיתה (בלי אפקט)' : 'בחר חיזוק שיוענק מיידית לכל תלמידי הכיתה';
+    awardAllDrawer.querySelectorAll('[data-all-kind]').forEach(b => {
+      b.classList.toggle('hidden', b.dataset.allKind !== mode);
+    });
     awardAllDrawer.classList.remove('hidden');
+  }
+
+  // AWARD / DEDUCT ALL CLASS
+  body.querySelector('[data-act="open-all-drawer"]')?.addEventListener('click', () => {
+    openAllClassDrawer('positive');
+  });
+
+  body.querySelector('[data-act="open-deduct-all-drawer"]')?.addEventListener('click', () => {
+    openAllClassDrawer('negative');
   });
 
   body.querySelector('[data-act="close-all-drawer"]')?.addEventListener('click', () => {
@@ -852,8 +914,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     btn.addEventListener('click', (e) => {
       const pts = parseInt(btn.dataset.allPts, 10);
       const title = btn.dataset.allTitle;
-      window.AppStore.addDiamondsToAll(pts, title, e.currentTarget);
-      SoundFX.bell();
+      window.AppStore.addDiamondsToAll(pts, title, e.currentTarget, selectedClassId);
+      if (pts > 0) SoundFX.bell();
+      else SoundFX.pop();
       studentScores = window.AppStore.getStudentScores();
       state.studentScores = studentScores;
       saveState();

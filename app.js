@@ -455,10 +455,22 @@ setWeeklySchedule: (sched) => {
   window.dispatchEvent(new CustomEvent('cs:schedule-updated', { detail: sched }));
 },
 getStudentScores: () => this.data.studentScores || {},
-setStudentScores: (scores) => {
+setStudentScores: (scores, historyLabel = 'עדכון ניקוד') => {
+  this.pushScoreHistory(historyLabel);
   this.data.studentScores = scores;
   this.saveState();
   window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: scores }));
+  this.renderStudentsSidebar();
+},
+canUndoScore: () => !!(this.scoreHistory && this.scoreHistory.length > 0),
+undoLastScore: () => {
+  if (!this.scoreHistory || this.scoreHistory.length === 0) return null;
+  const prev = this.scoreHistory.pop();
+  this.data.studentScores = prev.scores || {};
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
+  this.renderStudentsSidebar();
+  return prev.label || 'הפעולה האחרונה בוטלה';
 },
 getStudentIcons: () => this.data.studentIcons || {},
 setStudentIcons: (icons) => {
@@ -483,6 +495,7 @@ checkDailyReset: () => this.checkDailyReset(),
 triggerStudentAwardEffect: (name, pts, sourceEl) => this.triggerStudentAwardEffect(name, pts, sourceEl),
 addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק', sourceEl = null) => {
   if (!this.data.studentScores) this.data.studentScores = {};
+  this.pushScoreHistory(`${pts > 0 ? '+' : ''}${pts} 💎 (${name})`);
   const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
   sc.daily = Math.max(0, sc.daily + pts);
   sc.total = Math.max(0, sc.total + pts);
@@ -496,9 +509,11 @@ addDiamondsToStudent: (name, pts = 1, reason = 'חיזוק', sourceEl = null) =>
     this.triggerStudentAwardEffect(name, pts, sourceEl);
   }
 },
-addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי', sourceEl = null) => {
+addDiamondsToAll: (pts = 1, reason = 'חיזוק כיתתי', sourceEl = null, classId = null) => {
   if (!this.data.studentScores) this.data.studentScores = {};
-  const currentClass = this.data.classLists.find(c => c.id === this.data.selectedClassId) || this.data.classLists[0];
+  this.pushScoreHistory(`${pts > 0 ? '+' : ''}${pts} 💎 (כל הכיתה)`);
+  const targetClassId = classId || this.data.selectedClassId;
+  const currentClass = this.data.classLists.find(c => c.id === targetClassId) || this.data.classLists[0];
   const students = (currentClass ? currentClass.students : []).filter(Boolean);
   students.forEach(name => {
     const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
@@ -523,6 +538,15 @@ toggleStudentsSidebar: (show) => {
 };
 this.initBackgroundModalEvents();
 this.initStudentModalEvents();
+}
+
+pushScoreHistory(label = '') {
+  if (!this.scoreHistory) this.scoreHistory = [];
+  const snapshot = JSON.parse(JSON.stringify(this.data.studentScores || {}));
+  this.scoreHistory.push({ scores: snapshot, label });
+  if (this.scoreHistory.length > 30) {
+    this.scoreHistory.shift();
+  }
 }
 
 checkDailyReset() {
