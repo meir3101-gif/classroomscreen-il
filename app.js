@@ -44,6 +44,11 @@ function getWidgetHeaderCapsule(type) {
     'scoreboard': { cls: 'capsule-gold', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>' },
     'student-points': { cls: 'capsule-cyan', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg>' },
     'emotion-checkin': { cls: 'capsule-pink', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>' },
+    'help-queue': { cls: 'capsule-amber', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>' },
+    'seating-chart': { cls: 'capsule-indigo', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>' },
+    'brain-break': { cls: 'capsule-teal', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>' },
+    'exit-ticket': { cls: 'capsule-emerald', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' },
+    'birthdays': { cls: 'capsule-gold', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/></svg>' },
     'poll': { cls: 'capsule-royal', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-4"/><path d="M11 16V8"/><path d="M15 16v-8"/><path d="M19 16v-6"/></svg>' },
     'text': { cls: 'capsule-blue', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>' },
     'draw': { cls: 'capsule-purple', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/><path d="M18 10l-4-4"/><path d="m20.5 7.5-3-3a2.12 2.12 0 0 0-3 0l-1.5 1.5 6 6 1.5-1.5a2.12 2.12 0 0 0 0-3Z"/></svg>' },
@@ -85,6 +90,8 @@ activeScreenId: 'scr-1',
 selectedClassId: 'cls-1',
 studentPhotos: {},
 classGoals: {},
+shopItems: null,
+studentBirthdays: {},
 lastDailyResetDate: new Date().toLocaleDateString('sv-SE'),
 classLists: [
 { id: 'cls-1', name: "כיתה ה'1", students: [...DEFAULT_STUDENTS] },
@@ -207,7 +214,9 @@ studentScores: mergedScores,
 lastDailyResetDate: latestResetDate,
 studentPhotos: (cloudWorkspace.studentPhotos && Object.keys(cloudWorkspace.studentPhotos).length > 0) ? cloudWorkspace.studentPhotos : (localData.studentPhotos || {}),
 studentIcons: (cloudWorkspace.studentIcons && Object.keys(cloudWorkspace.studentIcons).length > 0) ? cloudWorkspace.studentIcons : (localData.studentIcons || {}),
-classGoals: (cloudWorkspace.classGoals && Object.keys(cloudWorkspace.classGoals).length > 0) ? cloudWorkspace.classGoals : (localData.classGoals || {})
+classGoals: (cloudWorkspace.classGoals && Object.keys(cloudWorkspace.classGoals).length > 0) ? cloudWorkspace.classGoals : (localData.classGoals || {}),
+shopItems: (Array.isArray(cloudWorkspace.shopItems) && cloudWorkspace.shopItems.length > 0) ? cloudWorkspace.shopItems : (localData.shopItems || null),
+studentBirthdays: (cloudWorkspace.studentBirthdays && Object.keys(cloudWorkspace.studentBirthdays).length > 0) ? cloudWorkspace.studentBirthdays : (localData.studentBirthdays || {})
 };
 this.checkDailyReset();
 try {
@@ -559,6 +568,28 @@ setClassGoals: (goals) => {
   this.data.classGoals = goals;
   this.saveState();
   window.dispatchEvent(new CustomEvent('cs:goals-updated', { detail: goals }));
+},
+getShopItems: () => this.data.shopItems || null,
+setShopItems: (items) => {
+  this.data.shopItems = items;
+  this.saveState();
+},
+getStudentBirthdays: () => this.data.studentBirthdays || {},
+setStudentBirthdays: (bdays) => {
+  this.data.studentBirthdays = bdays;
+  this.saveState();
+},
+redeemStudentDiamonds: (name, cost, rewardTitle = 'הטבה מחנות היהלומים') => {
+  if (!this.data.studentScores) this.data.studentScores = {};
+  const sc = this.data.studentScores[name] || { daily: 0, total: 0, breakdown: {} };
+  if ((sc.total || 0) < cost) return false;
+  this.pushScoreHistory(`רכישת "${rewardTitle}" (-${cost} 💎 ל-${name})`);
+  sc.total = Math.max(0, (sc.total || 0) - cost);
+  this.data.studentScores[name] = sc;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:scores-updated', { detail: this.data.studentScores }));
+  this.renderStudentsSidebar();
+  return true;
 },
 checkDailyReset: () => this.checkDailyReset(),
 triggerStudentAwardEffect: (name, pts, sourceEl) => this.triggerStudentAwardEffect(name, pts, sourceEl),

@@ -310,6 +310,8 @@ function sanitizeWorkspace(body) {
     studentIcons: (body.studentIcons && typeof body.studentIcons === 'object') ? body.studentIcons : undefined,
     studentPhotos: (body.studentPhotos && typeof body.studentPhotos === 'object') ? body.studentPhotos : undefined,
     classGoals: (body.classGoals && typeof body.classGoals === 'object') ? body.classGoals : undefined,
+    shopItems: Array.isArray(body.shopItems) ? body.shopItems : undefined,
+    studentBirthdays: (body.studentBirthdays && typeof body.studentBirthdays === 'object') ? body.studentBirthdays : undefined,
     lastDailyResetDate: typeof body.lastDailyResetDate === 'string' ? body.lastDailyResetDate : undefined
   };
 }

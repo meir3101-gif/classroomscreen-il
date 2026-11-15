@@ -311,6 +311,21 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     return classGoals[selectedClassId];
   }
 
+  const DEFAULT_SHOP_ITEMS = [
+    { id: 'sh-friend', icon: '💺', title: 'לשבת ליד חבר ליום אחד', cost: 20 },
+    { id: 'sh-assistant', icon: '👑', title: 'עוזר/ת המורה ליום שלם', cost: 30 },
+    { id: 'sh-skip-q', icon: '🎟️', title: 'דילוג על שאלה אחת בתרגול', cost: 25 },
+    { id: 'sh-board', icon: '🖍️', title: 'ציור או כתיבה חופשית על הלוח', cost: 15 },
+    { id: 'sh-game', icon: '🎲', title: 'בחירת משחק כיתתי של 5 דקות', cost: 35 },
+    { id: 'sh-letter', icon: '💌', title: 'מכתב מחמאה אישי להורים', cost: 40 },
+    { id: 'sh-corner', icon: '📚', title: '10 דקות בפינה השקטה / יצירה', cost: 15 },
+    { id: 'sh-duty', icon: '🌟', title: 'בחירת תורנות מועדפת ליום אחד', cost: 20 }
+  ];
+
+  let shopItems = (window.AppStore && window.AppStore.getShopItems && window.AppStore.getShopItems()) || state.shopItems || [...DEFAULT_SHOP_ITEMS];
+  let selectedShopBuyer = '';
+  let showAddShopForm = false;
+
   const BEHAVIORS = [
     { id: 'ready', icon: '🎒', title: 'מוכנות לשיעור', pts: 1 },
     { id: 'task', icon: '📝', title: 'ביצוע מטלה', pts: 2 },
@@ -330,6 +345,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
       <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
       <button class="rand-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students" style="flex:1;">💎 יהלומים (אישי)</button>
+      <button class="rand-tab ${activeTab === 'shop' ? 'active' : ''}" data-sptab="shop" style="flex:1;">🏪 חנות היהלומים</button>
     </div>
 
     <!-- 1. TEAMS VIEW -->
@@ -480,6 +496,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         <div class="sp-icon-grid" data-el="icon-grid"></div>
       </div>
     </div>
+
+    <!-- 3. DIAMOND SHOP VIEW -->
+    <div data-el="shop-view" class="sp-shop-container ${activeTab === 'shop' ? '' : 'hidden'}"></div>
   </div>
   `;
 
@@ -531,7 +550,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       body.querySelectorAll('[data-sptab]').forEach(b => b.classList.toggle('active', b.dataset.sptab === activeTab));
       body.querySelector('[data-el="teams-view"]').classList.toggle('hidden', activeTab !== 'teams');
       body.querySelector('[data-el="students-view"]').classList.toggle('hidden', activeTab !== 'students');
+      body.querySelector('[data-el="shop-view"]')?.classList.toggle('hidden', activeTab !== 'shop');
       if (activeTab === 'teams') renderTeamsBoard();
+      else if (activeTab === 'shop') renderShopView();
       else {
         renderClassGoalBanner();
         renderStudentsGrid();
@@ -1140,6 +1161,268 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   };
   document.addEventListener('keydown', escHandler);
 
+  // 3. DIAMOND SHOP LOGIC
+  const shopView = body.querySelector('[data-el="shop-view"]');
+  const SHOP_EMOJI_CHOICES = ['🎁', '🎟️', '👑', '💺', '🎲', '🖍️', '📚', '🌟', '💌', '🏆', '🎨', '⚽', '🧩', '🏅', '🪄', '🧁'];
+
+  function saveShopItemsList() {
+    state.shopItems = shopItems;
+    if (window.AppStore && window.AppStore.setShopItems) {
+      window.AppStore.setShopItems(shopItems);
+    } else {
+      saveState();
+    }
+  }
+
+  function openShopVoucherModal(studentName, item, remainingTotal) {
+    const existing = document.getElementById('shop-voucher-fullscreen');
+    if (existing) existing.remove();
+    const photo = getStudentPhoto(studentName);
+    const iconHtml = renderStudentIconHtml(getStudentIcon(studentName), studentName);
+    const todayStr = new Date().toLocaleDateString('he-IL');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'shop-voucher-fullscreen';
+    overlay.className = 'shop-voucher-overlay';
+    overlay.innerHTML = `
+      <div class="shop-voucher-card">
+        <div class="shop-voucher-ribbon">🎟️ שובר הטבה כיתתי רשמי</div>
+        <div class="shop-voucher-student">
+          <div class="sp-bubble-avatar ${photo ? 'has-custom-photo' : ''}" style="width:74px;height:74px;font-size:2.1rem;cursor:default;">
+            ${photo ? `<img src="${photo}" class="sp-bubble-photo-img" alt="${studentName}" />` : iconHtml}
+          </div>
+          <div class="shop-voucher-student-name">${studentName}</div>
+        </div>
+        <div class="shop-voucher-prize-box">
+          <div class="shop-voucher-prize-icon">${item.icon || '🎁'}</div>
+          <div class="shop-voucher-prize-title">${item.title}</div>
+          <div class="shop-voucher-cost-tag">נרכש ב-${item.cost} 💎 • יתרה מצטברת: ${remainingTotal} 💎</div>
+        </div>
+        <div class="shop-voucher-footer">
+          <span>📅 תאריך מימוש: ${todayStr}</span>
+          <button class="primary-btn" data-act="close-voucher" style="padding:8px 24px;border-radius:999px;font-weight:800;">🎉 איזה כיף! סגור שובר</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    if (typeof triggerConfetti === 'function') triggerConfetti();
+    if (typeof SoundFX !== 'undefined') {
+      if (SoundFX.fanfare) SoundFX.fanfare();
+      else if (SoundFX.diamondAward) SoundFX.diamondAward(5);
+    }
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay || e.target.closest('[data-act="close-voucher"]')) {
+        overlay.remove();
+      }
+    });
+  }
+
+  function renderShopView() {
+    if (!shopView) return;
+    const students = getStudentsList();
+    if (selectedShopBuyer && !students.includes(selectedShopBuyer)) {
+      selectedShopBuyer = '';
+    }
+    const buyerScoreObj = selectedShopBuyer ? getStudentScore(selectedShopBuyer) : null;
+    const buyerTotal = buyerScoreObj ? (buyerScoreObj.total || 0) : 0;
+
+    shopView.innerHTML = `
+      <div class="shop-header-banner">
+        <div class="shop-header-right">
+          <div class="shop-title-row">
+            <span style="font-size:1.5rem;">🏪</span>
+            <div>
+              <div style="font-weight:900;font-size:1.05rem;color:#fff;">חנות היהלומים הכיתתית</div>
+              <div style="font-size:0.78rem;color:rgba(255,255,255,0.82);">התלמידים מממשים יהלומים מצטברים (💎 מצטבר) להטבות וזכויות חינוכיות בכיתה</div>
+            </div>
+          </div>
+        </div>
+        <div class="shop-header-actions">
+          <button class="small-btn shop-add-custom-btn" data-act="toggle-add-shop-item">
+            ${showAddShopForm ? '✕ סגור הוספה' : '➕ הוסף הטבה משלך'}
+          </button>
+          <button class="small-btn" data-act="undo-shop-purchase" title="בטל רכישה אחרונה" style="background:rgba(254,243,199,0.95);color:#92400e;font-weight:800;border:none;" ${!(window.AppStore && window.AppStore.canUndoScore && window.AppStore.canUndoScore()) ? 'disabled style="opacity:0.45;"' : ''}>↩️ בטל רכישה</button>
+        </div>
+      </div>
+
+      ${showAddShopForm ? `
+        <div class="shop-custom-form-card">
+          <div style="font-weight:800;font-size:0.9rem;color:#0f172a;margin-bottom:6px;">✨ הוספת הטבה חדשה משלך לחנות הכיתתית:</div>
+          <div class="shop-emoji-picker-row" data-el="shop-emoji-row">
+            ${SHOP_EMOJI_CHOICES.map((em, idx) => `
+              <button type="button" class="shop-emoji-chip ${idx === 0 ? 'active' : ''}" data-emoji="${em}">${em}</button>
+            `).join('')}
+          </div>
+          <div class="shop-custom-inputs-row">
+            <input type="text" data-el="custom-shop-icon" class="shop-input-icon" value="🎁" maxlength="4" title="אייקון / אימוג'י" />
+            <input type="text" data-el="custom-shop-title" class="shop-input-title" placeholder="שם ההטבה (למשל: בחירת מדבקה / זמן מחשב / פתיחת השיעור בחידה)..." />
+            <div style="display:flex;align-items:center;gap:4px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:0 8px;">
+              <span>💎</span>
+              <input type="number" data-el="custom-shop-cost" class="shop-input-cost" value="20" min="1" max="500" />
+            </div>
+            <button type="button" class="primary-btn" data-act="save-custom-shop-item" style="padding:7px 16px;border-radius:10px;font-weight:800;white-space:nowrap;">💾 הוסף לחנות</button>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="shop-buyer-bar">
+        <div style="font-weight:800;font-size:0.86rem;color:#fff;white-space:nowrap;">👤 מי קונה עכשיו?</div>
+        <div class="shop-students-strip">
+          ${students.map(name => {
+            const sc = getStudentScore(name);
+            const tot = sc.total || 0;
+            const isSel = selectedShopBuyer === name;
+            const photo = getStudentPhoto(name);
+            const iconHtml = renderStudentIconHtml(getStudentIcon(name), name);
+            return `
+              <button class="shop-student-pill ${isSel ? 'active' : ''}" data-buyer="${name}">
+                <span class="shop-pill-avatar">
+                  ${photo ? `<img src="${photo}" alt="${name}" />` : iconHtml}
+                </span>
+                <span class="shop-pill-name">${name}</span>
+                <span class="shop-pill-balance">💎 ${tot}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="shop-items-grid">
+        ${shopItems.map((item, idx) => {
+          const canBuy = selectedShopBuyer && buyerTotal >= item.cost;
+          const missing = selectedShopBuyer ? Math.max(0, item.cost - buyerTotal) : 0;
+          return `
+            <div class="shop-item-card ${canBuy ? 'can-afford' : ''}" data-shop-idx="${idx}">
+              <div class="shop-item-card-tools">
+                <button class="shop-card-tool" data-act="edit-shop-item" data-idx="${idx}" title="ערוך הטבה או מחיר">✏️</button>
+                <button class="shop-card-tool danger" data-act="delete-shop-item" data-idx="${idx}" title="מחק הטבה מהחנות">🗑️</button>
+              </div>
+              <div class="shop-item-icon">${item.icon || '🎁'}</div>
+              <div class="shop-item-title">${item.title}</div>
+              <div class="shop-item-price-badge">💎 ${item.cost} יהלומים</div>
+              <button class="shop-buy-btn ${canBuy ? 'ready' : 'locked'}" data-act="buy-shop-item" data-idx="${idx}" ${!canBuy ? 'disabled' : ''}>
+                ${!selectedShopBuyer
+                  ? 'בחר תלמיד למעלה 👆'
+                  : (canBuy ? `🛒 רכישה עבור ${selectedShopBuyer}` : `חסרים עוד ${missing} 💎`)}
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    shopView.querySelector('[data-act="toggle-add-shop-item"]')?.addEventListener('click', () => {
+      showAddShopForm = !showAddShopForm;
+      renderShopView();
+    });
+
+    shopView.querySelector('[data-act="undo-shop-purchase"]')?.addEventListener('click', () => {
+      if (!window.AppStore || !window.AppStore.undoLastScore) return;
+      const undone = window.AppStore.undoLastScore();
+      if (!undone) return;
+      studentScores = window.AppStore.getStudentScores();
+      state.studentScores = studentScores;
+      saveState();
+      if (SoundFX.undo) SoundFX.undo();
+      renderShopView();
+    });
+
+    shopView.querySelectorAll('.shop-emoji-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        shopView.querySelectorAll('.shop-emoji-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const iconInp = shopView.querySelector('[data-el="custom-shop-icon"]');
+        if (iconInp) iconInp.value = chip.dataset.emoji;
+      });
+    });
+
+    shopView.querySelector('[data-act="save-custom-shop-item"]')?.addEventListener('click', () => {
+      const iconVal = (shopView.querySelector('[data-el="custom-shop-icon"]')?.value || '🎁').trim() || '🎁';
+      const titleVal = (shopView.querySelector('[data-el="custom-shop-title"]')?.value || '').trim();
+      const costVal = parseInt(shopView.querySelector('[data-el="custom-shop-cost"]')?.value || '20', 10);
+      if (!titleVal) {
+        alert('נא להזין שם להטבה החדשה');
+        return;
+      }
+      if (isNaN(costVal) || costVal <= 0) {
+        alert('נא להזין מחיר חיובי ביהלומים');
+        return;
+      }
+      shopItems.push({
+        id: 'sh-custom-' + Date.now(),
+        icon: iconVal,
+        title: titleVal,
+        cost: costVal
+      });
+      saveShopItemsList();
+      showAddShopForm = false;
+      if (SoundFX.pop) SoundFX.pop();
+      renderShopView();
+    });
+
+    shopView.querySelectorAll('.shop-student-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bName = btn.dataset.buyer;
+        selectedShopBuyer = (selectedShopBuyer === bName) ? '' : bName;
+        if (SoundFX.pop) SoundFX.pop();
+        renderShopView();
+      });
+    });
+
+    shopView.querySelectorAll('[data-act="edit-shop-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx, 10);
+        const item = shopItems[idx];
+        if (!item) return;
+        const newTitle = prompt('שם ההטבה בחנות:', item.title);
+        if (newTitle === null) return;
+        const newCostStr = prompt('מחיר ביהלומים (💎):', item.cost);
+        if (newCostStr === null) return;
+        const newCost = parseInt(newCostStr, 10);
+        if (isNaN(newCost) || newCost <= 0) return;
+        item.title = newTitle.trim() || item.title;
+        item.cost = newCost;
+        saveShopItemsList();
+        renderShopView();
+      });
+    });
+
+    shopView.querySelectorAll('[data-act="delete-shop-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx, 10);
+        const item = shopItems[idx];
+        if (!item) return;
+        if (confirm(`האם להסיר את "${item.title}" מחנות היהלומים?`)) {
+          shopItems.splice(idx, 1);
+          saveShopItemsList();
+          renderShopView();
+        }
+      });
+    });
+
+    shopView.querySelectorAll('[data-act="buy-shop-item"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!selectedShopBuyer) return;
+        const idx = parseInt(btn.dataset.idx, 10);
+        const item = shopItems[idx];
+        if (!item) return;
+        const ok = window.AppStore.redeemStudentDiamonds(selectedShopBuyer, item.cost, item.title);
+        if (!ok) {
+          alert('אין מספיק יהלומים מצטברים לרכישת הטבה זו.');
+          return;
+        }
+        studentScores = window.AppStore.getStudentScores();
+        state.studentScores = studentScores;
+        saveState();
+        const rem = (studentScores[selectedShopBuyer]?.total) || 0;
+        renderShopView();
+        openShopVoucherModal(selectedShopBuyer, item, rem);
+      });
+    });
+  }
+
   const onScoresUpdated = (ev) => {
     if (!document.body.contains(body)) {
       window.removeEventListener('cs:scores-updated', onScoresUpdated);
@@ -1150,6 +1433,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     if (activeTab === 'students') {
       renderClassGoalBanner();
       renderStudentsGrid();
+    } else if (activeTab === 'shop') {
+      renderShopView();
     }
   };
   window.addEventListener('cs:scores-updated', onScoresUpdated);
@@ -1157,6 +1442,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   // Init
   populateClassSelect();
   if (activeTab === 'teams') renderTeamsBoard();
+  else if (activeTab === 'shop') renderShopView();
   else {
     renderClassGoalBanner();
     renderStudentsGrid();
@@ -4209,6 +4495,651 @@ renderUI();
       }
     };
     document.addEventListener('keydown', escEmotionHandler);
+
+    renderUI();
+  }
+},
+
+'help-queue': {
+  title: 'תור עזרה שקט',
+  icon: '✋',
+  defaultW: 480,
+  defaultH: 520,
+  render(body, state, saveState) {
+    let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+    if (!Array.isArray(state.queue)) state.queue = [];
+
+    function getStudents() {
+      const lists = window.AppStore.getClassLists() || [];
+      const found = lists.find(c => c.id === selectedClassId) || lists[0];
+      return (found ? found.students : []).filter(Boolean);
+    }
+
+    function renderAvatarSmall(name) {
+      const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+      const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+      if (photos[name]) return `<img src="${photos[name]}" class="hq-avatar-img" alt="${name}" />`;
+      return renderStudentIconHtml(icons[name] || '', name);
+    }
+
+    function renderUI() {
+      const students = getStudents();
+      const queue = state.queue || [];
+      const waitingNames = new Set(queue.map(q => q.name));
+
+      body.innerHTML = `
+        <div class="hq-wrap">
+          <div class="hq-header-bar">
+            <div>
+              <div style="font-weight:800;font-size:0.95rem;">✋ תור ממתינים לעזרה (${queue.length})</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">לחצו על שמכם להצטרפות לתור בלי להרים יד ולהתעייף</div>
+            </div>
+            ${queue.length > 0 ? `<button class="small-btn danger" data-act="clear-hq" style="font-size:0.75rem;">🧹 נקה תור</button>` : ''}
+          </div>
+
+          <div class="hq-queue-list">
+            ${queue.length === 0 ? `
+              <div class="hq-empty-state">✨ אף תלמיד לא ממתין כרגע לעזרה – עבודה עצמית שקטה וזורמת!</div>
+            ` : queue.map((item, idx) => `
+              <div class="hq-queue-item ${idx === 0 ? 'first-in-line' : ''}">
+                <span class="hq-rank-badge">#${idx + 1}</span>
+                <div class="hq-student-avatar">${renderAvatarSmall(item.name)}</div>
+                <div class="hq-student-info">
+                  <div class="hq-student-name">${item.name}</div>
+                  <div class="hq-student-time">${idx === 0 ? '🟢 בתור עכשיו אצל המורה' : '⏳ ממתין/ה בתור'}</div>
+                </div>
+                <div class="hq-item-actions">
+                  <button class="small-btn hq-peer-btn" data-act="peer-help" data-idx="${idx}" title="חבר עזר לתלמיד">+1 💎 חבר עזר</button>
+                  <button class="small-btn hq-done-btn" data-act="done-help" data-idx="${idx}">✓ טופל</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="hq-students-picker-title">👆 לחץ על הסמל שלך כדי להצטרף לתור:</div>
+          <div class="hq-students-grid">
+            ${students.map(name => {
+              const isWaiting = waitingNames.has(name);
+              const pos = queue.findIndex(q => q.name === name) + 1;
+              return `
+                <button class="hq-student-chip ${isWaiting ? 'in-queue' : ''}" data-student="${name}">
+                  <span class="hq-chip-avatar">${renderAvatarSmall(name)}</span>
+                  <span class="hq-chip-name">${name}</span>
+                  ${isWaiting ? `<span class="hq-chip-pos">#${pos}</span>` : ''}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      body.querySelector('[data-act="clear-hq"]')?.addEventListener('click', () => {
+        state.queue = [];
+        saveState();
+        renderUI();
+      });
+
+      body.querySelectorAll('[data-act="done-help"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          state.queue.splice(idx, 1);
+          saveState();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('[data-act="peer-help"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          const item = state.queue[idx];
+          if (!item) return;
+          const helperName = prompt(`מי החבר/ה שעזר/ה ל-${item.name}? (יקבל +2 💎 על עזרה לחבר):`);
+          if (helperName && helperName.trim()) {
+            const matched = students.find(s => s.includes(helperName.trim())) || helperName.trim();
+            window.AppStore.addDiamondsToStudent(matched, 2, 'help', e.currentTarget);
+          }
+          state.queue.splice(idx, 1);
+          saveState();
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.hq-student-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const sName = chip.dataset.student;
+          const existingIdx = state.queue.findIndex(q => q.name === sName);
+          if (existingIdx >= 0) {
+            state.queue.splice(existingIdx, 1);
+          } else {
+            state.queue.push({ name: sName, ts: Date.now() });
+            if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          }
+          saveState();
+          renderUI();
+        });
+      });
+    }
+
+    renderUI();
+  }
+},
+
+'seating-chart': {
+  title: 'מפת הושבה חכמה',
+  icon: '🪑',
+  defaultW: 680,
+  defaultH: 520,
+  render(body, state, saveState) {
+    let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+    let layoutMode = state.layoutMode || 'pairs'; // 'pairs' (2), 'groups' (4), 'rows' (1)
+    if (!Array.isArray(state.seatsOrder)) state.seatsOrder = [];
+    if (!state.lockedSeats || typeof state.lockedSeats !== 'object') state.lockedSeats = {};
+    let swapSourceIndex = null;
+
+    function getStudents() {
+      const lists = window.AppStore.getClassLists() || [];
+      const found = lists.find(c => c.id === selectedClassId) || lists[0];
+      return (found ? found.students : []).filter(Boolean);
+    }
+
+    function syncSeatsOrder() {
+      const students = getStudents();
+      const existing = state.seatsOrder.filter(s => students.includes(s));
+      const missing = students.filter(s => !existing.includes(s));
+      state.seatsOrder = [...existing, ...missing];
+    }
+
+    function shuffleUnlockedSeats() {
+      syncSeatsOrder();
+      const order = [...state.seatsOrder];
+      const unlockedIndices = [];
+      const unlockedNames = [];
+      order.forEach((name, idx) => {
+        if (!state.lockedSeats[name]) {
+          unlockedIndices.push(idx);
+          unlockedNames.push(name);
+        }
+      });
+      for (let i = unlockedNames.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [unlockedNames[i], unlockedNames[j]] = [unlockedNames[j], unlockedNames[i]];
+      }
+      unlockedIndices.forEach((seatIdx, i) => {
+        order[seatIdx] = unlockedNames[i];
+      });
+      state.seatsOrder = order;
+      swapSourceIndex = null;
+      saveState();
+      if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+      renderUI();
+    }
+
+    function renderAvatar(name) {
+      const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+      const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+      if (photos[name]) return `<img src="${photos[name]}" class="hq-avatar-img" alt="${name}" />`;
+      return renderStudentIconHtml(icons[name] || '', name);
+    }
+
+    function renderUI() {
+      syncSeatsOrder();
+      const order = state.seatsOrder;
+      const perDesk = layoutMode === 'groups' ? 4 : (layoutMode === 'rows' ? 1 : 2);
+      const desks = [];
+      for (let i = 0; i < order.length; i += perDesk) {
+        desks.push(order.slice(i, i + perDesk).map((name, offset) => ({ name, seatIdx: i + offset })));
+      }
+
+      body.innerHTML = `
+        <div class="sc-wrap">
+          <div class="sc-toolbar">
+            <div style="display:flex;gap:4px;">
+              <button class="sp-mode-pill ${layoutMode === 'pairs' ? 'active' : ''}" data-layout="pairs">🪑 זוגות</button>
+              <button class="sp-mode-pill ${layoutMode === 'groups' ? 'active' : ''}" data-layout="groups">🧩 קבוצות (4)</button>
+              <button class="sp-mode-pill ${layoutMode === 'rows' ? 'active' : ''}" data-layout="rows">📏 טורים</button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span style="font-size:0.74rem;color:var(--text-muted);">${swapSourceIndex !== null ? '🔄 בחר כיסא שני להחלפה' : '💡 לחץ על שני תלמידים להחלפת מקום'}</span>
+              <button class="small-btn" data-act="shuffle-seats" style="background:#e0f2fe;color:#0284c7;font-weight:800;border:1px solid #bae6fd;">🎲 ערבב מקומות</button>
+            </div>
+          </div>
+
+          <div class="sc-front-board">🖥️ לוח הכיתה ועמדת המורה</div>
+
+          <div class="sc-desks-grid layout-${layoutMode}">
+            ${desks.map((desk, dIdx) => `
+              <div class="sc-desk-card">
+                <div class="sc-desk-header">
+                  <span>שולחן ${dIdx + 1}</span>
+                  <button class="sc-desk-reward-btn" data-act="reward-desk" data-didx="${dIdx}" title="הענק יהלום לכל יושבי השולחן">+1 💎 לשולחן</button>
+                </div>
+                <div class="sc-desk-seats">
+                  ${desk.map(seat => {
+                    const isLocked = !!state.lockedSeats[seat.name];
+                    const isSwapSel = swapSourceIndex === seat.seatIdx;
+                    return `
+                      <div class="sc-seat-item ${isLocked ? 'locked' : ''} ${isSwapSel ? 'swap-selected' : ''}" data-seat-idx="${seat.seatIdx}">
+                        <button class="sc-lock-btn" data-act="toggle-lock" data-name="${seat.name}" title="${isLocked ? 'בטל נעילת מקום' : 'נעל תלמיד במקום זה בעת ערבוב'}">
+                          ${isLocked ? '🔒' : '🔓'}
+                        </button>
+                        <div class="sc-seat-avatar">${renderAvatar(seat.name)}</div>
+                        <div class="sc-seat-name">${seat.name}</div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      body.querySelectorAll('[data-layout]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          layoutMode = btn.dataset.layout;
+          state.layoutMode = layoutMode;
+          saveState();
+          renderUI();
+        });
+      });
+
+      body.querySelector('[data-act="shuffle-seats"]')?.addEventListener('click', shuffleUnlockedSeats);
+
+      body.querySelectorAll('[data-act="toggle-lock"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sName = btn.dataset.name;
+          state.lockedSeats[sName] = !state.lockedSeats[sName];
+          saveState();
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('[data-act="reward-desk"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dIdx = parseInt(btn.dataset.didx, 10);
+          const desk = desks[dIdx] || [];
+          desk.forEach(seat => {
+            window.AppStore.addDiamondsToStudent(seat.name, 1, 'order', e.currentTarget);
+          });
+          if (typeof SoundFX !== 'undefined' && SoundFX.diamondAward) SoundFX.diamondAward(2);
+        });
+      });
+
+      body.querySelectorAll('.sc-seat-item').forEach(seatEl => {
+        seatEl.addEventListener('click', () => {
+          const idx = parseInt(seatEl.dataset.seatIdx, 10);
+          if (swapSourceIndex === null) {
+            swapSourceIndex = idx;
+          } else if (swapSourceIndex === idx) {
+            swapSourceIndex = null;
+          } else {
+            const temp = state.seatsOrder[swapSourceIndex];
+            state.seatsOrder[swapSourceIndex] = state.seatsOrder[idx];
+            state.seatsOrder[idx] = temp;
+            swapSourceIndex = null;
+            saveState();
+            if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          }
+          renderUI();
+        });
+      });
+    }
+
+    renderUI();
+  }
+},
+
+'brain-break': {
+  title: 'הפסקת מוח ונשימה',
+  icon: '🧘',
+  defaultW: 440,
+  defaultH: 430,
+  render(body, state, saveState) {
+    let tab = state.tab || 'breathe'; // 'breathe' | 'move'
+    let breathingActive = false;
+    let breatheTimer = null;
+    let phaseIndex = 0;
+    let moveRemaining = 60;
+    let moveInterval = null;
+
+    const CHALLENGES = [
+      { icon: '🙆‍♂️', title: 'מתיחות לשמיים ונשימה', desc: 'עמדו ליד הכיסא, מתחו ידיים גבוה לשמיים על קצות האצבעות ושחררו לאט 5 פעמים.' },
+      { icon: '🪞', title: 'משחק המראה בדממה', desc: 'עמדו מול השותף לשולחן וחקו את התנועות האיטיות שלו בדממה מוחלטת למשך דקה!' },
+      { icon: '🦩', title: 'אתגר הפלמינגו השקט', desc: 'עמדו על רגל אחת בשיווי משקל מלא ובדממה – אחרי 30 שניות החליפו רגל!' },
+      { icon: '🌧️', title: 'מקהלת הגשם באצבעות', desc: 'תיפוף עדין של טיפות גשם עם שתי אצבעות על השולחן שהולך ונחלש עד לדממה.' },
+      { icon: '🦋', title: 'שחרור כתפיים וצוואר', desc: 'סובבו כתפיים לאחור ברוגע 8 פעמים, עצמו עיניים והניחו ראש על השולחן ל-20 שניות.' }
+    ];
+    let currentChallengeIdx = state.challengeIdx ?? 0;
+
+    const PHASES = [
+      { label: 'שאיפה עמוקה מהאף... 🌿', cls: 'inhale', sec: 4 },
+      { label: 'החזקת אוויר... ✨', cls: 'hold', sec: 4 },
+      { label: 'נשיפה איטית מהפה... 🫧', cls: 'exhale', sec: 4 }
+    ];
+
+    function stopTimers() {
+      if (breatheTimer) { clearInterval(breatheTimer); breatheTimer = null; }
+      if (moveInterval) { clearInterval(moveInterval); moveInterval = null; }
+      breathingActive = false;
+    }
+
+    function renderUI() {
+      const ch = CHALLENGES[currentChallengeIdx % CHALLENGES.length];
+      body.innerHTML = `
+        <div class="bb-wrap">
+          <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
+            <button class="rand-tab ${tab === 'breathe' ? 'active' : ''}" data-bbtab="breathe" style="flex:1;">🫧 בועת נשימה ורוגע</button>
+            <button class="rand-tab ${tab === 'move' ? 'active' : ''}" data-bbtab="move" style="flex:1;">⚡ התרעננות 60 שניות</button>
+          </div>
+
+          ${tab === 'breathe' ? `
+            <div class="bb-breathe-stage">
+              <div class="bb-orb-container">
+                <div class="bb-orb ${breathingActive ? PHASES[phaseIndex].cls : ''}" data-el="bb-orb">
+                  <span class="bb-orb-emoji">🧘</span>
+                  <span class="bb-orb-text" data-el="bb-orb-text">${breathingActive ? PHASES[phaseIndex].label : 'לחצו להתחלת נשימה'}</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:center;">
+                <button class="primary-btn" data-act="toggle-breathe" style="border-radius:999px;padding:8px 22px;font-weight:800;">
+                  ${breathingActive ? '⏹️ עצור נשימה' : '▶️ התחל 3 נשימות מרגיעות'}
+                </button>
+              </div>
+            </div>
+          ` : `
+            <div class="bb-move-stage">
+              <div class="bb-challenge-card">
+                <div class="bb-challenge-icon">${ch.icon}</div>
+                <div class="bb-challenge-title">${ch.title}</div>
+                <div class="bb-challenge-desc">${ch.desc}</div>
+                <div class="bb-timer-pill" data-el="bb-move-timer">⏱️ ${moveRemaining} שניות</div>
+              </div>
+              <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+                <button class="small-btn" data-act="spin-challenge" style="font-weight:800;">🎲 הגרל תרגיל אחר</button>
+                <button class="primary-btn" data-act="toggle-move-timer" style="padding:6px 16px;border-radius:10px;font-weight:800;">
+                  ${moveInterval ? '⏸️ עצור טיימר' : '▶️ הפעל 60 שניות'}
+                </button>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      body.querySelectorAll('[data-bbtab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          stopTimers();
+          tab = btn.dataset.bbtab;
+          state.tab = tab;
+          saveState();
+          renderUI();
+        });
+      });
+
+      body.querySelector('[data-act="toggle-breathe"]')?.addEventListener('click', () => {
+        if (breathingActive) {
+          stopTimers();
+          renderUI();
+          return;
+        }
+        breathingActive = true;
+        phaseIndex = 0;
+        renderUI();
+        breatheTimer = setInterval(() => {
+          if (!document.body.contains(body)) { stopTimers(); return; }
+          phaseIndex = (phaseIndex + 1) % PHASES.length;
+          const orb = body.querySelector('[data-el="bb-orb"]');
+          const txt = body.querySelector('[data-el="bb-orb-text"]');
+          if (orb && txt) {
+            orb.className = `bb-orb ${PHASES[phaseIndex].cls}`;
+            txt.textContent = PHASES[phaseIndex].label;
+          }
+        }, 4000);
+      });
+
+      body.querySelector('[data-act="spin-challenge"]')?.addEventListener('click', () => {
+        stopTimers();
+        moveRemaining = 60;
+        currentChallengeIdx = (currentChallengeIdx + 1 + Math.floor(Math.random() * (CHALLENGES.length - 1))) % CHALLENGES.length;
+        state.challengeIdx = currentChallengeIdx;
+        saveState();
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+        renderUI();
+      });
+
+      body.querySelector('[data-act="toggle-move-timer"]')?.addEventListener('click', () => {
+        if (moveInterval) {
+          stopTimers();
+          renderUI();
+          return;
+        }
+        moveRemaining = 60;
+        renderUI();
+        moveInterval = setInterval(() => {
+          if (!document.body.contains(body)) { stopTimers(); return; }
+          moveRemaining--;
+          const tEl = body.querySelector('[data-el="bb-move-timer"]');
+          if (tEl) tEl.textContent = `⏱️ ${moveRemaining} שניות`;
+          if (moveRemaining <= 0) {
+            stopTimers();
+            if (typeof SoundFX !== 'undefined' && SoundFX.bell) SoundFX.bell();
+            moveRemaining = 60;
+            renderUI();
+          }
+        }, 1000);
+      });
+    }
+
+    renderUI();
+    return () => stopTimers();
+  }
+},
+
+'exit-ticket': {
+  title: 'מד הבנה בסוף שיעור',
+  icon: '🚦',
+  defaultW: 560,
+  defaultH: 500,
+  render(body, state, saveState) {
+    let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+    if (!state.understanding || typeof state.understanding !== 'object') state.understanding = {};
+    let activeStudent = null;
+
+    const LEVELS = [
+      { id: 'green', icon: '🟢', title: 'הבנתי מצוין!', sub: 'יכול/ה גם להסביר לחבר', color: '#10b981' },
+      { id: 'yellow', icon: '🟡', title: 'הבנתי חלקית', sub: 'צריך/ה עוד תרגול קטן', color: '#f59e0b' },
+      { id: 'red', icon: '🔴', title: 'צריך/ה עזרה', sub: 'אשמח להסבר נוסף מהמורה', color: '#ef4444' }
+    ];
+
+    function getStudents() {
+      const lists = window.AppStore.getClassLists() || [];
+      const found = lists.find(c => c.id === selectedClassId) || lists[0];
+      return (found ? found.students : []).filter(Boolean);
+    }
+
+    function renderUI() {
+      const students = getStudents();
+      const map = state.understanding || {};
+
+      body.innerHTML = `
+        <div class="et-wrap">
+          <div class="et-top-bar">
+            <span style="font-weight:800;font-size:0.9rem;">🚦 איך הבנתי את החומר בשיעור היום?</span>
+            <button class="small-btn" data-act="reset-et" style="font-size:0.75rem;">↺ איפוס מד הבנה</button>
+          </div>
+
+          <div class="et-columns">
+            ${LEVELS.map(lv => {
+              const inLevel = students.filter(s => map[s] === lv.id);
+              return `
+                <div class="et-col" style="border-top: 4px solid ${lv.color};">
+                  <div class="et-col-header">
+                    <span>${lv.icon} <b>${lv.title}</b> (${inLevel.length})</span>
+                    <div style="font-size:0.7rem;color:var(--text-muted);">${lv.sub}</div>
+                  </div>
+                  <div class="et-col-students">
+                    ${inLevel.map(name => `<span class="et-student-tag">${name}</span>`).join('') || '<span style="font-size:0.74rem;color:#94a3b8;">—</span>'}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="et-students-Title" style="font-size:0.78rem;font-weight:700;color:var(--text-muted);">👆 לחץ על שמך ובחר רמת הבנה:</div>
+          <div class="et-students-grid">
+            ${students.map(name => {
+              const cur = LEVELS.find(l => l.id === map[name]);
+              return `
+                <button class="et-student-btn ${cur ? 'checked-' + cur.id : ''}" data-student="${name}">
+                  <span>${cur ? cur.icon : '⚪'}</span>
+                  <span>${name}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          ${activeStudent ? `
+            <div class="et-picker-modal">
+              <div class="et-picker-card">
+                <div style="font-weight:800;margin-bottom:8px;">איך הבנת את השיעור, ${activeStudent}?</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${LEVELS.map(lv => `
+                    <button class="et-choice-btn" data-lv="${lv.id}">
+                      <span style="font-size:1.3rem;">${lv.icon}</span>
+                      <div style="text-align:right;">
+                        <div style="font-weight:800;">${lv.title}</div>
+                        <div style="font-size:0.74rem;color:var(--text-muted);">${lv.sub}</div>
+                      </div>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      body.querySelector('[data-act="reset-et"]')?.addEventListener('click', () => {
+        state.understanding = {};
+        saveState();
+        renderUI();
+      });
+
+      body.querySelectorAll('.et-student-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeStudent = btn.dataset.student;
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.et-choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!activeStudent) return;
+          state.understanding[activeStudent] = btn.dataset.lv;
+          activeStudent = null;
+          saveState();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        });
+      });
+    }
+
+    renderUI();
+  }
+},
+
+'birthdays': {
+  title: 'לוח ימי הולדת בכיתה',
+  icon: '🎂',
+  defaultW: 480,
+  defaultH: 480,
+  render(body, state, saveState) {
+    let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
+    let bdays = (window.AppStore && window.AppStore.getStudentBirthdays) ? window.AppStore.getStudentBirthdays() : (state.bdays || {});
+
+    function getStudents() {
+      const lists = window.AppStore.getClassLists() || [];
+      const found = lists.find(c => c.id === selectedClassId) || lists[0];
+      return (found ? found.students : []).filter(Boolean);
+    }
+
+    function saveBdays() {
+      state.bdays = bdays;
+      if (window.AppStore && window.AppStore.setStudentBirthdays) {
+        window.AppStore.setStudentBirthdays(bdays);
+      } else {
+        saveState();
+      }
+    }
+
+    function renderUI() {
+      const students = getStudents();
+      const now = new Date();
+      const curDay = now.getDate();
+      const curMonth = now.getMonth() + 1;
+
+      body.innerHTML = `
+        <div class="bd-wrap">
+          <div class="bd-header">
+            <div>
+              <div style="font-weight:900;font-size:0.98rem;">🎂 ימי הולדת בכיתה</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">לחצו על תאריך לעדכון יום הולדת או על 🎉 לחגיגה ומתנת +5 💎</div>
+            </div>
+          </div>
+
+          <div class="bd-list">
+            ${students.map(name => {
+              const raw = bdays[name] || ''; // format "DD/MM"
+              const parts = raw.split('/');
+              const d = parseInt(parts[0], 10);
+              const m = parseInt(parts[1], 10);
+              const isToday = (d === curDay && m === curMonth);
+              const isThisMonth = (!isToday && m === curMonth);
+              return `
+                <div class="bd-row ${isToday ? 'bd-today' : (isThisMonth ? 'bd-month' : '')}">
+                  <div class="bd-student-info">
+                    <span class="bd-icon">${isToday ? '👑' : (isThisMonth ? '🎈' : '🎂')}</span>
+                    <span class="bd-name">${name}</span>
+                    ${isToday ? `<span class="bd-badge-today">חוגג/ת היום! 🎉</span>` : (isThisMonth ? `<span class="bd-badge-month">החודש!</span>` : '')}
+                  </div>
+                  <div class="bd-actions">
+                    <button class="small-btn bd-date-btn" data-act="set-bday" data-student="${name}">
+                      📅 ${raw || 'הגדר תאריך'}
+                    </button>
+                    <button class="small-btn bd-celebrate-btn" data-act="celebrate-bday" data-student="${name}" title="חגיגת יום הולדת והענקת 5 יהלומים במתנה!">
+                      🎉 חגוג (+5 💎)
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      body.querySelectorAll('[data-act="set-bday"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sName = btn.dataset.student;
+          const val = prompt(`הזן תאריך יום הולדת עבור ${sName} (בפורמט יום/חודש, למשל 14/05):`, bdays[sName] || '');
+          if (val === null) return;
+          bdays[sName] = val.trim();
+          saveBdays();
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('[data-act="celebrate-bday"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const sName = btn.dataset.student;
+          window.AppStore.addDiamondsToStudent(sName, 5, 'excel', e.currentTarget);
+          if (typeof triggerConfetti === 'function') triggerConfetti();
+          if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
+          alert(`🎂🎉 מזל טוב ל-${sName}! הוענקו 5 יהלומים במתנה ליום ההולדת!`);
+        });
+      });
+    }
 
     renderUI();
   }
