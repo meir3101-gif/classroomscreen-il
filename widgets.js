@@ -3846,5 +3846,371 @@ function bindEvents() {
 
 renderUI();
 }
+},
+'emotion-checkin': {
+  title: 'מד רגשות ושיח בוקר',
+  icon: '💛',
+  defaultW: 560,
+  defaultH: 540,
+  render(body, state, saveState) {
+    const EMOTIONS = [
+      { id: 'happy', icon: '😊', label: 'שמח/ה ורגוע/ה', short: 'שמח/ה', color: '#10b981', glow: 'rgba(16, 185, 129, 0.75)', bg: '#ecfdf5' },
+      { id: 'excited', icon: '🤩', label: 'נרגש/ת ומלא/ת אנרגיה', short: 'נרגש/ת', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.8)', bg: '#fffbeb' },
+      { id: 'tired', icon: '😴', label: 'עייף/ה היום', short: 'עייף/ה', color: '#6366f1', glow: 'rgba(99, 102, 241, 0.75)', bg: '#eef2ff' },
+      { id: 'confused', icon: '🤔', label: 'מהורהר/ת או מוטרד/ת', short: 'מהורהר/ת', color: '#0ea5e9', glow: 'rgba(14, 165, 233, 0.75)', bg: '#f0f9ff' },
+      { id: 'share', icon: '🙋‍♂️', label: 'רוצה לשתף!', short: 'רוצה לשתף!', color: '#ec4899', glow: 'rgba(236, 72, 153, 0.88)', bg: '#fdf2f8' }
+    ];
+
+    const MORNING_QUESTIONS = [
+      'משהו קטן ששימח אותי השבוע או הבוקר הוא...',
+      'למי בכיתה הייתי רוצה להגיד תודה היום, ועל מה?',
+      'מתי הרגשתי גאווה בעצמי לאחרונה?',
+      'מה עוזר לי להירגע ולהרגיש טוב כשקצת קשה לי?',
+      'מעשה טוב שעשיתי או שראיתי חבר/ה עושה השבוע',
+      'דבר אחד שאני מצפה לו במיוחד היום או השבוע',
+      'אם הרגש שלי הבוקר היה מזג אוויר – איזה מזג אוויר הוא היה?',
+      'מה נותן לי כוח ואנרגיה בבוקר?',
+      'מחמאה שהייתי רוצה לתת לחבר או חברה בכיתה',
+      'משהו חדש שלמדתי לאחרונה וסיקרן אותי',
+      'איך אפשר לעזור לחבר/ה שנראה שקצת עצוב לו היום?',
+      'רגע מצחיק או כיפי שהיה לי בימים האחרונים'
+    ];
+
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+    if (state.lastEmotionDate !== todayStr) {
+      state.studentEmotions = {};
+      state.sharedToday = {};
+      state.lastEmotionDate = todayStr;
+      state.questionIdx = Math.floor(Math.random() * MORNING_QUESTIONS.length);
+      saveState();
+    }
+
+    if (!state.studentEmotions || typeof state.studentEmotions !== 'object') state.studentEmotions = {};
+    if (!state.sharedToday || typeof state.sharedToday !== 'object') state.sharedToday = {};
+    if (typeof state.questionIdx !== 'number') state.questionIdx = 0;
+
+    let selectedClassId = state.classId || (window.AppStore && window.AppStore.getSelectedClassId ? window.AppStore.getSelectedClassId() : null);
+    let activeFilter = 'all';
+    let selectedStudent = null;
+    let spotlightStudent = null;
+
+    function getClassLists() {
+      return (window.AppStore && window.AppStore.getClassLists) ? window.AppStore.getClassLists() : [];
+    }
+
+    function getStudents() {
+      const lists = getClassLists();
+      const found = lists.find(c => c.id === selectedClassId) || lists[0];
+      return (found ? found.students : []).filter(Boolean);
+    }
+
+    function getStudentAvatarInner(name) {
+      const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+      const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+      if (photos[name]) {
+        return `<img src="${photos[name]}" alt="${name}" class="sp-bubble-photo-img" />`;
+      }
+      return window.renderStudentIconHtml ? window.renderStudentIconHtml(icons[name], name) : '⭐';
+    }
+
+    function computeWeatherSummary(students) {
+      const counts = { happy: 0, excited: 0, tired: 0, confused: 0, share: 0 };
+      let totalChecked = 0;
+      students.forEach(s => {
+        const em = state.studentEmotions[s];
+        if (em && counts[em] !== undefined) {
+          counts[em]++;
+          totalChecked++;
+        }
+      });
+      let weatherText = '🌤️ בוקר חדש בכיתה – לחצו על תלמיד לבחירת רגש';
+      if (totalChecked > 0) {
+        if (counts.share >= 3) weatherText = '🙋‍♂️ בוקר של שיתופים ושיח כיתתי!';
+        else if (counts.excited >= counts.happy && counts.excited > 0) weatherText = '🌈 מזג אוויר כיתתי: אנרגטי ונרגש!';
+        else if (counts.happy >= totalChecked * 0.4) weatherText = '☀️ מזג אוויר כיתתי: שמשי, שמח ורגוע!';
+        else if (counts.tired >= totalChecked * 0.4) weatherText = '☁️ מזג אוויר כיתתי: רגוע ושקט (קצת עייפים הבוקר)';
+        else weatherText = '🌤️ מזג אוויר כיתתי: מגוון ופתוח להקשבה';
+      }
+      return { counts, totalChecked, weatherText };
+    }
+
+    function renderUI() {
+      const lists = getClassLists();
+      const students = getStudents();
+      const { counts, totalChecked, weatherText } = computeWeatherSummary(students);
+      const curQuestion = MORNING_QUESTIONS[state.questionIdx % MORNING_QUESTIONS.length];
+
+      const filteredStudents = activeFilter === 'all'
+        ? students
+        : students.filter(s => state.studentEmotions[s] === activeFilter);
+
+      body.innerHTML = `
+        <div class="em-arena-container">
+          <!-- Top Bar: Class selector, Weather Summary & Reset -->
+          <div class="em-top-toolbar">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <select data-el="em-class-sel" class="em-class-sel">
+                ${lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name} (${c.students.length})</option>`).join('')}
+              </select>
+              <span class="em-weather-pill">${weatherText}</span>
+              <span class="em-count-pill">שיתפו היום: <b>${totalChecked} / ${students.length}</b></span>
+            </div>
+            <button class="small-btn" data-act="reset-emotions" style="font-weight:700;">↺ איפוס בוקר חדש</button>
+          </div>
+
+          <!-- Part 3: Daily Emotional Question & Sharing Spotlight -->
+          <div class="em-question-card">
+            <div class="em-question-main">
+              <div class="em-question-badge">💬 שאלת הבוקר לשיח רגשי</div>
+              <div class="em-question-text">"${curQuestion}"</div>
+            </div>
+            <div class="em-question-actions">
+              <button class="em-action-btn secondary" data-act="next-question" title="הגרל שאלת שיח אחרת">🎲 החלף שאלה</button>
+              <button class="em-action-btn primary" data-act="pick-sharer" title="הגרל תלמיד לשיתוף (עדיפות למי שסימן 'רוצה לשתף!')">🙋‍♂️ הגרל תלמיד לשיתוף (${counts.share > 0 ? `${counts.share} רוצים לשתף` : 'מהכיתה'})</button>
+            </div>
+          </div>
+
+          ${spotlightStudent ? (() => {
+            const emObj = EMOTIONS.find(e => e.id === state.studentEmotions[spotlightStudent]);
+            const alreadyRewarded = Boolean(state.sharedToday[spotlightStudent]);
+            return `
+              <div class="em-spotlight-banner">
+                <div class="em-spotlight-left">
+                  <div class="em-spotlight-avatar" style="border-color:${emObj ? emObj.color : '#ec4899'};">
+                    ${getStudentAvatarInner(spotlightStudent)}
+                  </div>
+                  <div>
+                    <div class="em-spotlight-name">🎤 הבמה של ${spotlightStudent}!</div>
+                    <div class="em-spotlight-sub">${emObj ? `${emObj.icon} ${emObj.label}` : 'משתף/ת בשאלת הבוקר'}</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="em-reward-share-btn ${alreadyRewarded ? 'rewarded' : ''}" data-act="reward-sharer" data-student="${spotlightStudent}">
+                    ${alreadyRewarded ? '✓ הוענק יהלום על שיתוף!' : '💎 פרגן יהלום על שיתוף (+1)'}
+                  </button>
+                  <button class="small-btn" data-act="close-spotlight">✕</button>
+                </div>
+              </div>
+            `;
+          })() : ''}
+
+          <!-- Part 1: Emotion Bubbles Filter Strip -->
+          <div class="em-filter-strip">
+            <button class="em-filter-pill ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">
+              <span>✨ כל הכיתה</span>
+              <span class="em-pill-num">${students.length}</span>
+            </button>
+            ${EMOTIONS.map(em => `
+              <button class="em-filter-pill ${activeFilter === em.id ? 'active' : ''}" data-filter="${em.id}" style="--em-color:${em.color};">
+                <span style="font-size:1.15rem;">${em.icon}</span>
+                <span>${em.short}</span>
+                <span class="em-pill-num">${counts[em.id] || 0}</span>
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Students Emotion Map Grid -->
+          <div class="sp-grid em-students-grid">
+            ${filteredStudents.length === 0 ? `
+              <div style="grid-column:1/-1;text-align:center;padding:28px;color:#fff;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,0.4);">
+                אין תלמידים בקטגוריה זו כרגע
+              </div>
+            ` : filteredStudents.map(name => {
+              const emId = state.studentEmotions[name];
+              const emObj = EMOTIONS.find(e => e.id === emId);
+              const hasPhoto = Boolean(window.AppStore && window.AppStore.getStudentPhotos && window.AppStore.getStudentPhotos()[name]);
+              return `
+                <div class="sp-student-bubble em-student-card ${emObj ? 'has-emotion' : ''} ${emId === 'share' ? 'wants-to-share' : ''}" data-student="${name}" style="${emObj ? `--em-color:${emObj.color};--em-glow:${emObj.glow};` : ''}">
+                  <div class="sp-bubble-avatar-wrap">
+                    <div class="sp-bubble-avatar ${hasPhoto ? 'has-custom-photo' : ''}">
+                      ${getStudentAvatarInner(name)}
+                    </div>
+                    ${emObj ? `
+                      <span class="em-student-badge" style="background:${emObj.color};">${emObj.icon} ${emObj.short}</span>
+                    ` : `
+                      <span class="em-student-badge empty">איך אני מרגיש/ה?</span>
+                    `}
+                  </div>
+                  <div class="sp-bubble-name" title="${name}">${name}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Emotion Picker Drawer (Opens on clicking a student) -->
+          <div class="sp-drawer em-picker-drawer ${selectedStudent ? '' : 'hidden'}">
+            ${selectedStudent ? (() => {
+              const curEm = state.studentEmotions[selectedStudent];
+              const alreadyRewarded = Boolean(state.sharedToday[selectedStudent]);
+              return `
+                <div class="sp-drawer-header">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f0f9ff;border:2px solid #38bdf8;font-size:1.5rem;">
+                      ${getStudentAvatarInner(selectedStudent)}
+                    </div>
+                    <div>
+                      <div style="font-weight:900;font-size:1rem;color:var(--text-dark);">איך ${selectedStudent} מרגיש/ה הבוקר?</div>
+                      <div style="font-size:0.78rem;color:var(--text-muted);">בחר/י רגש או סמן/י שרוצה לשתף בכיתה</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="em-reward-share-btn small ${alreadyRewarded ? 'rewarded' : ''}" data-act="reward-sharer" data-student="${selectedStudent}">
+                      ${alreadyRewarded ? '✓ קיבל/ה יהלום' : '💎 +1 על שיתוף'}
+                    </button>
+                    ${curEm ? `<button class="small-btn" data-act="clear-student-em" style="font-size:0.75rem;">נקה בחירה</button>` : ''}
+                    <button class="small-btn" data-act="close-em-drawer" style="padding:2px 8px;">✕</button>
+                  </div>
+                </div>
+                <div class="em-choices-grid">
+                  ${EMOTIONS.map(em => `
+                    <button class="em-choice-btn ${curEm === em.id ? 'selected' : ''}" data-em="${em.id}" style="--em-color:${em.color};--em-bg:${em.bg};">
+                      <span class="em-choice-icon">${em.icon}</span>
+                      <span class="em-choice-label">${em.label}</span>
+                    </button>
+                  `).join('')}
+                </div>
+              `;
+            })() : ''}
+          </div>
+        </div>
+      `;
+
+      bindEmotionEvents();
+    }
+
+    function bindEmotionEvents() {
+      body.querySelector('[data-el="em-class-sel"]')?.addEventListener('change', (e) => {
+        selectedClassId = e.target.value;
+        state.classId = selectedClassId;
+        selectedStudent = null;
+        spotlightStudent = null;
+        saveState();
+        renderUI();
+      });
+
+      body.querySelector('[data-act="reset-emotions"]')?.addEventListener('click', () => {
+        if (confirm('האם לאפס את לוח הרגשות לבוקר חדש?')) {
+          state.studentEmotions = {};
+          state.sharedToday = {};
+          selectedStudent = null;
+          spotlightStudent = null;
+          saveState();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        }
+      });
+
+      body.querySelector('[data-act="next-question"]')?.addEventListener('click', () => {
+        state.questionIdx = (state.questionIdx + 1) % MORNING_QUESTIONS.length;
+        saveState();
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+        renderUI();
+      });
+
+      body.querySelector('[data-act="pick-sharer"]')?.addEventListener('click', () => {
+        const students = getStudents();
+        if (students.length === 0) return;
+        const sharers = students.filter(s => state.studentEmotions[s] === 'share' && !state.sharedToday[s]);
+        const allSharers = students.filter(s => state.studentEmotions[s] === 'share');
+        const pool = sharers.length > 0 ? sharers : (allSharers.length > 0 ? allSharers : students);
+        spotlightStudent = pool[Math.floor(Math.random() * pool.length)];
+        selectedStudent = null;
+        if (typeof SoundFX !== 'undefined' && SoundFX.diamondAward) SoundFX.diamondAward(1);
+        renderUI();
+      });
+
+      body.querySelector('[data-act="close-spotlight"]')?.addEventListener('click', () => {
+        spotlightStudent = null;
+        renderUI();
+      });
+
+      body.querySelectorAll('[data-act="reward-sharer"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const stName = btn.dataset.student;
+          if (!stName) return;
+          if (window.AppStore && window.AppStore.addDiamondsToStudent) {
+            window.AppStore.addDiamondsToStudent(stName, 1, 'שיתוף בשיח רגשי', btn);
+          }
+          state.sharedToday[stName] = true;
+          saveState();
+          if (typeof SoundFX !== 'undefined' && SoundFX.diamondAward) SoundFX.diamondAward(1);
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.em-filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          activeFilter = pill.dataset.filter;
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.em-student-card').forEach(card => {
+        card.addEventListener('click', () => {
+          selectedStudent = card.dataset.student;
+          renderUI();
+        });
+      });
+
+      body.querySelector('[data-act="close-em-drawer"]')?.addEventListener('click', () => {
+        selectedStudent = null;
+        renderUI();
+      });
+
+      body.querySelector('[data-act="clear-student-em"]')?.addEventListener('click', () => {
+        if (selectedStudent) {
+          delete state.studentEmotions[selectedStudent];
+          selectedStudent = null;
+          saveState();
+          renderUI();
+        }
+      });
+
+      body.querySelectorAll('.em-choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!selectedStudent) return;
+          const chosenEm = btn.dataset.em;
+          const stName = selectedStudent;
+          state.studentEmotions[stName] = chosenEm;
+          selectedStudent = null;
+          saveState();
+          if (typeof SoundFX !== 'undefined' && SoundFX.diamondAward) SoundFX.diamondAward(1);
+          renderUI();
+          const targetCard = body.querySelector(`.em-student-card[data-student="${CSS.escape(stName)}"] .sp-bubble-avatar`);
+          if (targetCard) {
+            targetCard.classList.add('sp-pop-zoom-active');
+            setTimeout(() => targetCard.classList.remove('sp-pop-zoom-active'), 800);
+          }
+        });
+      });
+    }
+
+    const escEmotionHandler = (e) => {
+      if (e.key !== 'Escape') return;
+      if (!document.body.contains(body)) {
+        document.removeEventListener('keydown', escEmotionHandler);
+        return;
+      }
+      if (selectedStudent) {
+        selectedStudent = null;
+        renderUI();
+        return;
+      }
+      if (spotlightStudent) {
+        spotlightStudent = null;
+        renderUI();
+        return;
+      }
+      const win = body.closest('.widget-window[data-type="emotion-checkin"]');
+      if (win) {
+        document.removeEventListener('keydown', escEmotionHandler);
+        win.querySelector('[data-wact="close"]')?.click();
+      }
+    };
+    document.addEventListener('keydown', escEmotionHandler);
+
+    renderUI();
+  }
 }
 };
