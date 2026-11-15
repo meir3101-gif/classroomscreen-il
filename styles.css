@@ -6269,5 +6269,40 @@ button {
   margin-right: 4px;
 }
 
+/* Duty Roster Direct Random Substitute Button & Highlight */
+.duty-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.duty-random-btn {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.25)) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  font-weight: 800 !important;
+}
+
+.duty-random-btn:hover {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(56, 189, 248, 0.45)) !important;
+  transform: scale(1.06);
+}
+
+.duty-just-replaced {
+  animation: dutySubHighlight 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dutySubHighlight {
+  0% {
+    background: rgba(56, 189, 248, 0.45);
+    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+
 
 

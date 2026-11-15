@@ -28,6 +28,7 @@ const DEFAULT_STUDENTS = [
 'גיא שפירא', 'יעל אלון', 'עומר סגל', 'ליאור מלכה', 'אגם רוזן', 'נדב שטרן'
 ];
 const STORAGE_KEY = 'classroomscreen_il_state_v1';
+const SCORES_BACKUP_KEY = 'classroomscreen_il_scores_backup_v1';
 function getWidgetHeaderCapsule(type) {
   const map = {
     'timer': { cls: 'capsule-coral', svg: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>' },
@@ -147,6 +148,7 @@ const raw = localStorage.getItem(STORAGE_KEY);
 if (raw) {
 this.data = JSON.parse(raw);
 if (this.data && Array.isArray(this.data.screens) && this.data.screens.length > 0) {
+this.restoreScoresFromBackupIfNeeded();
 return;
 }
 }
@@ -154,8 +156,74 @@ return;
 console.warn('Could not load saved state:', e);
 }
 this.data = this.getDefaultWorkspaceData();
+this.restoreScoresFromBackupIfNeeded();
+}
+restoreScoresFromBackupIfNeeded() {
+try {
+const rawBackup = localStorage.getItem(SCORES_BACKUP_KEY);
+if (!rawBackup) return;
+const backup = JSON.parse(rawBackup);
+if (backup && backup.studentScores && typeof backup.studentScores === 'object') {
+this.data.studentScores = this.mergeStudentScoresMaps(this.data.studentScores || {}, backup.studentScores, this.data.lastDailyResetDate, backup.lastDailyResetDate);
+if (!this.data.lastDailyResetDate && backup.lastDailyResetDate) {
+this.data.lastDailyResetDate = backup.lastDailyResetDate;
+}
+}
+} catch (_) {}
+}
+mergeStudentScoresMaps(primaryScores = {}, secondaryScores = {}, primaryDate = '', secondaryDate = '') {
+const merged = {};
+const allNames = new Set([...Object.keys(primaryScores || {}), ...Object.keys(secondaryScores || {})]);
+allNames.forEach(name => {
+const a = primaryScores[name] || { daily: 0, total: 0, breakdown: {} };
+const b = secondaryScores[name] || { daily: 0, total: 0, breakdown: {} };
+const aTotal = Math.max(0, Number(a.total) || 0, Number(a.daily) || 0);
+const bTotal = Math.max(0, Number(b.total) || 0, Number(b.daily) || 0);
+const total = Math.max(aTotal, bTotal);
+let daily = 0;
+if (primaryDate && secondaryDate && primaryDate !== secondaryDate) {
+daily = primaryDate > secondaryDate ? (Number(a.daily) || 0) : (Number(b.daily) || 0);
+} else {
+daily = Math.max(Number(a.daily) || 0, Number(b.daily) || 0);
+}
+const breakdown = { ...(b.breakdown || {}), ...(a.breakdown || {}) };
+merged[name] = { daily, total, breakdown };
+});
+return merged;
+}
+mergeCloudWorkspace(cloudWorkspace) {
+const localData = this.data || this.getDefaultWorkspaceData();
+const mergedScores = this.mergeStudentScoresMaps(
+localData.studentScores || {},
+cloudWorkspace.studentScores || {},
+localData.lastDailyResetDate || '',
+cloudWorkspace.lastDailyResetDate || ''
+);
+const latestResetDate = [localData.lastDailyResetDate || '', cloudWorkspace.lastDailyResetDate || ''].sort().pop() || new Date().toLocaleDateString('sv-SE');
+this.data = {
+...cloudWorkspace,
+studentScores: mergedScores,
+lastDailyResetDate: latestResetDate,
+studentPhotos: (cloudWorkspace.studentPhotos && Object.keys(cloudWorkspace.studentPhotos).length > 0) ? cloudWorkspace.studentPhotos : (localData.studentPhotos || {}),
+studentIcons: (cloudWorkspace.studentIcons && Object.keys(cloudWorkspace.studentIcons).length > 0) ? cloudWorkspace.studentIcons : (localData.studentIcons || {}),
+classGoals: (cloudWorkspace.classGoals && Object.keys(cloudWorkspace.classGoals).length > 0) ? cloudWorkspace.classGoals : (localData.classGoals || {})
+};
+this.checkDailyReset();
+try {
+localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+localStorage.setItem(SCORES_BACKUP_KEY, JSON.stringify({
+studentScores: this.data.studentScores || {},
+lastDailyResetDate: this.data.lastDailyResetDate || ''
+}));
+} catch (_) {}
 }
 saveState() {
+try {
+localStorage.setItem(SCORES_BACKUP_KEY, JSON.stringify({
+studentScores: this.data.studentScores || {},
+lastDailyResetDate: this.data.lastDailyResetDate || ''
+}));
+} catch (_) {}
 try {
 localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
 } catch (e) {
@@ -192,10 +260,10 @@ const me = await meRes.json();
 if (me.authenticated && me.user) {
 this.user = me.user;
 if (me.workspace && Array.isArray(me.workspace.screens) && me.workspace.screens.length > 0) {
-this.data = me.workspace;
-localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+this.mergeCloudWorkspace(me.workspace);
 this.renderScreenTabs();
 this.applyCurrentScreen();
+this.renderStudentsSidebar();
 } else {
 this.scheduleCloudSync(true);
 }
@@ -265,10 +333,10 @@ this.user = result.user;
 document.getElementById('modal-google-auth').classList.add('hidden');
 SoundFX.fanfare();
 if (result.workspace && Array.isArray(result.workspace.screens) && result.workspace.screens.length > 0) {
-this.data = result.workspace;
-localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+this.mergeCloudWorkspace(result.workspace);
 this.renderScreenTabs();
 this.applyCurrentScreen();
+this.renderStudentsSidebar();
 } else {
 this.scheduleCloudSync(true);
 }
@@ -560,8 +628,10 @@ checkDailyReset() {
     // 12:00 Midnight has passed! Reset daily points to 0, keep total intact
     if (this.data.studentScores && typeof this.data.studentScores === 'object') {
       Object.keys(this.data.studentScores).forEach(name => {
-        if (this.data.studentScores[name]) {
-          this.data.studentScores[name].daily = 0;
+        const sc = this.data.studentScores[name];
+        if (sc) {
+          sc.total = Math.max(Number(sc.total) || 0, Number(sc.daily) || 0);
+          sc.daily = 0;
         }
       });
     }

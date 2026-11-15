@@ -758,20 +758,16 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       return 'halo-none';
     }
 
-    function renderStudentBubbleHtml(name, rank = 0) {
+    function renderStudentBubbleHtml(name) {
       const sc = getStudentScore(name);
       const scoreVal = scoreMode === 'daily' ? sc.daily : sc.total;
       const icon = getStudentIcon(name);
       const photo = getStudentPhoto(name);
       const iconHtml = renderStudentIconHtml(icon, name);
       const haloClass = getHaloTierClass(scoreVal);
-      const rankClass = rank > 0 ? `rank-${rank} is-top-leader` : '';
-      const medalMap = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
       return `
-        <div class="sp-student-bubble ${rankClass} ${haloClass}" data-student="${name}">
-          ${rank === 1 ? '<div class="arena-live-crown" title="מוביל/ת הכיתה!">👑</div>' : ''}
-          ${rank > 0 ? `<div class="arena-rank-medal" title="מקום ${rank}">${medalMap[rank]}</div>` : ''}
+        <div class="sp-student-bubble ${haloClass}" data-student="${name}">
           <div class="sp-card-tools-bar">
             <button class="sp-card-tool-btn" data-act="upload-photo" data-student="${name}" title="העלה תמונה מהמחשב">📷</button>
             <button class="sp-card-tool-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">🎨</button>
@@ -787,47 +783,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       `;
     }
 
-    const isSearching = Boolean(searchQuery.trim());
-    let top3Names = [];
-    if (!isSearching) {
-      top3Names = students
-        .map(name => {
-          const sc = getStudentScore(name);
-          return { name, score: scoreMode === 'daily' ? sc.daily : sc.total };
-        })
-        .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
-        .map(item => item.name);
-    }
-
-    let html = '';
-    if (top3Names.length > 0) {
-      // Arrange in podium-like arch: 2nd - 1st - 3rd
-      const orderedTop = [];
-      if (top3Names[1]) orderedTop.push({ name: top3Names[1], rank: 2 });
-      orderedTop.push({ name: top3Names[0], rank: 1 });
-      if (top3Names[2]) orderedTop.push({ name: top3Names[2], rank: 3 });
-
-      html += `
-        <div class="arena-top3-section">
-          <div class="arena-section-pill">⭐ מובילי הכיתה</div>
-          <div class="arena-top3-stage">
-            ${orderedTop.map(t => renderStudentBubbleHtml(t.name, t.rank)).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    const remainingStudents = isSearching
-      ? filtered
-      : filtered.filter(n => !top3Names.includes(n));
-
-    if (remainingStudents.length > 0) {
-      html += remainingStudents.map(name => renderStudentBubbleHtml(name, 0)).join('');
-    }
-
-    studentsGrid.innerHTML = html;
+    studentsGrid.innerHTML = filtered.map(name => renderStudentBubbleHtml(name)).join('');
 
     studentsGrid.querySelectorAll('.sp-student-bubble').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -1183,6 +1139,20 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
     }
   };
   document.addEventListener('keydown', escHandler);
+
+  const onScoresUpdated = (ev) => {
+    if (!document.body.contains(body)) {
+      window.removeEventListener('cs:scores-updated', onScoresUpdated);
+      return;
+    }
+    studentScores = (window.AppStore && window.AppStore.getStudentScores) ? window.AppStore.getStudentScores() : (ev.detail || studentScores);
+    state.studentScores = studentScores;
+    if (activeTab === 'students') {
+      renderClassGoalBanner();
+      renderStudentsGrid();
+    }
+  };
+  window.addEventListener('cs:scores-updated', onScoresUpdated);
 
   // Init
   populateClassSelect();
@@ -3444,6 +3414,7 @@ if (!state.substitutes) state.substitutes = {};
 
 let showSettings = false;
 let activeModalRole = null;
+let justReplacedRole = null;
 
 function getClassStudents() {
   if (window.AppStore && typeof window.AppStore.getClassLists === 'function') {
@@ -3522,13 +3493,15 @@ function replaceDuty(roleId, newStudent) {
   if (!curStudent || !newStudent || curStudent === newStudent) return;
 
   if (!state.rolePools[roleId]) state.rolePools[roleId] = [];
-  // Return the absent student to the front of this role's round queue so they get their turn next time
-  if (!state.rolePools[roleId].includes(curStudent)) {
-    state.rolePools[roleId].unshift(curStudent);
-  }
 
-  // Remove the replacement student from this role's pool so they don't get assigned again soon
+  // Remove the replacement student from this role's pool so they don't get assigned again in the same round
   state.rolePools[roleId] = state.rolePools[roleId].filter(s => s !== newStudent);
+
+  // Return the absent student back into this role's round queue (at a random spot so they get another day in the same round)
+  if (!state.rolePools[roleId].includes(curStudent)) {
+    const insertIdx = Math.floor(Math.random() * (state.rolePools[roleId].length + 1));
+    state.rolePools[roleId].splice(insertIdx, 0, curStudent);
+  }
 
   state.assignments[roleId] = newStudent;
   state.substitutes[roleId] = {
@@ -3537,6 +3510,33 @@ function replaceDuty(roleId, newStudent) {
     time: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
   };
   saveState();
+}
+
+function drawRandomSubstitute(roleId) {
+  const curStudent = state.assignments ? state.assignments[roleId] : '';
+  const allStudents = getClassStudents();
+  const assignedOthers = Object.values(state.assignments || {}).filter(s => s && s !== curStudent);
+  const rolePool = state.rolePools[roleId] || [];
+
+  // 1. Prefer students remaining in this role's current round who aren't on another duty today
+  let candidates = rolePool.filter(s => s !== curStudent && !assignedOthers.includes(s));
+  // 2. Fallback: any student remaining in this role's round
+  if (candidates.length === 0) {
+    candidates = rolePool.filter(s => s !== curStudent);
+  }
+  // 3. Fallback: any student in class not on another duty today
+  if (candidates.length === 0) {
+    candidates = allStudents.filter(s => s !== curStudent && !assignedOthers.includes(s));
+  }
+  // 4. Final fallback: anyone else in class
+  if (candidates.length === 0) {
+    candidates = allStudents.filter(s => s !== curStudent);
+  }
+  if (candidates.length === 0) return null;
+
+  const picked = candidates[Math.floor(Math.random() * candidates.length)];
+  replaceDuty(roleId, picked);
+  return picked;
 }
 
 performDailyRotation(false);
@@ -3613,7 +3613,7 @@ function renderUI() {
             const rolePool = state.rolePools[role.id] || [];
             const roundNum = state.roleRounds[role.id] || 1;
             return `
-              <div class="duty-role-item ${sub ? 'is-substitute' : ''}">
+              <div class="duty-role-item ${sub ? 'is-substitute' : ''} ${justReplacedRole === role.id ? 'duty-just-replaced' : ''}">
                 <div class="duty-role-info">
                   <span class="duty-role-icon">${role.icon}</span>
                   <div class="duty-role-texts">
@@ -3625,9 +3625,14 @@ function renderUI() {
                   <span class="duty-student-name">${student || '—'}</span>
                   ${sub ? `<span class="duty-sub-tag" title="מחליף את ${sub.original}">מחליף</span>` : ''}
                 </div>
-                <button class="duty-replace-btn" data-act="open-sub" data-role="${role.id}" title="החלף תורן אם התלמיד נעדר">
-                  🔄 החלף
-                </button>
+                <div class="duty-row-actions">
+                  <button class="duty-replace-btn duty-random-btn" data-act="random-sub" data-role="${role.id}" title="הגרל תורן מחליף (הנוכחי יחזור לסבב)">
+                    🎲 הגרל
+                  </button>
+                  <button class="duty-replace-btn" data-act="open-sub" data-role="${role.id}" title="בחר מחליף ידנית">
+                    🔄
+                  </button>
+                </div>
               </div>
             `;
           }).join('')}
@@ -3756,6 +3761,23 @@ function bindEvents() {
     });
   }
 
+  body.querySelectorAll('[data-act="random-sub"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const roleId = btn.dataset.role;
+      const picked = drawRandomSubstitute(roleId);
+      if (picked) {
+        justReplacedRole = roleId;
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+        renderUI();
+        setTimeout(() => {
+          justReplacedRole = null;
+        }, 1200);
+      } else {
+        alert('לא נמצאו תלמידים פנויים להחלפה.');
+      }
+    });
+  });
+
   body.querySelectorAll('[data-act="open-sub"]').forEach(btn => {
     btn.addEventListener('click', () => {
       activeModalRole = btn.dataset.role;
@@ -3774,22 +3796,14 @@ function bindEvents() {
   const quickRandomBtn = body.querySelector('[data-act="quick-random-sub"]');
   if (quickRandomBtn && activeModalRole) {
     quickRandomBtn.addEventListener('click', () => {
-      const curStudent = state.assignments[activeModalRole];
-      const allStudents = getClassStudents();
-      const assigned = Object.values(state.assignments || {}).filter(s => s !== curStudent);
-      const pool = (state.rolePools[activeModalRole] || []).filter(s => s !== curStudent && !assigned.includes(s));
-      let subCandidate = pool.length > 0 ? pool[0] : null;
-      if (!subCandidate) {
-        const available = allStudents.filter(s => s !== curStudent && !assigned.includes(s));
-        if (available.length > 0) {
-          subCandidate = available[Math.floor(Math.random() * available.length)];
-        }
-      }
+      const roleId = activeModalRole;
+      const subCandidate = drawRandomSubstitute(roleId);
       if (subCandidate) {
-        replaceDuty(activeModalRole, subCandidate);
+        justReplacedRole = roleId;
         activeModalRole = null;
-        if (typeof SoundFX !== 'undefined' && SoundFX.tap) SoundFX.tap();
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
         renderUI();
+        setTimeout(() => { justReplacedRole = null; }, 1200);
       } else {
         alert('לא נמצאו תלמידים פנויים להחלפה.');
       }
@@ -3801,10 +3815,13 @@ function bindEvents() {
     confirmSubBtn.addEventListener('click', () => {
       const sel = body.querySelector('[data-el="sub-select"]');
       if (sel && sel.value) {
-        replaceDuty(activeModalRole, sel.value);
+        const roleId = activeModalRole;
+        replaceDuty(roleId, sel.value);
+        justReplacedRole = roleId;
         activeModalRole = null;
-        if (typeof SoundFX !== 'undefined' && SoundFX.tap) SoundFX.tap();
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
         renderUI();
+        setTimeout(() => { justReplacedRole = null; }, 1200);
       }
     });
   }
