@@ -7663,6 +7663,186 @@ button {
   font-weight: 800 !important;
 }
 
+.bd-header-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  border: 1px solid #fbcfe8;
+}
+
+.bd-months-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding: 2px;
+}
+
+.bd-month-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bd-month-card.current-heb-month {
+  background: linear-gradient(180deg, #fdf2f8 0%, #fff 100%);
+  border: 2px solid #ec4899;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.16);
+}
+
+.bd-month-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 900;
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.bd-cur-month-pill {
+  background: #ec4899;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.bd-month-kids-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bd-month-kid-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.bd-month-kid-chip.is-today {
+  background: #fef9c3;
+  border-color: #eab308;
+}
+
+.bd-kid-chip-day {
+  color: #db2777;
+  font-weight: 900;
+}
+
+.bd-heb-picker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 14px;
+}
+
+.bd-heb-picker-modal {
+  background: #fff;
+  border: 2px solid #f472b6;
+  border-radius: 18px;
+  padding: 14px 16px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 96%;
+  overflow-y: auto;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+}
+
+.bd-heb-preview-bar {
+  text-align: center;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  color: #9d174d;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.bd-heb-days-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.bd-heb-day-btn {
+  padding: 5px 2px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-weight: 800;
+  font-size: 0.76rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bd-heb-day-btn.active,
+.bd-heb-day-btn:hover {
+  background: #ec4899;
+  color: #fff;
+  border-color: #db2777;
+}
+
+.bd-heb-months-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.bd-heb-month-btn {
+  padding: 5px 4px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-weight: 800;
+  font-size: 0.76rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bd-heb-month-btn.active,
+.bd-heb-month-btn:hover {
+  background: #0284c7;
+  color: #fff;
+  border-color: #0369a1;
+}
+
+.bd-greg-converter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 7px 10px;
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+
 
 
 

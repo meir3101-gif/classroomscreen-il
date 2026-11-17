@@ -1449,6 +1449,99 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   }
 }
 
+const HEBREW_DAYS_GEMATRIA = [
+  'א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ז׳', 'ח׳', 'ט׳', 'י׳',
+  'י״א', 'י״ב', 'י״ג', 'י״ד', 'ט״ו', 'ט״ז', 'י״ז', 'י״ח', 'י״ט', 'כ׳',
+  'כ״א', 'כ״ב', 'כ״ג', 'כ״ד', 'כ״ה', 'כ״ו', 'כ״ז', 'כ״ח', 'כ״ט', 'ל׳'
+];
+
+const HEBREW_MONTHS_LIST = [
+  'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר', 'אדר א׳', 'אדר ב׳',
+  'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול'
+];
+
+function normalizeHebMonthName(rawMonth = '') {
+  const m = String(rawMonth).trim().replace(/['׳]/g, '׳');
+  if (!m) return '';
+  if (m.includes('חשוון') || m.includes('חשון')) return 'חשוון';
+  if (m.includes('סיוון') || m.includes('סיון')) return 'סיוון';
+  if (m.includes('אדר א')) return 'אדר א׳';
+  if (m.includes('אדר ב')) return 'אדר ב׳';
+  if (m.includes('אדר')) return 'אדר';
+  const found = HEBREW_MONTHS_LIST.find(hm => m.includes(hm));
+  return found || m;
+}
+
+function isSameHebrewMonth(m1, m2) {
+  const a = normalizeHebMonthName(m1);
+  const b = normalizeHebMonthName(m2);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if ((a === 'אדר' && (b === 'אדר א׳' || b === 'אדר ב׳')) ||
+      (b === 'אדר' && (a === 'אדר א׳' || a === 'אדר ב׳'))) {
+    return true;
+  }
+  return false;
+}
+
+function getHebrewDateInfo(dateObj = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).formatToParts(dateObj);
+    const dayVal = parts.find(p => p.type === 'day')?.value || '1';
+    const monthVal = parts.find(p => p.type === 'month')?.value || 'תשרי';
+    const yearVal = parts.find(p => p.type === 'year')?.value || '';
+    const dayNum = parseInt(dayVal.replace(/\D/g, ''), 10) || 1;
+    const dayGematria = HEBREW_DAYS_GEMATRIA[Math.max(0, Math.min(29, dayNum - 1))] || dayVal;
+    const normMonth = normalizeHebMonthName(monthVal);
+    return {
+      dayNum,
+      dayGematria,
+      month: normMonth,
+      year: yearVal,
+      shortDisplay: `${dayGematria} ב${normMonth}`,
+      fullDisplay: `${dayGematria} ב${normMonth}`
+    };
+  } catch (e) {
+    return {
+      dayNum: 1,
+      dayGematria: 'א׳',
+      month: 'תשרי',
+      year: '',
+      shortDisplay: 'א׳ בתשרי',
+      fullDisplay: 'א׳ בתשרי'
+    };
+  }
+}
+
+function parseSavedHebrewBirthday(val) {
+  if (!val) return null;
+  if (typeof val === 'object' && val.hebDay && val.hebMonth) {
+    return {
+      hebDay: val.hebDay,
+      hebMonth: normalizeHebMonthName(val.hebMonth),
+      gregDate: val.gregDate || ''
+    };
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return null;
+    // Check if it looks like "י״ד בניסן" or "א׳ תשרי"
+    for (const hm of HEBREW_MONTHS_LIST) {
+      if (trimmed.includes(hm)) {
+        const dayPart = trimmed.replace(hm, '').replace(/\s+ב$/, '').replace(/\s+/g, '').replace(/ב$/, '');
+        const matchedDay = HEBREW_DAYS_GEMATRIA.find(d => dayPart.includes(d)) || dayPart || 'א׳';
+        return { hebDay: matchedDay, hebMonth: hm, gregDate: '' };
+      }
+    }
+    return { hebDay: '', hebMonth: '', gregDate: trimmed };
+  }
+  return null;
+}
+
 const WIDGET_REGISTRY = {
 'timer': {
 title: 'טיימר ספירה לאחור',
@@ -3403,49 +3496,75 @@ render(body, state, saveState) {
 }
 },
 'calendar': {
-title: 'לוח שנה כיתתי',
+title: 'לוח שנה עברי ולועזי',
 icon: '📅',
-defaultW: 320,
-defaultH: 300,
+defaultW: 390,
+defaultH: 360,
 render(body) {
 let viewDate = new Date();
 body.innerHTML = `
-<div style="display:flex;flex-direction:column;height:100%;gap:8px;">
-<div style="display:flex;align-items:center;justify-content:space-between;">
-<button class="small-btn" data-act="prev">◀</button>
-<div data-el="month-title" style="font-weight:800;font-size:1rem;"></div>
-<button class="small-btn" data-act="next">▶</button>
-</div>
-<div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-weight:800;font-size:0.78rem;color:var(--primary);">
-<span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
-</div>
-<div data-el="days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1;text-align:center;"></div>
+<div style="display:flex;flex-direction:column;height:100%;gap:6px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+    <button class="small-btn" data-act="prev">◀</button>
+    <div style="text-align:center;">
+      <div data-el="heb-month-title" style="font-weight:900;font-size:0.98rem;color:var(--primary);"></div>
+      <div data-el="month-title" style="font-weight:700;font-size:0.74rem;color:var(--text-muted);"></div>
+    </div>
+    <button class="small-btn" data-act="next">▶</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-weight:800;font-size:0.76rem;color:var(--primary);">
+    <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span>ש׳</span>
+  </div>
+  <div data-el="days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1;text-align:center;"></div>
 </div>
 `;
+const hebTitleEl = body.querySelector('[data-el="heb-month-title"]');
 const titleEl = body.querySelector('[data-el="month-title"]');
 const daysEl = body.querySelector('[data-el="days"]');
 function renderCal() {
-const y = viewDate.getFullYear();
-const m = viewDate.getMonth();
-titleEl.textContent = viewDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
-const firstDay = new Date(y, m, 1).getDay();
-const daysInMonth = new Date(y, m + 1, 0).getDate();
-const today = new Date();
-let html = '';
-for (let i = 0; i < firstDay; i++) html += `<div></div>`;
-for (let d = 1; d <= daysInMonth; d++) {
-const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
-html += `<div style="display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700;font-size:0.85rem;${isToday ? 'background:var(--primary);color:#fff;' : 'background:rgba(0,0,0,0.03);'}">${d}</div>`;
-}
-daysEl.innerHTML = html;
+  const y = viewDate.getFullYear();
+  const m = viewDate.getMonth();
+  titleEl.textContent = viewDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+  const firstDate = new Date(y, m, 1);
+  const lastDate = new Date(y, m + 1, 0);
+  const firstHeb = getHebrewDateInfo(firstDate);
+  const lastHeb = getHebrewDateInfo(lastDate);
+  hebTitleEl.textContent = firstHeb.month === lastHeb.month
+    ? `${firstHeb.month} ${firstHeb.year}`
+    : `${firstHeb.month} – ${lastHeb.month} ${lastHeb.year}`;
+
+  const bdaysMap = (window.AppStore && window.AppStore.getStudentBirthdays) ? window.AppStore.getStudentBirthdays() : {};
+  const firstDay = firstDate.getDay();
+  const daysInMonth = lastDate.getDate();
+  const today = new Date();
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cellDate = new Date(y, m, d);
+    const heb = getHebrewDateInfo(cellDate);
+    const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
+    const celebrants = Object.entries(bdaysMap).filter(([, val]) => {
+      const parsed = parseSavedHebrewBirthday(val);
+      return parsed && parsed.hebDay === heb.dayGematria && isSameHebrewMonth(parsed.hebMonth, heb.month);
+    }).map(([name]) => name);
+    const hasBday = celebrants.length > 0;
+    html += `
+      <div title="${heb.shortDisplay}${hasBday ? ' • 🎂 יום הולדת: ' + celebrants.join(', ') : ''}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;padding:2px;position:relative;${isToday ? 'background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(79,70,229,0.35);' : (hasBday ? 'background:#fef3c7;border:1px solid #f59e0b;' : 'background:rgba(0,0,0,0.03);')}">
+        <span style="font-weight:900;font-size:0.82rem;line-height:1.1;">${heb.dayGematria}</span>
+        <span style="font-size:0.64rem;opacity:0.72;line-height:1;">${d}</span>
+        ${hasBday ? `<span style="position:absolute;top:1px;left:2px;font-size:0.62rem;">🎂</span>` : ''}
+      </div>
+    `;
+  }
+  daysEl.innerHTML = html;
 }
 body.querySelector('[data-act="prev"]').addEventListener('click', () => {
-viewDate.setMonth(viewDate.getMonth() - 1);
-renderCal();
+  viewDate.setMonth(viewDate.getMonth() - 1);
+  renderCal();
 });
 body.querySelector('[data-act="next"]').addEventListener('click', () => {
-viewDate.setMonth(viewDate.getMonth() + 1);
-renderCal();
+  viewDate.setMonth(viewDate.getMonth() + 1);
+  renderCal();
 });
 renderCal();
 }
@@ -5051,18 +5170,35 @@ renderUI();
 },
 
 'birthdays': {
-  title: 'לוח ימי הולדת בכיתה',
+  title: 'לוח ימי הולדת עברי',
   icon: '🎂',
-  defaultW: 480,
-  defaultH: 480,
+  defaultW: 560,
+  defaultH: 520,
   render(body, state, saveState) {
     let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
     let bdays = (window.AppStore && window.AppStore.getStudentBirthdays) ? window.AppStore.getStudentBirthdays() : (state.bdays || {});
+    let viewTab = state.viewTab || 'list'; // 'list' | 'months'
+    let editingStudent = null;
+    let pickerDay = 'א׳';
+    let pickerMonth = 'תשרי';
+    let pickerGreg = '';
+
+    const CALENDAR_HEB_MONTHS = [
+      'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר',
+      'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול'
+    ];
 
     function getStudents() {
       const lists = window.AppStore.getClassLists() || [];
       const found = lists.find(c => c.id === selectedClassId) || lists[0];
       return (found ? found.students : []).filter(Boolean);
+    }
+
+    function renderAvatar(name) {
+      const photos = (window.AppStore && window.AppStore.getStudentPhotos) ? window.AppStore.getStudentPhotos() : {};
+      const icons = (window.AppStore && window.AppStore.getStudentIcons) ? window.AppStore.getStudentIcons() : {};
+      if (photos[name]) return `<img src="${photos[name]}" class="hq-avatar-img" alt="${name}" />`;
+      return renderStudentIconHtml(icons[name] || '', name);
     }
 
     function saveBdays() {
@@ -5074,69 +5210,265 @@ renderUI();
       }
     }
 
+    function openBirthdayCelebrationCard(studentName, hebDisplayStr) {
+      const existing = document.getElementById('bday-celebration-overlay');
+      if (existing) existing.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'bday-celebration-overlay';
+      overlay.className = 'shop-voucher-overlay';
+      overlay.innerHTML = `
+        <div class="shop-voucher-card" style="border-color:#ec4899;background:linear-gradient(180deg,#fff 0%,#fdf2f8 100%);">
+          <div class="shop-voucher-ribbon" style="background:linear-gradient(135deg,#ec4899,#db2777);">🎂 חגיגת יום הולדת עברי בכיתה! 🎈</div>
+          <div class="shop-voucher-student">
+            <div class="hq-student-avatar" style="width:82px;height:82px;font-size:2.4rem;border:3px solid #f472b6;">
+              ${renderAvatar(studentName)}
+            </div>
+            <div class="shop-voucher-student-name" style="font-size:1.45rem;color:#be185d;">מזל טוב ל${studentName}! 🎉</div>
+          </div>
+          <div class="shop-voucher-prize-box" style="border-color:#fbcfe8;">
+            <div style="font-size:2.8rem;">🎁💎🎂</div>
+            <div class="shop-voucher-prize-title" style="color:#be185d;">יום הולדת שמח! (${hebDisplayStr || 'מזל טוב!'})</div>
+            <div class="shop-voucher-cost-tag">קיבלת מתנת יום הולדת כיתתית: <b>+5 יהלומים (💎)</b>!</div>
+          </div>
+          <button class="primary-btn" data-act="close-bday-card" style="background:linear-gradient(135deg,#ec4899,#db2777);padding:9px 26px;border-radius:999px;font-weight:800;">🥳 מזל טוב! סגור חלון</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      if (typeof triggerConfetti === 'function') triggerConfetti();
+      if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
+      overlay.addEventListener('click', (ev) => {
+        if (ev.target === overlay || ev.target.closest('[data-act="close-bday-card"]')) {
+          overlay.remove();
+        }
+      });
+    }
+
     function renderUI() {
       const students = getStudents();
-      const now = new Date();
-      const curDay = now.getDate();
-      const curMonth = now.getMonth() + 1;
+      const todayHeb = getHebrewDateInfo(new Date());
+
+      // Enrich students with their parsed Hebrew birthday status
+      const enriched = students.map(name => {
+        const parsed = parseSavedHebrewBirthday(bdays[name]);
+        const hasHeb = !!(parsed && parsed.hebDay && parsed.hebMonth);
+        const isToday = hasHeb && parsed.hebDay === todayHeb.dayGematria && isSameHebrewMonth(parsed.hebMonth, todayHeb.month);
+        const isThisMonth = hasHeb && !isToday && isSameHebrewMonth(parsed.hebMonth, todayHeb.month);
+        const dayIndex = hasHeb ? HEBREW_DAYS_GEMATRIA.indexOf(parsed.hebDay) : 99;
+        return {
+          name,
+          parsed,
+          hasHeb,
+          isToday,
+          isThisMonth,
+          dayIndex: dayIndex >= 0 ? dayIndex : 99,
+          displayStr: hasHeb ? `${parsed.hebDay} ב${parsed.hebMonth}` : (parsed?.gregDate || '')
+        };
+      });
+
+      // Sort so today's celebrants are first, then this Hebrew month's celebrants (by day), then others
+      const sortedStudents = [...enriched].sort((a, b) => {
+        if (a.isToday !== b.isToday) return a.isToday ? -1 : 1;
+        if (a.isThisMonth !== b.isThisMonth) return a.isThisMonth ? -1 : 1;
+        if (a.isThisMonth && b.isThisMonth) return a.dayIndex - b.dayIndex;
+        return 0;
+      });
 
       body.innerHTML = `
-        <div class="bd-wrap">
-          <div class="bd-header">
+        <div class="bd-wrap" style="position:relative;">
+          <div class="bd-header-banner">
             <div>
-              <div style="font-weight:900;font-size:0.98rem;">🎂 ימי הולדת בכיתה</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">לחצו על תאריך לעדכון יום הולדת או על 🎉 לחגיגה ומתנת +5 💎</div>
+              <div style="font-weight:900;font-size:0.96rem;color:#831843;">🎂 לוח ימי הולדת עברי</div>
+              <div style="font-size:0.78rem;font-weight:700;color:#9d174d;">📅 היום בלוח העברי: <b>${todayHeb.shortDisplay} ${todayHeb.year}</b></div>
+            </div>
+            <div style="display:flex;gap:4px;background:rgba(255,255,255,0.75);padding:3px;border-radius:10px;">
+              <button class="sp-mode-pill ${viewTab === 'list' ? 'active' : ''}" data-bdtab="list">📋 תלמידים</button>
+              <button class="sp-mode-pill ${viewTab === 'months' ? 'active' : ''}" data-bdtab="months">🗓️ חודשי השנה (תשרי–אלול)</button>
             </div>
           </div>
 
-          <div class="bd-list">
-            ${students.map(name => {
-              const raw = bdays[name] || ''; // format "DD/MM"
-              const parts = raw.split('/');
-              const d = parseInt(parts[0], 10);
-              const m = parseInt(parts[1], 10);
-              const isToday = (d === curDay && m === curMonth);
-              const isThisMonth = (!isToday && m === curMonth);
-              return `
-                <div class="bd-row ${isToday ? 'bd-today' : (isThisMonth ? 'bd-month' : '')}">
+          ${viewTab === 'list' ? `
+            <div class="bd-list">
+              ${sortedStudents.map(item => `
+                <div class="bd-row ${item.isToday ? 'bd-today' : (item.isThisMonth ? 'bd-month' : '')}">
                   <div class="bd-student-info">
-                    <span class="bd-icon">${isToday ? '👑' : (isThisMonth ? '🎈' : '🎂')}</span>
-                    <span class="bd-name">${name}</span>
-                    ${isToday ? `<span class="bd-badge-today">חוגג/ת היום! 🎉</span>` : (isThisMonth ? `<span class="bd-badge-month">החודש!</span>` : '')}
+                    <div class="hq-student-avatar">${renderAvatar(item.name)}</div>
+                    <div>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span class="bd-name">${item.name}</span>
+                        ${item.isToday ? `<span class="bd-badge-today">👑 חוגג/ת היום! 🎉</span>` : (item.isThisMonth ? `<span class="bd-badge-month">🎈 ילד/ת חודש ${todayHeb.month}</span>` : '')}
+                      </div>
+                      <div style="font-size:0.75rem;color:#64748b;font-weight:700;">
+                        ${item.displayStr ? `📅 תאריך עברי: <b style="color:#0f172a;">${item.displayStr}</b>` : 'טרם הוגדר תאריך יום הולדת עברי'}
+                      </div>
+                    </div>
                   </div>
                   <div class="bd-actions">
-                    <button class="small-btn bd-date-btn" data-act="set-bday" data-student="${name}">
-                      📅 ${raw || 'הגדר תאריך'}
+                    <button class="small-btn bd-date-btn" data-act="open-heb-picker" data-student="${item.name}">
+                      🗓️ ${item.displayStr || 'בחר תאריך עברי'}
                     </button>
-                    <button class="small-btn bd-celebrate-btn" data-act="celebrate-bday" data-student="${name}" title="חגיגת יום הולדת והענקת 5 יהלומים במתנה!">
+                    <button class="small-btn bd-celebrate-btn" data-act="celebrate-bday" data-student="${item.name}" data-heb="${item.displayStr}" title="חגיגת יום הולדת על המסך והענקת 5 יהלומים במתנה!">
                       🎉 חגוג (+5 💎)
                     </button>
                   </div>
                 </div>
-              `;
-            }).join('')}
-          </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="bd-months-board">
+              ${CALENDAR_HEB_MONTHS.map(mName => {
+                const isCurMonth = isSameHebrewMonth(mName, todayHeb.month);
+                const monthKids = enriched
+                  .filter(it => it.hasHeb && isSameHebrewMonth(it.parsed.hebMonth, mName))
+                  .sort((a, b) => a.dayIndex - b.dayIndex);
+                return `
+                  <div class="bd-month-card ${isCurMonth ? 'current-heb-month' : ''}">
+                    <div class="bd-month-card-header">
+                      <span>🗓️ חודש ${mName}</span>
+                      ${isCurMonth ? `<span class="bd-cur-month-pill">החודש הנוכחי ✨</span>` : `<span style="font-size:0.72rem;opacity:0.75;">(${monthKids.length})</span>`}
+                    </div>
+                    <div class="bd-month-kids-list">
+                      ${monthKids.length === 0
+                        ? `<span style="font-size:0.73rem;color:#94a3b8;">אין ימי הולדת רשומים</span>`
+                        : monthKids.map(k => `
+                          <div class="bd-month-kid-chip ${k.isToday ? 'is-today' : ''}" data-act="open-heb-picker" data-student="${k.name}" title="לחץ לעריכת תאריך">
+                            <span class="bd-kid-chip-name">${k.name}</span>
+                            <span class="bd-kid-chip-day">${k.parsed.hebDay}</span>
+                          </div>
+                        `).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+
+          ${editingStudent ? `
+            <div class="bd-heb-picker-overlay">
+              <div class="bd-heb-picker-modal">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <div style="font-weight:900;font-size:0.98rem;color:#0f172a;">🗓️ בחירת יום הולדת עברי: <span style="color:#db2777;">${editingStudent}</span></div>
+                  <button class="small-btn" data-act="close-heb-picker" style="padding:2px 8px;">✕</button>
+                </div>
+
+                <div class="bd-heb-preview-bar">
+                  תאריך נבחר: <b>${pickerDay} ב${pickerMonth}</b>
+                </div>
+
+                <div style="font-size:0.76rem;font-weight:800;color:#475569;margin-bottom:4px;">1. בחר יום בחודש העברי (א׳ עד ל׳):</div>
+                <div class="bd-heb-days-grid">
+                  ${HEBREW_DAYS_GEMATRIA.map(d => `
+                    <button type="button" class="bd-heb-day-btn ${pickerDay === d ? 'active' : ''}" data-hday="${d}">${d}</button>
+                  `).join('')}
+                </div>
+
+                <div style="font-size:0.76rem;font-weight:800;color:#475569;margin:8px 0 4px 0;">2. בחר חודש עברי:</div>
+                <div class="bd-heb-months-grid">
+                  ${HEBREW_MONTHS_LIST.map(m => `
+                    <button type="button" class="bd-heb-month-btn ${pickerMonth === m ? 'active' : ''}" data-hmonth="${m}">${m}</button>
+                  `).join('')}
+                </div>
+
+                <div class="bd-greg-converter-row">
+                  <span style="font-size:0.74rem;font-weight:700;color:#475569;">🔄 יודע רק תאריך לידה לועזי? בחר והמערכת תמיר לעברי:</span>
+                  <input type="date" data-el="greg-convert-inp" value="${pickerGreg}" style="padding:3px 8px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.76rem;" />
+                </div>
+
+                <div style="display:flex;justify-content:space-between;gap:8px;margin-top:10px;">
+                  <button type="button" class="small-btn danger" data-act="clear-student-bday" style="font-size:0.76rem;">🗑️ נקה תאריך</button>
+                  <div style="display:flex;gap:6px;">
+                    <button type="button" class="small-btn" data-act="close-heb-picker">ביטול</button>
+                    <button type="button" class="primary-btn" data-act="save-heb-bday" style="padding:6px 18px;border-radius:10px;font-weight:800;">💾 שמור תאריך עברי</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
 
-      body.querySelectorAll('[data-act="set-bday"]').forEach(btn => {
+      body.querySelectorAll('[data-bdtab]').forEach(btn => {
         btn.addEventListener('click', () => {
-          const sName = btn.dataset.student;
-          const val = prompt(`הזן תאריך יום הולדת עבור ${sName} (בפורמט יום/חודש, למשל 14/05):`, bdays[sName] || '');
-          if (val === null) return;
-          bdays[sName] = val.trim();
-          saveBdays();
+          viewTab = btn.dataset.bdtab;
+          state.viewTab = viewTab;
+          saveState();
           renderUI();
         });
+      });
+
+      body.querySelectorAll('[data-act="open-heb-picker"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sName = btn.dataset.student;
+          editingStudent = sName;
+          const existing = parseSavedHebrewBirthday(bdays[sName]);
+          pickerDay = (existing && existing.hebDay) ? existing.hebDay : todayHeb.dayGematria;
+          pickerMonth = (existing && existing.hebMonth) ? existing.hebMonth : todayHeb.month;
+          pickerGreg = (existing && existing.gregDate) ? existing.gregDate : '';
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.bd-heb-day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pickerDay = btn.dataset.hday;
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.bd-heb-month-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pickerMonth = btn.dataset.hmonth;
+          renderUI();
+        });
+      });
+
+      body.querySelector('[data-el="greg-convert-inp"]')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (!val) return;
+        pickerGreg = val;
+        const dObj = new Date(val + 'T12:00:00');
+        if (!isNaN(dObj.getTime())) {
+          const converted = getHebrewDateInfo(dObj);
+          pickerDay = converted.dayGematria;
+          pickerMonth = converted.month;
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        }
+      });
+
+      body.querySelectorAll('[data-act="close-heb-picker"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          editingStudent = null;
+          renderUI();
+        });
+      });
+
+      body.querySelector('[data-act="clear-student-bday"]')?.addEventListener('click', () => {
+        if (!editingStudent) return;
+        delete bdays[editingStudent];
+        editingStudent = null;
+        saveBdays();
+        renderUI();
+      });
+
+      body.querySelector('[data-act="save-heb-bday"]')?.addEventListener('click', () => {
+        if (!editingStudent) return;
+        bdays[editingStudent] = {
+          hebDay: pickerDay,
+          hebMonth: pickerMonth,
+          gregDate: pickerGreg
+        };
+        editingStudent = null;
+        saveBdays();
+        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+        renderUI();
       });
 
       body.querySelectorAll('[data-act="celebrate-bday"]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const sName = btn.dataset.student;
+          const hebStr = btn.dataset.heb || '';
           window.AppStore.addDiamondsToStudent(sName, 5, 'excel', e.currentTarget);
-          if (typeof triggerConfetti === 'function') triggerConfetti();
-          if (typeof SoundFX !== 'undefined' && SoundFX.fanfare) SoundFX.fanfare();
-          alert(`🎂🎉 מזל טוב ל-${sName}! הוענקו 5 יהלומים במתנה ליום ההולדת!`);
+          openBirthdayCelebrationCard(sName, hebStr);
         });
       });
     }
