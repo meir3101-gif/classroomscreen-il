@@ -7996,10 +7996,665 @@ button {
 }
 
 .w-header-capsule.waze-capsule-3d {
-  width: 24px !important;
-  height: 24px !important;
-  border-width: 1.5px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-width: 2px !important;
 }
+
+/* =========================================================================
+   WAZE 3D FULL-SITE DESIGN SYSTEM OVERHAUL (1:1 MATCH ACROSS ALL COMPONENTS)
+   A1: Frameless Floating Widgets & Plump 3D White Waze Inner Capsules
+   A2: Glossy 3D White Waze Capsule Dock & Top Bar (Large Medallions + Hover Pill)
+   A3: Bright Waze 3D Sky-Clouds Full-Screen Arenas (Diamond Arena, Shop, Check-in)
+   A4: Plump 3D Waze Cushion Buttons, Rings, Cards, Modals & Sidebars Everywhere
+   ========================================================================= */
+
+:root {
+  --waze-3d-white-bg: linear-gradient(180deg, #ffffff 0%, #f4faff 100%);
+  --waze-3d-rim: 3.5px solid #ffffff;
+  --waze-3d-lip-shadow: 0 7px 0 #cbd5e1, 0 15px 30px rgba(15, 23, 42, 0.2), inset 0 2px 3px #ffffff;
+  --waze-3d-pill-shadow: 0 5px 0 #cbd5e1, 0 10px 22px rgba(15, 23, 42, 0.16), inset 0 2px 2px #ffffff;
+  --waze-3d-btn-shadow: 0 4px 0 #cbd5e1, 0 7px 14px rgba(15, 23, 42, 0.12), inset 0 1.5px 1px #ffffff;
+  --waze-3d-blue-bg: linear-gradient(180deg, #33ccff 0%, #0099ff 100%);
+  --waze-3d-blue-shadow: 0 5px 0 #0284c7, 0 10px 20px rgba(2, 132, 199, 0.28), inset 0 2px 2px rgba(255, 255, 255, 0.55);
+  --waze-3d-mint-bg: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  --waze-3d-mint-shadow: 0 5px 0 #059669, 0 10px 20px rgba(16, 185, 129, 0.26), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+  --waze-3d-amber-bg: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+  --waze-3d-amber-shadow: 0 5px 0 #d97706, 0 10px 20px rgba(245, 158, 11, 0.26), inset 0 2px 2px rgba(255, 255, 255, 0.55);
+  --waze-3d-berry-bg: linear-gradient(180deg, #ff4da6 0%, #e11d48 100%);
+  --waze-3d-berry-shadow: 0 5px 0 #be123c, 0 10px 20px rgba(225, 29, 72, 0.28), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* -------------------------------------------------------------------------
+   A2: TOP BAR & BOTTOM DOCK — GLOSSY 3D WHITE WAZE CAPSULES
+   ------------------------------------------------------------------------- */
+.top-bar {
+  padding: 12px 20px !important;
+}
+
+.brand-logo,
+.top-btn,
+.screens-tabs,
+.cloud-sync-pill {
+  background: var(--waze-3d-white-bg) !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 999px !important;
+  box-shadow: var(--waze-3d-btn-shadow) !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.top-btn:hover,
+.brand-logo:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #cbd5e1, 0 12px 22px rgba(15, 23, 42, 0.18), inset 0 2px 2px #ffffff !important;
+}
+
+.top-btn:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #cbd5e1, 0 4px 8px rgba(15, 23, 42, 0.12) !important;
+}
+
+.top-btn.danger-hover:hover {
+  background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%) !important;
+  color: #e11d48 !important;
+  box-shadow: 0 5px 0 #fecdd3, 0 10px 18px rgba(225, 29, 72, 0.18) !important;
+}
+
+.screen-tab.active {
+  background: var(--waze-3d-blue-bg) !important;
+  color: #ffffff !important;
+  border-radius: 999px !important;
+  box-shadow: 0 3px 0 #0284c7, 0 6px 12px rgba(2, 132, 199, 0.25) !important;
+}
+
+.screen-add-btn {
+  background: #f1f5f9 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 2px 0 #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+/* Bottom Dock: Tight 3D White Waze Capsule with Large Floating Medallions (No Text Clutter) */
+.bottom-dock-container {
+  bottom: 16px !important;
+}
+
+.bottom-dock {
+  background: linear-gradient(180deg, #ffffff 0%, #eef8ff 100%) !important;
+  border: 4.5px solid #ffffff !important;
+  border-radius: 999px !important;
+  padding: 8px 16px !important;
+  gap: 10px !important;
+  box-shadow: 0 9px 0 #bcd8ec, 0 20px 42px rgba(15, 23, 42, 0.28), inset 0 3px 4px #ffffff !important;
+  overflow: visible !important;
+  max-width: 96vw !important;
+}
+
+.dock-btn {
+  position: relative !important;
+  min-width: 50px !important;
+  width: 50px !important;
+  height: 50px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+.dock-btn:hover {
+  background: transparent !important;
+  transform: translateY(-7px) scale(1.1) !important;
+}
+
+.dock-btn:active {
+  transform: translateY(1px) scale(0.96) !important;
+}
+
+.dock-icon-capsule,
+.dock-icon-capsule.waze-capsule-3d {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  border: 3.5px solid #ffffff !important;
+  box-shadow: 0 5px 0 #cbd5e1, 0 9px 18px rgba(15, 23, 42, 0.22) !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+}
+
+.dock-btn:hover .dock-icon-capsule {
+  box-shadow: 0 8px 0 #7dd3fc, 0 14px 26px rgba(2, 132, 199, 0.32) !important;
+}
+
+/* Hide dock labels underneath; show only as a crisp Waze 3D floating pill tooltip on hover */
+.dock-label {
+  position: absolute !important;
+  bottom: 60px !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(8px) scale(0.88) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  border: 2px solid #ffffff !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 0 #020617, 0 8px 18px rgba(15, 23, 42, 0.32) !important;
+  transition: opacity 0.16s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  z-index: 100 !important;
+}
+
+.dock-btn:hover .dock-label {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+.dock-divider {
+  height: 32px !important;
+  width: 3px !important;
+  border-radius: 99px !important;
+  background: #e2e8f0 !important;
+  margin: 0 2px !important;
+}
+
+/* More Widgets Drawer & Modals & Sidebars as Plump 3D White Waze Capsules */
+.more-widgets-drawer {
+  background: linear-gradient(180deg, #ffffff 0%, #eef8ff 100%) !important;
+  border: 4.5px solid #ffffff !important;
+  border-radius: 32px !important;
+  box-shadow: 0 10px 0 #bcd8ec, 0 24px 52px rgba(15, 23, 42, 0.28), inset 0 3px 4px #ffffff !important;
+}
+
+.drawer-item {
+  background: #ffffff !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 22px !important;
+  box-shadow: 0 5px 0 #cbd5e1, 0 10px 18px rgba(15, 23, 42, 0.1) !important;
+  padding: 12px 8px !important;
+}
+
+.drawer-item:hover {
+  transform: translateY(-4px) scale(1.03) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%) !important;
+  box-shadow: 0 7px 0 #7dd3fc, 0 14px 24px rgba(2, 132, 199, 0.2) !important;
+}
+
+.drawer-icon-capsule,
+.drawer-icon-capsule.waze-capsule-3d {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 4px 0 #cbd5e1, 0 8px 16px rgba(15, 23, 42, 0.18) !important;
+}
+
+/* -------------------------------------------------------------------------
+   A1: FRAMELESS FLOATING WIDGETS & PLUMP 3D WAZE INNER CAPSULES
+   ------------------------------------------------------------------------- */
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]):hover,
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]).active-widget {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Compact Floating 3D White Waze Pill Header for Every Widget */
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]) > .widget-header {
+  width: fit-content !important;
+  min-width: 210px !important;
+  max-width: 96% !important;
+  margin: 0 auto 10px auto !important;
+  height: 42px !important;
+  padding: 5px 12px 5px 10px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #eef8ff 100%) !important;
+  border: 3.5px solid #ffffff !important;
+  box-shadow: 0 6px 0 #bcd8ec, 0 12px 24px rgba(15, 23, 42, 0.22), inset 0 2px 2px #ffffff !important;
+  gap: 12px !important;
+  z-index: 25 !important;
+}
+
+.widget-window.active-widget:not([data-type="student-points"]):not([data-type="emotion-checkin"]) > .widget-header {
+  box-shadow: 0 6px 0 #38bdf8, 0 14px 28px rgba(2, 132, 199, 0.28), inset 0 2px 2px #ffffff !important;
+}
+
+.widget-title {
+  font-weight: 900 !important;
+  color: #0f172a !important;
+  font-size: 0.9rem !important;
+}
+
+.w-ctrl-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: #f1f5f9 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 2.5px 0 #cbd5e1 !important;
+  color: #334155 !important;
+  font-weight: 900 !important;
+}
+
+.w-ctrl-btn:hover {
+  transform: translateY(-1px) scale(1.08) !important;
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
+  box-shadow: 0 3.5px 0 #7dd3fc !important;
+}
+
+.w-ctrl-btn.close:hover {
+  background: #ffe4e6 !important;
+  color: #e11d48 !important;
+  box-shadow: 0 3.5px 0 #fda4af !important;
+}
+
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]) > .widget-body {
+  background: transparent !important;
+  overflow: visible !important;
+  padding: 4px 8px 10px 8px !important;
+}
+
+/* Resize Handle as 3D Floating Pill Dot */
+.widget-window:not([data-type="student-points"]):not([data-type="emotion-checkin"]) > .resize-handle {
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important;
+  width: 18px !important;
+  height: 18px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  box-shadow: 0 3px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Universal Plump 3D White Waze Capsule Surface for All Inner Widget Cards & Containers */
+.timer-hero-card,
+.vt-ring-wrap,
+.sw-laps-box,
+.duty-header,
+.duty-card,
+.duty-footer,
+.duty-settings-panel,
+.agenda-top-bar,
+.agenda-spotlight-card,
+.agenda-item-card,
+.agenda-add-bar,
+.tt-wrapper,
+.bd-header-banner,
+.bd-today-alert,
+.bd-add-panel,
+.bd-row,
+.bd-month-card,
+.hq-header-bar,
+.hq-spotlight-card,
+.hq-queue-list,
+.hq-picker-area,
+.sc-toolbar,
+.sc-front-board,
+.sc-desk-card,
+.bb-header-bar,
+.bb-challenge-card,
+.et-top-bar,
+.et-col,
+.et-picker-box,
+.group-card,
+.team-column,
+.rand-result-box,
+.rand-wheel-stage,
+.rand-cards-stage,
+.rand-hat-stage,
+.rand-bottle-stage,
+.traffic-housing,
+.work-symbol-card {
+  background: var(--waze-3d-white-bg) !important;
+  border: 3.5px solid #ffffff !important;
+  border-radius: 26px !important;
+  box-shadow: var(--waze-3d-lip-shadow) !important;
+  color: #0f172a !important;
+}
+
+/* Duty container itself stays frameless so its header, cards & footer float independently! */
+.duty-container,
+.agenda-widget,
+.bd-widget,
+.hq-widget,
+.sc-widget,
+.bb-widget,
+.et-widget,
+.timer-shell,
+.randomizer-shell,
+.work-symbols-grid {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Direct-Body Widgets (Clock, Calendar, Countdown, Noise Meter, Dice, Poll, Group Maker, Text, Draw, QR, Image, Video, Webcam, Embed, Stickers):
+   Wrap their primary child surface in a plump 3D Waze white capsule so everything floats cleanly */
+.widget-window[data-type="clock"] .widget-body,
+.widget-window[data-type="calendar"] .widget-body,
+.widget-window[data-type="countdown"] .widget-body,
+.widget-window[data-type="noise-meter"] .widget-body,
+.widget-window[data-type="dice"] .widget-body,
+.widget-window[data-type="poll"] .widget-body,
+.widget-window[data-type="group-maker"] .widget-body,
+.widget-window[data-type="qr"] .widget-body,
+.widget-window[data-type="image"] .widget-body,
+.widget-window[data-type="video"] .widget-body,
+.widget-window[data-type="webcam"] .widget-body,
+.widget-window[data-type="embed"] .widget-body,
+.widget-window[data-type="text"] .widget-body,
+.widget-window[data-type="draw"] .widget-body,
+.widget-window[data-type="stickers"] .widget-body,
+.widget-window[data-type="scoreboard"] .widget-body {
+  background: var(--waze-3d-white-bg) !important;
+  border: 4px solid #ffffff !important;
+  border-radius: 30px !important;
+  box-shadow: var(--waze-3d-lip-shadow) !important;
+  padding: 14px !important;
+  overflow: auto !important;
+}
+
+/* Traffic Light 3D Waze Medallion Housing */
+.traffic-housing {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 4.5px solid #ffffff !important;
+  border-radius: 999px !important;
+  box-shadow: 0 9px 0 #64748b, 0 20px 38px rgba(15, 23, 42, 0.35), inset 0 3px 5px rgba(255, 255, 255, 0.25) !important;
+  padding: 16px 20px !important;
+}
+
+.traffic-bulb {
+  border: 3.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Work Symbols Cards: Floating 3D Waze Badges */
+.work-symbol-card {
+  border-radius: 24px !important;
+  padding: 12px !important;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease !important;
+}
+
+.work-symbol-card.active {
+  background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%) !important;
+  border: 4px solid #ffffff !important;
+  box-shadow: 0 7px 0 #0284c7, 0 16px 32px rgba(2, 132, 199, 0.32) !important;
+  transform: translateY(-4px) scale(1.03) !important;
+}
+
+/* -------------------------------------------------------------------------
+   A3: BRIGHT WAZE 3D SKY-CLOUDS FULL-SCREEN ARENAS
+   (Diamond Arena, Diamond Shop, Emotion Check-in)
+   ------------------------------------------------------------------------- */
+.widget-window[data-type="student-points"]:not(.minimized),
+.widget-window[data-type="emotion-checkin"]:not(.minimized) {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.7) 7%, transparent 16%),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.65) 9%, transparent 18%),
+    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.7) 8%, transparent 17%),
+    radial-gradient(circle at 88% 20%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.6) 6%, transparent 15%),
+    radial-gradient(circle at 50% 82%, rgba(255, 255, 255, 0.75) 0%, transparent 28%),
+    linear-gradient(180deg, #8ed8ff 0%, #bfe9ff 45%, #e6f7ff 100%) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Full-Screen Arena Top Widget Header */
+.widget-window[data-type="student-points"]:not(.minimized) > .widget-header,
+.widget-window[data-type="emotion-checkin"]:not(.minimized) > .widget-header {
+  background: linear-gradient(180deg, #ffffff 0%, #eef8ff 100%) !important;
+  border: 3.5px solid #ffffff !important;
+  border-radius: 999px !important;
+  box-shadow: 0 5px 0 #93c5fd, 0 12px 24px rgba(2, 132, 199, 0.2) !important;
+  width: fit-content !important;
+  margin: 10px auto 4px auto !important;
+  padding: 6px 18px !important;
+  height: 42px !important;
+}
+
+.widget-window[data-type="student-points"]:not(.minimized) > .widget-header .widget-title,
+.widget-window[data-type="emotion-checkin"]:not(.minimized) > .widget-header .widget-title {
+  color: #0f172a !important;
+  text-shadow: none !important;
+}
+
+/* Arena Top Bar: Goal Card & Toolbar as Plump 3D White Waze Capsules */
+.arena-goal-card,
+.sp-toolbar,
+.em-top-toolbar,
+.em-question-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%) !important;
+  border: 3.5px solid #ffffff !important;
+  border-radius: 999px !important;
+  box-shadow: 0 6px 0 #93c5fd, 0 14px 28px rgba(2, 132, 199, 0.2), inset 0 2px 3px #ffffff !important;
+  color: #0f172a !important;
+}
+
+.em-question-card {
+  border-radius: 26px !important;
+}
+
+.arena-goal-info,
+.arena-goal-title,
+.arena-goal-nums,
+.em-q-text,
+.em-stat-pill {
+  color: #0f172a !important;
+  text-shadow: none !important;
+}
+
+.arena-goal-track {
+  background: #e2e8f0 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Student Bubbles in Diamond Arena & Emotion Check-in: Plump 3D Waze Medallions! */
+.sp-bubble-avatar,
+.em-bubble-circle {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%) !important;
+  border: 5px solid #ffffff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 8px 0 #7dd3fc, 0 16px 28px rgba(2, 132, 199, 0.25), inset 0 3px 5px #ffffff !important;
+  color: #0f172a !important;
+}
+
+.sp-bubble.halo-low .sp-bubble-avatar {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3.5px #38bdf8, 0 8px 0 #0284c7, 0 16px 28px rgba(2, 132, 199, 0.28) !important;
+}
+
+.sp-bubble.halo-mid .sp-bubble-avatar {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3.5px #34d399, 0 8px 0 #059669, 0 16px 28px rgba(16, 185, 129, 0.28) !important;
+}
+
+.sp-bubble.halo-high .sp-bubble-avatar {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 4px #a855f7, 0 8px 0 #7e22ce, 0 16px 30px rgba(147, 51, 234, 0.32) !important;
+}
+
+.sp-bubble.halo-legend .sp-bubble-avatar {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 4.5px #ff3399, 0 8px 0 #d97706, 0 18px 34px rgba(255, 51, 153, 0.38) !important;
+}
+
+.sp-bubble:hover .sp-bubble-avatar,
+.em-bubble:hover .em-bubble-circle {
+  transform: translateY(-6px) scale(1.08) !important;
+}
+
+/* Student Name Tag Pill Under Medallion */
+.sp-bubble-name,
+.em-bubble-name {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2.5px solid #ffffff !important;
+  border-radius: 999px !important;
+  padding: 2px 11px !important;
+  font-weight: 900 !important;
+  font-size: 0.8rem !important;
+  text-shadow: none !important;
+  box-shadow: 0 3.5px 0 #93c5fd, 0 6px 12px rgba(2, 132, 199, 0.18) !important;
+  margin-top: 4px !important;
+}
+
+/* Diamond Shop Inside Student Points: Bright 3D Waze Storefront */
+.shop-header-banner,
+.shop-buyer-bar,
+.shop-custom-form-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%) !important;
+  border: 3.5px solid #ffffff !important;
+  border-radius: 26px !important;
+  box-shadow: 0 6px 0 #93c5fd, 0 14px 28px rgba(2, 132, 199, 0.18), inset 0 2px 3px #ffffff !important;
+  color: #0f172a !important;
+}
+
+.shop-student-pill {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2.5px solid #e2e8f0 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 0 #cbd5e1, 0 6px 12px rgba(15, 23, 42, 0.1) !important;
+  font-weight: 800 !important;
+}
+
+.shop-student-pill.active {
+  background: var(--waze-3d-blue-bg) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: var(--waze-3d-blue-shadow) !important;
+}
+
+.shop-student-pill.active .shop-pill-name {
+  color: #ffffff !important;
+}
+
+.shop-item-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 4px solid #ffffff !important;
+  border-radius: 28px !important;
+  box-shadow: 0 8px 0 #93c5fd, 0 16px 32px rgba(2, 132, 199, 0.18), inset 0 2px 3px #ffffff !important;
+  color: #0f172a !important;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease !important;
+}
+
+.shop-item-card:hover {
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 11px 0 #38bdf8, 0 22px 38px rgba(2, 132, 199, 0.25) !important;
+}
+
+.shop-item-title {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+/* Bottom Behavior Drawer in Student Points & Emotion Choice Bar */
+.sp-drawer,
+.em-choice-modal,
+.modal-card,
+.students-sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%) !important;
+  border: 4.5px solid #ffffff !important;
+  border-radius: 32px !important;
+  box-shadow: 0 10px 0 #93c5fd, 0 24px 50px rgba(15, 23, 42, 0.28), inset 0 3px 4px #ffffff !important;
+  color: #0f172a !important;
+}
+
+.sp-drawer-title,
+.sp-drawer-sub,
+.sp-section-label {
+  color: #0f172a !important;
+}
+
+.sp-behavior-btn,
+.em-choice-btn {
+  background: #ffffff !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 22px !important;
+  box-shadow: 0 5px 0 #cbd5e1, 0 10px 18px rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.sp-behavior-btn:hover,
+.em-choice-btn:hover {
+  transform: translateY(-4px) scale(1.03) !important;
+  box-shadow: 0 7px 0 #38bdf8, 0 14px 24px rgba(2, 132, 199, 0.22) !important;
+}
+
+/* -------------------------------------------------------------------------
+   A4: PLUMP 3D WAZE CUSHION BUTTONS, TABS & CHIPS ACROSS ALL WIDGETS
+   ------------------------------------------------------------------------- */
+.small-btn,
+.primary-btn,
+.secondary-btn,
+.preset-chip,
+.timer-action-btn,
+.sp-mode-pill,
+.rand-tab,
+.em-filter-pill,
+.em-action-btn,
+.hq-student-chip,
+.et-student-btn,
+.sc-seat-item {
+  border-radius: 999px !important;
+  border: 2.5px solid #ffffff !important;
+  box-shadow: 0 4px 0 #cbd5e1, 0 7px 14px rgba(15, 23, 42, 0.12), inset 0 1.5px 1px #ffffff !important;
+  font-weight: 800 !important;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease !important;
+}
+
+.primary-btn,
+.timer-play-btn,
+.sp-mode-pill.active,
+.rand-tab.active,
+.em-filter-pill.active {
+  background: var(--waze-3d-blue-bg) !important;
+  color: #ffffff !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: var(--waze-3d-blue-shadow) !important;
+}
+
+.small-btn:hover,
+.primary-btn:hover,
+.secondary-btn:hover,
+.preset-chip:hover,
+.timer-play-btn:hover,
+.timer-action-btn:hover,
+.sp-mode-pill:hover,
+.rand-tab:hover,
+.hq-student-chip:hover,
+.et-student-btn:hover {
+  transform: translateY(-2px) !important;
+}
+
+.small-btn:active,
+.primary-btn:active,
+.secondary-btn:active,
+.preset-chip:active,
+.timer-play-btn:active,
+.timer-action-btn:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1.5px 0 #94a3b8 !important;
+}
+
 
 
 

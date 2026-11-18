@@ -1348,7 +1348,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         <div class="shop-header-right">
           <div class="shop-title-row">
             ${renderWaze3DMedallion('trophy-crown', 32)}
-            <div style="font-weight:900;font-size:1.05rem;color:#fff;">חנות היהלומים</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#0f172a;">חנות היהלומים</div>
           </div>
         </div>
         <div class="shop-header-actions">
@@ -1380,7 +1380,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       ` : ''}
 
       <div class="shop-buyer-bar">
-        <div style="font-weight:800;font-size:0.86rem;color:#fff;white-space:nowrap;">קונה:</div>
+        <div style="font-weight:900;font-size:0.86rem;color:#0f172a;white-space:nowrap;">קונה:</div>
         <div class="shop-students-strip">
           ${students.map(name => {
             const sc = getStudentScore(name);
