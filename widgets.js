@@ -1,9 +1,59 @@
+const WAZE_3D_MAP = {
+  'waze:mood-cool': 'assets/waze-3d/mood-cool.jpg',
+  'waze:mood-ninja': 'assets/waze-3d/mood-ninja.jpg',
+  'waze:mood-king': 'assets/waze-3d/mood-king.jpg',
+  'waze:mood-headphones': 'assets/waze-3d/mood-headphones.jpg',
+  'waze:mood-star': 'assets/waze-3d/mood-star.jpg',
+  'waze:diamond-cyan': 'assets/waze-3d/diamond-cyan.jpg',
+  'waze:diamond-legend': 'assets/waze-3d/diamond-legend.jpg',
+  'waze:trophy-crown': 'assets/waze-3d/trophy-crown.jpg',
+  'waze:dice': 'assets/waze-3d/dice.jpg',
+  'waze:birthday-cake': 'assets/waze-3d/birthday-cake.jpg'
+};
+
+const WAZE_DEFAULT_MOOD_KEYS = [
+  'waze:mood-cool',
+  'waze:mood-ninja',
+  'waze:mood-king',
+  'waze:mood-headphones',
+  'waze:mood-star'
+];
+
+function renderWaze3DDiamond(isLegend = false, size = 18) {
+  const src = isLegend ? 'assets/waze-3d/diamond-legend.jpg' : 'assets/waze-3d/diamond-cyan.jpg';
+  return `<span class="waze-3d-gem-disc" style="width:${size}px;height:${size}px;"><img src="${src}" alt="💎" class="waze-3d-crop-img" /></span>`;
+}
+window.renderWaze3DDiamond = renderWaze3DDiamond;
+
+function renderWaze3DMedallion(assetKey = 'trophy-crown', size = 22) {
+  const src = WAZE_3D_MAP['waze:' + assetKey] || `assets/waze-3d/${assetKey}.jpg`;
+  return `<span class="waze-3d-gem-disc" style="width:${size}px;height:${size}px;"><img src="${src}" alt="" class="waze-3d-crop-img" /></span>`;
+}
+window.renderWaze3DMedallion = renderWaze3DMedallion;
+
 const ICON_CATEGORIES = [
+  {
+    id: 'waze3d',
+    name: 'דמויות Waze 3D',
+    icon: '🌟',
+    icons: [
+      'waze:mood-cool',
+      'waze:mood-ninja',
+      'waze:mood-king',
+      'waze:mood-headphones',
+      'waze:mood-star',
+      'waze:trophy-crown',
+      'waze:diamond-cyan',
+      'waze:diamond-legend',
+      'waze:dice',
+      'waze:birthday-cake'
+    ]
+  },
   {
     id: 'animals',
     name: 'בעלי חיים',
     icon: '🦁',
-    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','זברה','🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
+    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
   },
   {
     id: 'vehicles',
@@ -40,6 +90,9 @@ const ICON_CATEGORIES = [
 const ALL_STUDENT_ICONS = ICON_CATEGORIES.flatMap(c => c.icons);
 
 function renderStudentIconHtml(icon, name = '') {
+  if (icon && WAZE_3D_MAP[icon]) {
+    return `<img src="${WAZE_3D_MAP[icon]}" alt="${name}" class="waze-3d-avatar-img" />`;
+  }
   if (icon && !icon.startsWith('flag:')) {
     return `<span class="icon-glyph">${icon}</span>`;
   }
@@ -48,8 +101,8 @@ function renderStudentIconHtml(icon, name = '') {
     hash = (hash << 5) - hash + name.charCodeAt(i);
     hash |= 0;
   }
-  const fallback = ALL_STUDENT_ICONS[Math.abs(hash) % ALL_STUDENT_ICONS.length];
-  return `<span class="icon-glyph">${fallback}</span>`;
+  const defaultWazeKey = WAZE_DEFAULT_MOOD_KEYS[Math.abs(hash) % WAZE_DEFAULT_MOOD_KEYS.length];
+  return `<img src="${WAZE_3D_MAP[defaultWazeKey]}" alt="${name}" class="waze-3d-avatar-img" />`;
 }
 window.renderStudentIconHtml = renderStudentIconHtml;
 
@@ -273,7 +326,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   let searchQuery = '';
   let selectedStudentForAward = null;
   let selectedStudentForIcon = null;
-  let activeIconCategory = 'animals';
+  let activeIconCategory = 'waze3d';
   let targetStudentForUpload = null;
 
   const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
@@ -342,10 +395,10 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   body.innerHTML = `
   <input type="file" accept="image/*" data-el="sp-photo-file-input" style="display:none;" />
   <div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
-    <div style="display:flex;gap:4px;background:rgba(0,0,0,0.05);padding:3px;border-radius:10px;">
-      <button class="rand-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams" style="flex:1;">👥 ניקוד קבוצות</button>
-      <button class="rand-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students" style="flex:1;">💎 יהלומים (אישי)</button>
-      <button class="rand-tab ${activeTab === 'shop' ? 'active' : ''}" data-sptab="shop" style="flex:1;">🏪 חנות היהלומים</button>
+    <div style="display:flex;gap:8px;justify-content:center;padding:4px;">
+      <button class="rand-tab waze-pill-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams">👥 קבוצות</button>
+      <button class="rand-tab waze-pill-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students">${renderWaze3DDiamond(false, 20)} <span>יהלומים</span></button>
+      <button class="rand-tab waze-pill-tab ${activeTab === 'shop' ? 'active' : ''}" data-sptab="shop">${renderWaze3DMedallion('trophy-crown', 20)} <span>חנות</span></button>
     </div>
 
     <!-- 1. TEAMS VIEW -->
@@ -353,17 +406,17 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div data-el="team-goal-banner" class="team-goal-banner"></div>
       <div class="scoreboard-teams" data-el="teams-container"></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:auto;">
-        <button class="small-btn" data-act="add-team">+ הוסף קבוצה</button>
-        <button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס ניקוד קבוצות</button>
+        <button class="small-btn" data-act="add-team">+ קבוצה</button>
+        <button class="secondary-btn" data-act="reset-scores" style="padding:4px 10px;font-size:0.8rem;">↺ איפוס</button>
       </div>
     </div>
 
     <!-- 2. STUDENTS INDIVIDUAL POINTS VIEW (DIAMONDS) -->
     <div data-el="students-view" class="sp-container ${activeTab === 'students' ? '' : 'hidden'}">
       <div class="sp-toolbar">
-        <select data-el="sp-class-sel" style="max-width:130px;padding:5px 8px;border-radius:8px;border:1px solid #cbd5e1;font-weight:600;font-size:0.8rem;"></select>
-        <input type="text" class="sp-search" data-el="sp-search" placeholder="🔍 חיפוש תלמיד..." />
-        <div style="display:flex;gap:3px;">
+        <select data-el="sp-class-sel" style="max-width:130px;padding:5px 8px;border-radius:12px;border:1px solid #cbd5e1;font-weight:700;font-size:0.8rem;"></select>
+        <input type="text" class="sp-search" data-el="sp-search" placeholder="🔍 חיפוש..." />
+        <div style="display:flex;gap:5px;">
           <button class="sp-mode-pill ${scoreMode === 'daily' ? 'active' : ''}" data-mode="daily" title="הצג יהלומים שנצברו היום">היום</button>
           <button class="sp-mode-pill ${scoreMode === 'total' ? 'active' : ''}" data-mode="total" title="הצג סך כל היהלומים המצטבר">מצטבר</button>
         </div>
@@ -372,17 +425,17 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <!-- Class Goal Progress Banner -->
       <div data-el="class-goal-banner" class="class-goal-banner"></div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-wrap:wrap;gap:4px;">
-        <div style="display:flex;gap:4px;flex-wrap:wrap;">
-          <button class="small-btn" data-act="open-podium" style="background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(2,132,199,0.25);">🏆 מצעד אלופים</button>
-          <button class="small-btn" data-act="open-all-drawer" style="background:#e0f2fe;color:#0369a1;font-weight:800;border:1px solid #bae6fd;">✨ הוסף לכולם</button>
-          <button class="small-btn" data-act="open-deduct-all-drawer" style="background:#fee2e2;color:#dc2626;font-weight:800;border:1px solid #fecaca;">➖ הורד לכולם</button>
-          <button class="small-btn" data-act="undo-score" title="בטל את פעולת הניקוד האחרונה" style="font-weight:800;background:#fef3c7;color:#92400e;border:1px solid #fde68a;" disabled>↩️ בטל אחורה</button>
-          <button class="small-btn" data-act="toggle-sidebar-view" style="font-weight:700;">📌 סרגל צדי</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-wrap:wrap;gap:6px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button class="small-btn waze-action-pill" data-act="open-podium" style="background:#ffffff;color:#0f172a;font-weight:900;">${renderWaze3DMedallion('trophy-crown', 22)} <span>מצעד</span></button>
+          <button class="small-btn waze-action-pill" data-act="open-all-drawer" style="background:#ffffff;color:#0284c7;font-weight:900;">${renderWaze3DDiamond(false, 20)} <span>+ לכולם</span></button>
+          <button class="small-btn waze-action-pill" data-act="open-deduct-all-drawer" style="background:#fff1f2;color:#e11d48;font-weight:900;"><span>− לכולם</span></button>
+          <button class="small-btn waze-action-pill" data-act="undo-score" title="בטל את פעולת הניקוד האחרונה" style="font-weight:900;background:#fef9c3;color:#92400e;" disabled>↩</button>
+          <button class="small-btn waze-action-pill" data-act="toggle-sidebar-view" style="font-weight:800;background:#ffffff;color:#334155;">📌 סרגל</button>
         </div>
-        <div style="display:flex;gap:4px;">
-          <button class="small-btn" data-act="randomize-all-icons" title="חלק סמלים אקראיים ומגוונים לכל התלמידים" style="font-size:0.75rem;">🎲 הגרל סמלים</button>
-          <button class="small-btn" data-act="reset-daily" style="font-size:0.75rem;">↺ איפוס יומי</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="small-btn waze-action-pill" data-act="randomize-all-icons" title="חלק דמויות Waze 3D אקראיות לכל התלמידים" style="background:#ffffff;color:#0f172a;">${renderWaze3DMedallion('dice', 20)} <span>הגרל דמויות</span></button>
+          <button class="small-btn waze-action-pill" data-act="reset-daily" style="background:#ffffff;color:#475569;">↺ איפוס יומי</button>
         </div>
       </div>
       <div class="sp-grid" data-el="students-grid"></div>
@@ -487,7 +540,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         </div>
         <div class="sp-icon-cat-bar" data-el="icon-cat-bar">
           ${ICON_CATEGORIES.map(c => `
-            <button class="sp-icon-cat-btn ${c.id === 'animals' ? 'active' : ''}" data-cat="${c.id}">
+            <button class="sp-icon-cat-btn ${c.id === 'waze3d' ? 'active' : ''}" data-cat="${c.id}">
               <span>${c.icon}</span>
               <span>${c.name}</span>
             </button>
@@ -709,9 +762,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           <div class="diamond-jar-body">
             <div class="diamond-jar-fill" style="height: ${Math.max(8, percent)}%;">
               <div class="diamond-jar-gems">
-                ${percent >= 15 ? '<span>💎</span>' : ''}
-                ${percent >= 45 ? '<span>💎</span>' : ''}
-                ${percent >= 75 ? '<span>💎</span>' : ''}
+                ${percent >= 15 ? renderWaze3DDiamond(false, 16) : ''}
+                ${percent >= 45 ? renderWaze3DDiamond(true, 16) : ''}
+                ${percent >= 75 ? renderWaze3DDiamond(false, 16) : ''}
               </div>
             </div>
             <div class="diamond-jar-percent">${percent}%</div>
@@ -720,18 +773,17 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         <div class="arena-goal-main">
           <div class="class-goal-top">
             <div class="class-goal-title-group">
-              <span class="class-goal-icon">${isReached ? '🎉' : '🎯'}</span>
-              <span class="class-goal-title">יעד כיתתי:</span>
+              ${isReached ? renderWaze3DMedallion('trophy-crown', 24) : renderWaze3DDiamond(false, 22)}
               <span class="class-goal-prize" title="הפרס שהכיתה תזכה בו">${curGoal.prize || '🍕 מסיבת פיצה כיתתית'}</span>
             </div>
-            <button class="class-goal-edit-btn" data-act="edit-class-goal" title="עריכת יעד ופרס">✏️ ערוך יעד</button>
+            <button class="class-goal-edit-btn" data-act="edit-class-goal" title="עריכת יעד ופרס">✏️ יעד</button>
           </div>
           <div class="class-goal-progress-bar arena-lightbar">
             <div class="class-goal-progress-fill" style="width: ${percent}%;"></div>
           </div>
           <div class="class-goal-bottom">
-            <span class="class-goal-count">💎 ${sumPoints} / ${target}</span>
-            ${isReached ? `<span class="class-goal-badge success">✨ היעד הושג! מגיע לכם הפרס! 🎁</span>` : `<span class="class-goal-badge">עוד ${Math.max(0, target - sumPoints)} 💎 לפרס</span>`}
+            <span class="class-goal-count" style="display:inline-flex;align-items:center;gap:4px;">${renderWaze3DDiamond(false, 15)} <span>${sumPoints} / ${target}</span></span>
+            ${isReached ? `<span class="class-goal-badge success">✨ היעד הושג!</span>` : `<span class="class-goal-badge">נותרו ${Math.max(0, target - sumPoints)}</span>`}
           </div>
         </div>
       </div>
@@ -797,7 +849,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
             <div class="sp-bubble-avatar ${photo ? 'has-custom-photo' : ''}" data-act="open-drawer" data-student="${name}" title="לחץ להענקת יהלומים ל-${name}">
               ${photo ? `<img src="${photo}" alt="${name}" class="sp-bubble-photo-img" />` : iconHtml}
             </div>
-            <span class="sp-bubble-badge" title="יהלומים">💎 ${scoreVal}</span>
+            <span class="sp-bubble-badge ${scoreVal >= 30 ? 'legend-badge' : ''}" title="יהלומים">${renderWaze3DDiamond(scoreVal >= 30, 17)} <span>${scoreVal}</span></span>
           </div>
           <div class="sp-bubble-name" title="${name}">${name}</div>
         </div>
@@ -927,7 +979,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   function renderIconGrid() {
     const cat = ICON_CATEGORIES.find(c => c.id === activeIconCategory) || ICON_CATEGORIES[0];
     iconGrid.innerHTML = cat.icons.map(ic => `
-      <button class="sp-icon-pick-btn" data-icon="${ic}">${ic}</button>
+      <button class="sp-icon-pick-btn" data-icon="${ic}">
+        ${WAZE_3D_MAP[ic] ? `<span class="waze-3d-gem-disc" style="width:42px;height:42px;"><img src="${WAZE_3D_MAP[ic]}" class="waze-3d-crop-img" alt="" /></span>` : ic}
+      </button>
     `).join('');
 
     iconGrid.querySelectorAll('.sp-icon-pick-btn').forEach(btn => {
@@ -1230,18 +1284,15 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div class="shop-header-banner">
         <div class="shop-header-right">
           <div class="shop-title-row">
-            <span style="font-size:1.5rem;">🏪</span>
-            <div>
-              <div style="font-weight:900;font-size:1.05rem;color:#fff;">חנות היהלומים הכיתתית</div>
-              <div style="font-size:0.78rem;color:rgba(255,255,255,0.82);">התלמידים מממשים יהלומים מצטברים (💎 מצטבר) להטבות וזכויות חינוכיות בכיתה</div>
-            </div>
+            ${renderWaze3DMedallion('trophy-crown', 32)}
+            <div style="font-weight:900;font-size:1.05rem;color:#fff;">חנות היהלומים</div>
           </div>
         </div>
         <div class="shop-header-actions">
           <button class="small-btn shop-add-custom-btn" data-act="toggle-add-shop-item">
-            ${showAddShopForm ? '✕ סגור הוספה' : '➕ הוסף הטבה משלך'}
+            ${showAddShopForm ? '✕ סגור' : '+ הטבה חדשה'}
           </button>
-          <button class="small-btn" data-act="undo-shop-purchase" title="בטל רכישה אחרונה" style="background:rgba(254,243,199,0.95);color:#92400e;font-weight:800;border:none;" ${!(window.AppStore && window.AppStore.canUndoScore && window.AppStore.canUndoScore()) ? 'disabled style="opacity:0.45;"' : ''}>↩️ בטל רכישה</button>
+          <button class="small-btn waze-action-pill" data-act="undo-shop-purchase" title="בטל רכישה אחרונה" style="background:#fef9c3;color:#92400e;font-weight:900;border:none;" ${!(window.AppStore && window.AppStore.canUndoScore && window.AppStore.canUndoScore()) ? 'disabled style="opacity:0.45;"' : ''}>↩</button>
         </div>
       </div>
 
@@ -1266,7 +1317,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       ` : ''}
 
       <div class="shop-buyer-bar">
-        <div style="font-weight:800;font-size:0.86rem;color:#fff;white-space:nowrap;">👤 מי קונה עכשיו?</div>
+        <div style="font-weight:800;font-size:0.86rem;color:#fff;white-space:nowrap;">קונה:</div>
         <div class="shop-students-strip">
           ${students.map(name => {
             const sc = getStudentScore(name);
@@ -1280,7 +1331,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
                   ${photo ? `<img src="${photo}" alt="${name}" />` : iconHtml}
                 </span>
                 <span class="shop-pill-name">${name}</span>
-                <span class="shop-pill-balance">💎 ${tot}</span>
+                <span class="shop-pill-balance">${renderWaze3DDiamond(tot >= 30, 15)} <span>${tot}</span></span>
               </button>
             `;
           }).join('')}
@@ -1290,7 +1341,6 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div class="shop-items-grid">
         ${shopItems.map((item, idx) => {
           const canBuy = selectedShopBuyer && buyerTotal >= item.cost;
-          const missing = selectedShopBuyer ? Math.max(0, item.cost - buyerTotal) : 0;
           return `
             <div class="shop-item-card ${canBuy ? 'can-afford' : ''}" data-shop-idx="${idx}">
               <div class="shop-item-card-tools">
@@ -1299,11 +1349,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
               </div>
               <div class="shop-item-icon">${item.icon || '🎁'}</div>
               <div class="shop-item-title">${item.title}</div>
-              <div class="shop-item-price-badge">💎 ${item.cost} יהלומים</div>
               <button class="shop-buy-btn ${canBuy ? 'ready' : 'locked'}" data-act="buy-shop-item" data-idx="${idx}" ${!canBuy ? 'disabled' : ''}>
-                ${!selectedShopBuyer
-                  ? 'בחר תלמיד למעלה 👆'
-                  : (canBuy ? `🛒 רכישה עבור ${selectedShopBuyer}` : `חסרים עוד ${missing} 💎`)}
+                ${renderWaze3DDiamond(item.cost >= 30, 17)}
+                <span>${item.cost}</span>
               </button>
             </div>
           `;
@@ -4032,7 +4080,7 @@ function renderUI() {
                 </div>
                 <div class="duty-row-actions">
                   <button class="duty-replace-btn duty-random-btn" data-act="random-sub" data-role="${role.id}" title="הגרל תורן מחליף (הנוכחי יחזור לסבב)">
-                    🎲 הגרל
+                    ${renderWaze3DMedallion('dice', 16)} <span>הגרל</span>
                   </button>
                   <button class="duty-replace-btn" data-act="open-sub" data-role="${role.id}" title="בחר מחליף ידנית">
                     🔄
@@ -4045,7 +4093,7 @@ function renderUI() {
 
         <div class="duty-footer">
           <button class="duty-reward-btn" data-act="reward-duty" title="הענק נקודת יהלום לכל תורני היום">
-            💎 פרגן יהלום לכל התורנים
+            ${renderWaze3DDiamond(false, 18)} <span>+1 לתורנים</span>
           </button>
         </div>
       `}
@@ -5276,13 +5324,16 @@ renderUI();
       body.innerHTML = `
         <div class="bd-wrap" style="position:relative;">
           <div class="bd-header-banner">
-            <div>
-              <div style="font-weight:900;font-size:0.96rem;color:#831843;">🎂 לוח ימי הולדת עברי</div>
-              <div style="font-size:0.78rem;font-weight:700;color:#9d174d;">📅 היום בלוח העברי: <b>${todayHeb.shortDisplay} ${todayHeb.year}</b></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${renderWaze3DMedallion('birthday-cake', 30)}
+              <div>
+                <div style="font-weight:900;font-size:0.96rem;color:#831843;">ימי הולדת עברי</div>
+                <div style="font-size:0.76rem;font-weight:800;color:#9d174d;">${todayHeb.shortDisplay} ${todayHeb.year}</div>
+              </div>
             </div>
             <div style="display:flex;gap:4px;background:rgba(255,255,255,0.75);padding:3px;border-radius:10px;">
-              <button class="sp-mode-pill ${viewTab === 'list' ? 'active' : ''}" data-bdtab="list">📋 תלמידים</button>
-              <button class="sp-mode-pill ${viewTab === 'months' ? 'active' : ''}" data-bdtab="months">🗓️ חודשי השנה (תשרי–אלול)</button>
+              <button class="sp-mode-pill ${viewTab === 'list' ? 'active' : ''}" data-bdtab="list">תלמידים</button>
+              <button class="sp-mode-pill ${viewTab === 'months' ? 'active' : ''}" data-bdtab="months">חודשי השנה</button>
             </div>
           </div>
 
@@ -5295,19 +5346,19 @@ renderUI();
                     <div>
                       <div style="display:flex;align-items:center;gap:6px;">
                         <span class="bd-name">${item.name}</span>
-                        ${item.isToday ? `<span class="bd-badge-today">👑 חוגג/ת היום! 🎉</span>` : (item.isThisMonth ? `<span class="bd-badge-month">🎈 ילד/ת חודש ${todayHeb.month}</span>` : '')}
+                        ${item.isToday ? `<span class="bd-badge-today">חוגג/ת היום!</span>` : (item.isThisMonth ? `<span class="bd-badge-month">${todayHeb.month}</span>` : '')}
                       </div>
                       <div style="font-size:0.75rem;color:#64748b;font-weight:700;">
-                        ${item.displayStr ? `📅 תאריך עברי: <b style="color:#0f172a;">${item.displayStr}</b>` : 'טרם הוגדר תאריך יום הולדת עברי'}
+                        ${item.displayStr ? `<b style="color:#0f172a;">${item.displayStr}</b>` : 'לא הוגדר'}
                       </div>
                     </div>
                   </div>
                   <div class="bd-actions">
                     <button class="small-btn bd-date-btn" data-act="open-heb-picker" data-student="${item.name}">
-                      🗓️ ${item.displayStr || 'בחר תאריך עברי'}
+                      ${item.displayStr || 'תאריך'}
                     </button>
                     <button class="small-btn bd-celebrate-btn" data-act="celebrate-bday" data-student="${item.name}" data-heb="${item.displayStr}" title="חגיגת יום הולדת על המסך והענקת 5 יהלומים במתנה!">
-                      🎉 חגוג (+5 💎)
+                      ${renderWaze3DDiamond(true, 16)} <span>+5</span>
                     </button>
                   </div>
                 </div>

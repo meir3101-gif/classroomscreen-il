@@ -7842,6 +7842,141 @@ button {
   border-radius: 10px;
 }
 
+/* ==========================================================================
+   Waze 3D Medallions, 3D Glossy Diamonds, & Tight Tactile Buttons
+   ========================================================================== */
+.waze-3d-gem-disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  vertical-align: middle;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.22);
+}
+
+.waze-3d-crop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.36);
+  display: block;
+  pointer-events: none;
+}
+
+.waze-3d-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.36);
+  border-radius: 50%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Tight Waze-style Floating Action Pills & Tabs (Hug Content, No Bloated Ellipses) */
+.waze-action-pill,
+.waze-pill-tab {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  flex: 0 0 auto !important;
+  padding: 5px 12px !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 0.82rem !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 4px 0 rgba(15, 23, 42, 0.16), 0 6px 14px rgba(15, 23, 42, 0.14) !important;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease !important;
+}
+
+.waze-pill-tab {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #1e293b !important;
+}
+
+.waze-pill-tab.active {
+  background: linear-gradient(135deg, #00b4ff, #0077e6) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.waze-action-pill:hover,
+.waze-pill-tab:hover {
+  transform: translateY(-2px);
+}
+
+.waze-action-pill:active,
+.waze-pill-tab:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.16) !important;
+}
+
+/* Tight Waze Score Badge on Student Bubbles */
+.sp-bubble-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  width: fit-content !important;
+  padding: 2px 9px 2px 6px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #00b4ff, #0284c7) !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 0.82rem !important;
+  line-height: 1.1 !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.28) !important;
+}
+
+.sp-bubble-badge.legend-badge {
+  background: linear-gradient(135deg, #ff3399, #ff8800) !important;
+  box-shadow: 0 4px 14px rgba(255, 51, 153, 0.45) !important;
+}
+
+/* Tight Waze Shop Buy Button & Balance Pill */
+.shop-pill-balance {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: fit-content !important;
+  padding: 2px 8px 2px 5px !important;
+}
+
+.shop-buy-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  margin: 4px auto 0 auto !important;
+  padding: 6px 14px !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+  font-size: 0.88rem !important;
+  box-shadow: 0 4px 0 rgba(15, 23, 42, 0.15), 0 6px 12px rgba(15, 23, 42, 0.12) !important;
+}
+
+.duty-replace-btn,
+.duty-reward-btn,
+.bd-celebrate-btn,
+.bd-date-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: fit-content !important;
+  padding: 4px 10px !important;
+  border-radius: 12px !important;
+}
+
+
 
 
 

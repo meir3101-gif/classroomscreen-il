@@ -701,8 +701,8 @@ renderStudentsSidebar() {
     <div class="sidebar-header">
       <div class="sidebar-header-top">
         <div style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:1.15rem;">💎</span>
-          <span style="font-weight:800;font-size:0.88rem;color:var(--text-dark);">ניקוד כיתתי</span>
+          ${window.renderWaze3DDiamond ? window.renderWaze3DDiamond(false, 20) : '<span>💎</span>'}
+          <span style="font-weight:900;font-size:0.88rem;color:var(--text-dark);">ניקוד</span>
         </div>
         <div style="display:flex;gap:4px;align-items:center;">
           <button class="mini-icon-btn" data-act="sidebar-all" title="הוסף נקודה לכל תלמידי הכיתה בבת אחת">+כולם</button>
@@ -730,6 +730,7 @@ renderStudentsSidebar() {
         const iconHtml = photo 
           ? `<img src="${photo}" alt="${name}" class="sidebar-student-photo" />`
           : `<span class="sidebar-student-icon">${window.renderStudentIconHtml ? window.renderStudentIconHtml(icons[name], name) : '⭐'}</span>`;
+        const gemHtml = window.renderWaze3DDiamond ? window.renderWaze3DDiamond(sc.daily >= 30, 14) : '💎';
         return `
           <div class="sidebar-student-row" data-student="${name}">
             <div class="sidebar-student-avatar-wrap">
@@ -737,7 +738,7 @@ renderStudentsSidebar() {
             </div>
             <span class="sidebar-student-name" title="${name}">${name}</span>
             <div class="sidebar-actions-group">
-              <span class="sidebar-student-score" title="יהלומים יומיים">💎 ${sc.daily}</span>
+              <span class="sidebar-student-score" title="יהלומים יומיים" style="display:inline-flex;align-items:center;gap:3px;">${gemHtml} <span>${sc.daily}</span></span>
               <button class="sidebar-score-btn plus" data-student="${name}" data-action="plus" title="הוסף נקודה">+</button>
               <button class="sidebar-score-btn minus" data-student="${name}" data-action="minus" title="הורד נקודה">-</button>
             </div>
