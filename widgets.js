@@ -4,11 +4,21 @@ const WAZE_3D_MAP = {
   'waze:mood-king': 'assets/waze-3d/mood-king.jpg',
   'waze:mood-headphones': 'assets/waze-3d/mood-headphones.jpg',
   'waze:mood-star': 'assets/waze-3d/mood-star.jpg',
+  'waze:mood-astronaut': 'assets/waze-3d/mood-astronaut.jpg',
+  'waze:mood-superhero': 'assets/waze-3d/mood-superhero.jpg',
+  'waze:mood-wizard': 'assets/waze-3d/mood-wizard.jpg',
+  'waze:mood-detective': 'assets/waze-3d/mood-detective.jpg',
+  'waze:mood-chef': 'assets/waze-3d/mood-chef.jpg',
+  'waze:mood-pirate': 'assets/waze-3d/mood-pirate.jpg',
   'waze:diamond-cyan': 'assets/waze-3d/diamond-cyan.jpg',
   'waze:diamond-legend': 'assets/waze-3d/diamond-legend.jpg',
   'waze:trophy-crown': 'assets/waze-3d/trophy-crown.jpg',
   'waze:dice': 'assets/waze-3d/dice.jpg',
-  'waze:birthday-cake': 'assets/waze-3d/birthday-cake.jpg'
+  'waze:birthday-cake': 'assets/waze-3d/birthday-cake.jpg',
+  'waze:shop-chair': 'assets/waze-3d/shop-chair.jpg',
+  'waze:shop-ticket': 'assets/waze-3d/shop-ticket.jpg',
+  'waze:shop-palette': 'assets/waze-3d/shop-palette.jpg',
+  'waze:star-shield': 'assets/waze-3d/star-shield.jpg'
 };
 
 const WAZE_DEFAULT_MOOD_KEYS = [
@@ -16,7 +26,13 @@ const WAZE_DEFAULT_MOOD_KEYS = [
   'waze:mood-ninja',
   'waze:mood-king',
   'waze:mood-headphones',
-  'waze:mood-star'
+  'waze:mood-star',
+  'waze:mood-astronaut',
+  'waze:mood-superhero',
+  'waze:mood-wizard',
+  'waze:mood-detective',
+  'waze:mood-chef',
+  'waze:mood-pirate'
 ];
 
 function renderWaze3DDiamond(isLegend = false, size = 18) {
@@ -26,7 +42,8 @@ function renderWaze3DDiamond(isLegend = false, size = 18) {
 window.renderWaze3DDiamond = renderWaze3DDiamond;
 
 function renderWaze3DMedallion(assetKey = 'trophy-crown', size = 22) {
-  const src = WAZE_3D_MAP['waze:' + assetKey] || `assets/waze-3d/${assetKey}.jpg`;
+  const cleanKey = String(assetKey).replace(/^waze:/, '');
+  const src = WAZE_3D_MAP['waze:' + cleanKey] || `assets/waze-3d/${cleanKey}.jpg`;
   return `<span class="waze-3d-gem-disc" style="width:${size}px;height:${size}px;"><img src="${src}" alt="" class="waze-3d-crop-img" /></span>`;
 }
 window.renderWaze3DMedallion = renderWaze3DMedallion;
@@ -42,11 +59,21 @@ const ICON_CATEGORIES = [
       'waze:mood-king',
       'waze:mood-headphones',
       'waze:mood-star',
+      'waze:mood-astronaut',
+      'waze:mood-superhero',
+      'waze:mood-wizard',
+      'waze:mood-detective',
+      'waze:mood-chef',
+      'waze:mood-pirate',
       'waze:trophy-crown',
+      'waze:star-shield',
       'waze:diamond-cyan',
       'waze:diamond-legend',
       'waze:dice',
-      'waze:birthday-cake'
+      'waze:birthday-cake',
+      'waze:shop-chair',
+      'waze:shop-ticket',
+      'waze:shop-palette'
     ]
   },
   {
@@ -365,14 +392,14 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   }
 
   const DEFAULT_SHOP_ITEMS = [
-    { id: 'sh-friend', icon: '💺', title: 'לשבת ליד חבר ליום אחד', cost: 20 },
-    { id: 'sh-assistant', icon: '👑', title: 'עוזר/ת המורה ליום שלם', cost: 30 },
-    { id: 'sh-skip-q', icon: '🎟️', title: 'דילוג על שאלה אחת בתרגול', cost: 25 },
-    { id: 'sh-board', icon: '🖍️', title: 'ציור או כתיבה חופשית על הלוח', cost: 15 },
-    { id: 'sh-game', icon: '🎲', title: 'בחירת משחק כיתתי של 5 דקות', cost: 35 },
-    { id: 'sh-letter', icon: '💌', title: 'מכתב מחמאה אישי להורים', cost: 40 },
-    { id: 'sh-corner', icon: '📚', title: '10 דקות בפינה השקטה / יצירה', cost: 15 },
-    { id: 'sh-duty', icon: '🌟', title: 'בחירת תורנות מועדפת ליום אחד', cost: 20 }
+    { id: 'sh-friend', icon: 'waze:shop-chair', title: 'לשבת ליד חבר ליום אחד', cost: 20 },
+    { id: 'sh-assistant', icon: 'waze:trophy-crown', title: 'עוזר/ת המורה ליום שלם', cost: 30 },
+    { id: 'sh-skip-q', icon: 'waze:shop-ticket', title: 'דילוג על שאלה אחת בתרגול', cost: 25 },
+    { id: 'sh-board', icon: 'waze:shop-palette', title: 'ציור או כתיבה חופשית על הלוח', cost: 15 },
+    { id: 'sh-game', icon: 'waze:dice', title: 'בחירת משחק כיתתי של 5 דקות', cost: 35 },
+    { id: 'sh-letter', icon: 'waze:star-shield', title: 'מכתב מחמאה אישי להורים', cost: 40 },
+    { id: 'sh-corner', icon: 'waze:mood-headphones', title: '10 דקות בפינה השקטה / יצירה', cost: 15 },
+    { id: 'sh-duty', icon: 'waze:mood-king', title: 'בחירת תורנות מועדפת ליום אחד', cost: 20 }
   ];
 
   let shopItems = (window.AppStore && window.AppStore.getShopItems && window.AppStore.getShopItems()) || state.shopItems || [...DEFAULT_SHOP_ITEMS];
@@ -1013,7 +1040,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   // Randomize icon for single student
   body.querySelector('[data-act="random-icon-one"]').addEventListener('click', () => {
     if (!selectedStudentForIcon) return;
-    const randomIcon = ALL_STUDENT_ICONS[Math.floor(Math.random() * ALL_STUDENT_ICONS.length)];
+    const randomIcon = WAZE_DEFAULT_MOOD_KEYS[Math.floor(Math.random() * WAZE_DEFAULT_MOOD_KEYS.length)];
     studentIcons[selectedStudentForIcon] = randomIcon;
     if (window.AppStore.setStudentIcons) {
       window.AppStore.setStudentIcons(studentIcons);
@@ -1030,8 +1057,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   body.querySelector('[data-act="randomize-all-icons"]').addEventListener('click', () => {
     const students = getStudentsList();
     if (students.length === 0) return;
-    if (confirm('האם להגריל סמלים מגוונים לכל תלמידי הכיתה?')) {
-      const shuffled = [...ALL_STUDENT_ICONS].sort(() => 0.5 - Math.random());
+    if (confirm('האם להגריל דמויות Waze 3D מגוונות לכל תלמידי הכיתה?')) {
+      const shuffled = [...WAZE_DEFAULT_MOOD_KEYS].sort(() => 0.5 - Math.random());
       students.forEach((name, i) => {
         studentIcons[name] = shuffled[i % shuffled.length];
       });
@@ -1248,7 +1275,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           <div class="shop-voucher-student-name">${studentName}</div>
         </div>
         <div class="shop-voucher-prize-box">
-          <div class="shop-voucher-prize-icon">${item.icon || '🎁'}</div>
+          <div class="shop-voucher-prize-icon">${WAZE_3D_MAP[item.icon] ? renderWaze3DMedallion(item.icon, 56) : (item.icon || '🎁')}</div>
           <div class="shop-voucher-prize-title">${item.title}</div>
           <div class="shop-voucher-cost-tag">נרכש ב-${item.cost} 💎 • יתרה מצטברת: ${remainingTotal} 💎</div>
         </div>
@@ -1341,13 +1368,16 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div class="shop-items-grid">
         ${shopItems.map((item, idx) => {
           const canBuy = selectedShopBuyer && buyerTotal >= item.cost;
+          const itemIconHtml = WAZE_3D_MAP[item.icon]
+            ? renderWaze3DMedallion(item.icon, 54)
+            : `<span style="font-size:2.4rem;">${item.icon || '🎁'}</span>`;
           return `
             <div class="shop-item-card ${canBuy ? 'can-afford' : ''}" data-shop-idx="${idx}">
               <div class="shop-item-card-tools">
                 <button class="shop-card-tool" data-act="edit-shop-item" data-idx="${idx}" title="ערוך הטבה או מחיר">✏️</button>
                 <button class="shop-card-tool danger" data-act="delete-shop-item" data-idx="${idx}" title="מחק הטבה מהחנות">🗑️</button>
               </div>
-              <div class="shop-item-icon">${item.icon || '🎁'}</div>
+              <div class="shop-item-icon">${itemIconHtml}</div>
               <div class="shop-item-title">${item.title}</div>
               <button class="shop-buy-btn ${canBuy ? 'ready' : 'locked'}" data-act="buy-shop-item" data-idx="${idx}" ${!canBuy ? 'disabled' : ''}>
                 ${renderWaze3DDiamond(item.cost >= 30, 17)}
