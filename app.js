@@ -32,12 +32,12 @@ const SCORES_BACKUP_KEY = 'classroomscreen_il_scores_backup_v1';
 function getWidgetHeaderCapsule(type) {
   const wazeMap = {
     'timer': 'tool-timer.jpg',
-    'visual-timer': 'shabbat-candles.jpg',
-    'stopwatch': 'mood-ninja.jpg',
-    'clock': 'mood-chef.jpg',
-    'traffic-light': 'star-shield.jpg',
-    'work-symbols': 'tefillin.jpg',
-    'random-name': 'mood-wizard.jpg',
+    'visual-timer': 'tool-visual-timer.jpg',
+    'stopwatch': 'tool-stopwatch.jpg',
+    'clock': 'tool-clock.jpg',
+    'traffic-light': 'tool-traffic-light.jpg',
+    'work-symbols': 'tool-symbols.jpg',
+    'random-name': 'tool-wheel.jpg',
     'group-maker': 'tool-groups.jpg',
     'noise-meter': 'mood-headphones.jpg',
     'dice': 'dice.jpg',
@@ -52,17 +52,16 @@ function getWidgetHeaderCapsule(type) {
     'poll': 'trophy-crown.jpg',
     'text': 'tool-text-draw.jpg',
     'draw': 'shop-palette.jpg',
-    'qr': 'mood-pirate.jpg',
     'daily-agenda': 'siddur.jpg',
     'duty-roster': 'mood-king.jpg',
     'timetable': 'sefer-torah.jpg',
     'calendar': 'chanukiah.jpg',
     'countdown': 'shop-ticket.jpg',
-    'stickers': 'pomegranate.jpg',
-    'image': 'wheat.jpg',
-    'video': 'mood-cool.jpg',
-    'webcam': 'jewish-boy.jpg',
-    'embed': 'kiddush-cup.jpg'
+    'stickers': 'star-shield.jpg',
+    'image': 'tool-background.jpg',
+    'video': 'tool-video.jpg',
+    'webcam': 'tool-webcam.jpg',
+    'embed': 'star-of-david.jpg'
   };
   const imgFile = wazeMap[type] || 'diamond-cyan.jpg';
   return `<span class="w-header-capsule waze-capsule-3d"><img src="assets/waze-3d/${imgFile}" class="waze-3d-crop-img" alt="" /></span>`;
