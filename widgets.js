@@ -1,4 +1,11 @@
 const WAZE_3D_MAP = {
+  'waze:jewish-boy': 'assets/waze-3d/jewish-boy.jpg',
+  'waze:jewish-girl': 'assets/waze-3d/jewish-girl.jpg',
+  'waze:tefillin': 'assets/waze-3d/tefillin.jpg',
+  'waze:siddur': 'assets/waze-3d/siddur.jpg',
+  'waze:shabbat-candles': 'assets/waze-3d/shabbat-candles.jpg',
+  'waze:chanukiah': 'assets/waze-3d/chanukiah.jpg',
+  'waze:sefer-torah': 'assets/waze-3d/sefer-torah.jpg',
   'waze:mood-cool': 'assets/waze-3d/mood-cool.jpg',
   'waze:mood-ninja': 'assets/waze-3d/mood-ninja.jpg',
   'waze:mood-king': 'assets/waze-3d/mood-king.jpg',
@@ -25,6 +32,8 @@ const WAZE_3D_MAP = {
 };
 
 const WAZE_DEFAULT_MOOD_KEYS = [
+  'waze:jewish-boy',
+  'waze:jewish-girl',
   'waze:mood-cool',
   'waze:mood-ninja',
   'waze:mood-king',
@@ -57,6 +66,8 @@ const ICON_CATEGORIES = [
     name: 'דמויות Waze 3D',
     icon: '🌟',
     icons: [
+      'waze:jewish-boy',
+      'waze:jewish-girl',
       'waze:mood-cool',
       'waze:mood-ninja',
       'waze:mood-king',
@@ -68,6 +79,11 @@ const ICON_CATEGORIES = [
       'waze:mood-detective',
       'waze:mood-chef',
       'waze:mood-pirate',
+      'waze:tefillin',
+      'waze:siddur',
+      'waze:shabbat-candles',
+      'waze:chanukiah',
+      'waze:sefer-torah',
       'waze:trophy-crown',
       'waze:star-shield',
       'waze:diamond-cyan',
@@ -77,6 +93,20 @@ const ICON_CATEGORIES = [
       'waze:shop-chair',
       'waze:shop-ticket',
       'waze:shop-palette'
+    ]
+  },
+  {
+    id: 'judaica',
+    name: 'יהדות ומסורת 3D',
+    icon: '✡️',
+    icons: [
+      'waze:jewish-boy',
+      'waze:jewish-girl',
+      'waze:tefillin',
+      'waze:siddur',
+      'waze:shabbat-candles',
+      'waze:chanukiah',
+      'waze:sefer-torah'
     ]
   },
   {
@@ -410,6 +440,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   let showAddShopForm = false;
 
   const BEHAVIORS = [
+    { id: 'prayer', icon: 'waze:siddur', title: 'תפילה וברכות', pts: 2 },
+    { id: 'torah', icon: 'waze:sefer-torah', title: 'לימוד תורה ופרשה', pts: 2 },
     { id: 'ready', icon: 'waze:mood-astronaut', title: 'מוכנות לשיעור', pts: 1 },
     { id: 'task', icon: 'waze:shop-ticket', title: 'ביצוע מטלה', pts: 2 },
     { id: 'listen', icon: 'waze:mood-headphones', title: 'הקשבה והשתתפות', pts: 1 },
