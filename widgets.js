@@ -18,7 +18,10 @@ const WAZE_3D_MAP = {
   'waze:shop-chair': 'assets/waze-3d/shop-chair.jpg',
   'waze:shop-ticket': 'assets/waze-3d/shop-ticket.jpg',
   'waze:shop-palette': 'assets/waze-3d/shop-palette.jpg',
-  'waze:star-shield': 'assets/waze-3d/star-shield.jpg'
+  'waze:star-shield': 'assets/waze-3d/star-shield.jpg',
+  'waze:tool-timer': 'assets/waze-3d/tool-timer.jpg',
+  'waze:tool-text-draw': 'assets/waze-3d/tool-text-draw.jpg',
+  'waze:tool-groups': 'assets/waze-3d/tool-groups.jpg'
 };
 
 const WAZE_DEFAULT_MOOD_KEYS = [
@@ -407,16 +410,16 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   let showAddShopForm = false;
 
   const BEHAVIORS = [
-    { id: 'ready', icon: '🎒', title: 'מוכנות לשיעור', pts: 1 },
-    { id: 'task', icon: '📝', title: 'ביצוע מטלה', pts: 2 },
-    { id: 'listen', icon: '👂', title: 'הקשבה והשתתפות', pts: 1 },
-    { id: 'help', icon: '🤝', title: 'עזרה לחבר', pts: 2 },
-    { id: 'polite', icon: '💬', title: 'דיבור בנימוס', pts: 1 },
-    { id: 'order', icon: '🧹', title: 'סדר וארגון', pts: 1 },
-    { id: 'excel', icon: '💎', title: 'הצטיינות מיוחדת', pts: 3 },
-    { id: 'behavior', icon: '⚡', title: 'התנהגות מופתית', pts: 2 },
-    { id: 'free', icon: '➕', title: 'יהלום בונוס חופשי', pts: 1 },
-    { id: 'penalty', icon: '➖', title: 'בירור / משמעת (-1)', pts: -1 }
+    { id: 'ready', icon: 'waze:mood-astronaut', title: 'מוכנות לשיעור', pts: 1 },
+    { id: 'task', icon: 'waze:shop-ticket', title: 'ביצוע מטלה', pts: 2 },
+    { id: 'listen', icon: 'waze:mood-headphones', title: 'הקשבה והשתתפות', pts: 1 },
+    { id: 'help', icon: 'waze:tool-groups', title: 'עזרה לחבר', pts: 2 },
+    { id: 'polite', icon: 'waze:mood-cool', title: 'דיבור בנימוס', pts: 1 },
+    { id: 'order', icon: 'waze:mood-king', title: 'סדר וארגון', pts: 1 },
+    { id: 'excel', icon: 'waze:diamond-legend', title: 'הצטיינות מיוחדת', pts: 3 },
+    { id: 'behavior', icon: 'waze:star-shield', title: 'התנהגות מופתית', pts: 2 },
+    { id: 'free', icon: 'waze:diamond-cyan', title: 'בונוס חופשי', pts: 1 },
+    { id: 'penalty', icon: 'waze:mood-pirate', title: 'בירור / משמעת (-1)', pts: -1 }
   ];
 
   body.innerHTML = `
@@ -487,10 +490,11 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         <div class="sp-behavior-grid">
           ${BEHAVIORS.map(b => `
             <button class="sp-behavior-btn" data-behavior="${b.id}" data-pts="${b.pts}">
-              <span style="font-size:1.25rem;">${b.icon}</span>
+              ${WAZE_3D_MAP[b.icon] ? renderWaze3DMedallion(b.icon, 28) : `<span style="font-size:1.25rem;">${b.icon}</span>`}
               <span>${b.title}</span>
-              <span class="sp-pts-tag" style="${b.pts < 0 ? 'background:#fee2e2;color:#dc2626;' : 'background:#e0f2fe;color:#0284c7;'}">
-                ${b.pts > 0 ? '+' + b.pts : b.pts} 💎
+              <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;${b.pts < 0 ? 'background:#fee2e2;color:#dc2626;' : 'background:#e0f2fe;color:#0284c7;'}">
+                ${renderWaze3DDiamond(b.pts >= 3, 14)}
+                <span>${b.pts > 0 ? '+' + b.pts : b.pts}</span>
               </span>
             </button>
           `).join('')}
@@ -4337,11 +4341,11 @@ renderUI();
   defaultH: 540,
   render(body, state, saveState) {
     const EMOTIONS = [
-      { id: 'happy', icon: '😊', label: 'שמח/ה ורגוע/ה', short: 'שמח/ה', color: '#10b981', glow: 'rgba(16, 185, 129, 0.75)', bg: '#ecfdf5' },
-      { id: 'excited', icon: '🤩', label: 'נרגש/ת ומלא/ת אנרגיה', short: 'נרגש/ת', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.8)', bg: '#fffbeb' },
-      { id: 'tired', icon: '😴', label: 'עייף/ה היום', short: 'עייף/ה', color: '#6366f1', glow: 'rgba(99, 102, 241, 0.75)', bg: '#eef2ff' },
-      { id: 'confused', icon: '🤔', label: 'מהורהר/ת או מוטרד/ת', short: 'מהורהר/ת', color: '#0ea5e9', glow: 'rgba(14, 165, 233, 0.75)', bg: '#f0f9ff' },
-      { id: 'share', icon: '🙋‍♂️', label: 'רוצה לשתף!', short: 'רוצה לשתף!', color: '#ec4899', glow: 'rgba(236, 72, 153, 0.88)', bg: '#fdf2f8' }
+      { id: 'happy', icon: renderWaze3DMedallion('mood-cool', 26), label: 'שמח/ה ורגוע/ה', short: 'שמח/ה', color: '#10b981', glow: 'rgba(16, 185, 129, 0.75)', bg: '#ecfdf5' },
+      { id: 'excited', icon: renderWaze3DMedallion('mood-star', 26), label: 'נרגש/ת ומלא/ת אנרגיה', short: 'נרגש/ת', color: '#f59e0b', glow: 'rgba(245, 158, 11, 0.8)', bg: '#fffbeb' },
+      { id: 'tired', icon: renderWaze3DMedallion('mood-headphones', 26), label: 'עייף/ה היום', short: 'עייף/ה', color: '#6366f1', glow: 'rgba(99, 102, 241, 0.75)', bg: '#eef2ff' },
+      { id: 'confused', icon: renderWaze3DMedallion('mood-detective', 26), label: 'מהורהר/ת או מוטרד/ת', short: 'מהורהר/ת', color: '#0ea5e9', glow: 'rgba(14, 165, 233, 0.75)', bg: '#f0f9ff' },
+      { id: 'share', icon: renderWaze3DMedallion('mood-superhero', 26), label: 'רוצה לשתף!', short: 'רוצה לשתף!', color: '#ec4899', glow: 'rgba(236, 72, 153, 0.88)', bg: '#fdf2f8' }
     ];
 
     const MORNING_QUESTIONS = [
