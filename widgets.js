@@ -2865,10 +2865,10 @@ renderScoreboardAndPoints(body, state, saveState, state.activeTab || 'teams');
     }
   },
 'poll': {
-title: 'סקר והצבעה כיתתית (חי מהנייד)',
+title: 'סקר והצבעה כיתתית',
 icon: '📊',
 defaultW: 410,
-defaultH: 340,
+defaultH: 320,
 render(body, state, saveState) {
 const randomToken = (bytes) => Array.from(crypto.getRandomValues(new Uint8Array(bytes)), b => b.toString(16).padStart(2, '0')).join('');
 const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2886,33 +2886,20 @@ let options = state.options ?? [
 { label: '🤔 הבנתי חלקית', votes: 0 },
 { label: '🙋 צריך חזרה נוספת', votes: 0 }
 ];
-let showQR = false;
 body.innerHTML = `
 <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
 <input type="text" data-el="q" value="${escHtml(question)}" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid #cbd5e1;font-weight:800;font-size:0.95rem;" />
 <div class="poll-bars" data-el="bars"></div>
-<div data-el="qr-box" class="hidden" style="display:flex;align-items:center;justify-content:center;gap:12px;background:#f8fafc;padding:8px;border-radius:12px;border:1px solid #e2e8f0;">
-<img data-el="qr-img" style="width:90px;height:90px;border-radius:8px;" alt="QR" />
-<div style="font-size:0.8rem;line-height:1.4;">
-<div style="font-weight:800;color:var(--primary);">הצבעת תלמידים בזמן אמת:</div>
-<div>סרקו או היכנסו לקישור:</div>
-<a data-el="vote-link" href="/vote/${pollId}" target="_blank" style="direction:ltr;display:inline-block;font-weight:700;color:#2563eb;word-break:break-all;"></a>
-</div>
-</div>
 <div style="display:flex;gap:5px;justify-content:space-between;flex-wrap:wrap;">
 <button class="small-btn" data-preset="smiley">😊 הבנה</button>
 <button class="small-btn" data-preset="yesno">כן/לא</button>
 <button class="small-btn" data-preset="abcd">א/ב/ג/ד</button>
-<button class="small-btn" data-act="toggle-qr" style="background:#dbeafe;color:#1e40af;">📱 הצבעה מהנייד</button>
 <button class="secondary-btn" data-act="reset" style="padding:4px 8px;font-size:0.76rem;">איפוס</button>
 </div>
 </div>
 `;
 const qInput = body.querySelector('[data-el="q"]');
 const barsEl = body.querySelector('[data-el="bars"]');
-const qrBox = body.querySelector('[data-el="qr-box"]');
-const qrImg = body.querySelector('[data-el="qr-img"]');
-const voteLink = body.querySelector('[data-el="vote-link"]');
 async function pushPollToServer() {
 try {
 await fetch(`/api/polls/${pollId}`, {
@@ -2951,17 +2938,6 @@ qInput.addEventListener('input', () => {
 state.question = qInput.value;
 saveState();
 pushPollToServer();
-});
-body.querySelector('[data-act="toggle-qr"]').addEventListener('click', () => {
-showQR = !showQR;
-qrBox.classList.toggle('hidden', !showQR);
-if (showQR) {
-const fullUrl = `${window.location.origin}/vote/${pollId}`;
-voteLink.textContent = fullUrl;
-voteLink.href = fullUrl;
-qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(fullUrl)}`;
-pushPollToServer();
-}
 });
 body.querySelectorAll('[data-preset]').forEach(btn => {
 btn.addEventListener('click', () => {
