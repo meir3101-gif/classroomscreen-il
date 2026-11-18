@@ -2999,24 +2999,87 @@ return () => clearInterval(pollInterval);
 'text': {
 title: 'תיבת טקסט והנחיות לשיעור',
 icon: '📝',
-defaultW: 410,
-defaultH: 270,
+defaultW: 440,
+defaultH: 290,
 render(body, state, saveState) {
 const defaultHtml = `<h3>🎯 משימת השיעור:</h3><ul><li>פתחו את המחברת בעמוד 24</li><li>קראו את הקטע וענו על שאלות 1–3</li><li>בסיום – בדקו עם החבר לשולחן</li></ul>`;
+const HIGHLIGHT_COLORS = [
+  { label: 'צהוב מרקר', color: '#fef08a', border: '#eab308' },
+  { label: 'ירוק מרקר', color: '#bbf7d0', border: '#22c55e' },
+  { label: 'תכלת מרקר', color: '#bae6fd', border: '#0ea5e9' },
+  { label: 'ורוד מרקר', color: '#fbcfe8', border: '#ec4899' },
+  { label: 'כתום מרקר', color: '#fed7aa', border: '#f97316' }
+];
+let activeMarkerColor = null;
 body.innerHTML = `
-<div class="text-toolbar">
+<div class="text-toolbar" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
 <button class="fmt-btn" data-cmd="bold" title="הדגשה"><b>B</b></button>
 <button class="fmt-btn" data-cmd="underline" title="קו תחתון"><u>U</u></button>
 <button class="fmt-btn" data-cmd="insertUnorderedList" title="רשימת תבליטים">• רשימה</button>
 <button class="fmt-btn" data-size="1.05rem">א-</button>
 <button class="fmt-btn" data-size="1.35rem">א+</button>
 <button class="fmt-btn" data-size="1.75rem">א++</button>
-<input type="color" data-el="color" value="#0f172a" title="צבע טקסט" style="width:26px;height:26px;border:none;background:none;cursor:pointer;" />
+<input type="color" data-el="color" value="#0f172a" title="צבע טקסט" style="width:24px;height:24px;border:none;background:none;cursor:pointer;" />
+<span style="width:1px;height:18px;background:#cbd5e1;margin:0 2px;"></span>
+<span style="font-size:0.74rem;font-weight:800;color:#475569;">🖍️ מרקר:</span>
+${HIGHLIGHT_COLORS.map(h => `
+  <button type="button" class="text-marker-swatch" data-hl="${h.color}" title="${h.label} (סמן טקסט או הפעל מרקר רציף)" style="width:20px;height:20px;border-radius:50%;background:${h.color};border:2px solid ${h.border};cursor:pointer;box-shadow:0 2px 0 rgba(15,23,42,0.15);transition:transform 0.14s ease;"></button>
+`).join('')}
+<button type="button" class="fmt-btn" data-act="clear-hl" title="הסר מרקר מטקסט מסומן" style="font-size:0.72rem;padding:2px 6px;">🧹 נקה מרקר</button>
 </div>
 <div class="rich-text-area" contenteditable="true" data-el="editor">${state.html ?? defaultHtml}</div>
 `;
 const editor = body.querySelector('[data-el="editor"]');
 if (state.fontSize) editor.style.fontSize = state.fontSize;
+
+function applyHighlightToSelection(color) {
+  editor.focus();
+  if (!document.execCommand('hiliteColor', false, color)) {
+    document.execCommand('backColor', false, color);
+  }
+  state.html = editor.innerHTML;
+  saveState();
+}
+
+body.querySelectorAll('[data-hl]').forEach(btn => {
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // preserve text selection inside editor
+  });
+  btn.addEventListener('click', () => {
+    const color = btn.dataset.hl;
+    const sel = window.getSelection();
+    const hasSelection = sel && !sel.isCollapsed && editor.contains(sel.anchorNode);
+    if (hasSelection) {
+      applyHighlightToSelection(color);
+    } else {
+      activeMarkerColor = (activeMarkerColor === color) ? null : color;
+      body.querySelectorAll('.text-marker-swatch').forEach(b => {
+        b.style.transform = (b.dataset.hl === activeMarkerColor) ? 'scale(1.25) translateY(-2px)' : '';
+        b.style.outline = (b.dataset.hl === activeMarkerColor) ? '2px solid #0f172a' : 'none';
+      });
+    }
+  });
+});
+
+const clearHlBtn = body.querySelector('[data-act="clear-hl"]');
+clearHlBtn.addEventListener('mousedown', (e) => e.preventDefault());
+clearHlBtn.addEventListener('click', () => {
+  activeMarkerColor = null;
+  body.querySelectorAll('.text-marker-swatch').forEach(b => {
+    b.style.transform = '';
+    b.style.outline = 'none';
+  });
+  applyHighlightToSelection('transparent');
+});
+
+editor.addEventListener('mouseup', () => {
+  if (!activeMarkerColor) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && editor.contains(sel.anchorNode)) {
+    applyHighlightToSelection(activeMarkerColor);
+  }
+});
+
 body.querySelectorAll('[data-cmd]').forEach(btn => {
 btn.addEventListener('click', () => {
 document.execCommand(btn.dataset.cmd, false, null);
@@ -3879,28 +3942,178 @@ if (stream) stream.getTracks().forEach(t => t.stop());
 'embed': {
 title: 'הטמעת אתר או קישור',
 icon: '🌐',
-defaultW: 440,
-defaultH: 340,
+defaultW: 560,
+defaultH: 430,
 render(body, state, saveState) {
 let url = state.url ?? 'https://he.wikipedia.org/wiki/עמוד_ראשי';
+const EMBED_MARKERS = [
+  { label: 'מרקר צהוב', rgba: 'rgba(250, 204, 21, 0.42)', solid: '#facc15' },
+  { label: 'מרקר ירוק', rgba: 'rgba(74, 222, 128, 0.42)', solid: '#4ade80' },
+  { label: 'מרקר תכלת', rgba: 'rgba(56, 189, 248, 0.42)', solid: '#38bdf8' },
+  { label: 'מרקר ורוד', rgba: 'rgba(244, 114, 182, 0.42)', solid: '#f472b6' },
+  { label: 'מרקר כתום', rgba: 'rgba(251, 146, 60, 0.42)', solid: '#fb923c' }
+];
+let markerMode = false;
+let isEraser = false;
+let straightLine = true;
+let activeColor = EMBED_MARKERS[0].rgba;
+
 body.innerHTML = `
 <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
-<div style="display:flex;gap:6px;">
-<input type="text" data-el="url" value="${url}" placeholder="הדבק כתובת אתר להצגה..." style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;direction:ltr;font-size:0.84rem;" />
-<button class="primary-btn" data-act="go">פתח</button>
-</div>
-<iframe data-el="iframe" src="${url}" style="flex:1;width:100%;border:1px solid #cbd5e1;border-radius:10px;background:#fff;"></iframe>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+    <input type="text" data-el="url" value="${url}" placeholder="הדבק כתובת אתר להצגה..." style="flex:1;min-width:160px;padding:6px 10px;border-radius:12px;border:2px solid #cbd5e1;direction:ltr;font-size:0.84rem;font-weight:700;" />
+    <button class="primary-btn" data-act="go" style="padding:5px 12px;">פתח</button>
+    <button class="small-btn" data-act="toggle-marker" style="background:#fef9c3;color:#854d0e;border-color:#fde047 !important;">🖍️ מרקר על האתר</button>
+  </div>
+  <div data-el="marker-bar" class="hidden" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#f8fafc;padding:6px 10px;border-radius:16px;border:2px solid #e2e8f0;">
+    <span style="font-size:0.76rem;font-weight:900;color:#334155;">צבע מרקר:</span>
+    ${EMBED_MARKERS.map((m, idx) => `
+      <button type="button" class="embed-marker-dot ${idx === 0 ? 'active' : ''}" data-rgba="${m.rgba}" title="${m.label}" style="width:22px;height:22px;border-radius:50%;background:${m.solid};border:2.5px solid #ffffff;box-shadow:0 2px 0 #cbd5e1;cursor:pointer;${idx === 0 ? 'outline:2px solid #0f172a;transform:scale(1.15);' : ''}"></button>
+    `).join('')}
+    <button type="button" class="small-btn" data-act="toggle-straight" title="קו מרקר ישר אוטומטית לשורות טקסט" style="font-size:0.74rem;padding:3px 9px;background:#e0f2fe;color:#0369a1;">📏 קו ישר: פעיל</button>
+    <button type="button" class="small-btn" data-act="marker-eraser" style="font-size:0.74rem;padding:3px 9px;">🧹 מחק</button>
+    <button type="button" class="small-btn" data-act="marker-clear" style="font-size:0.74rem;padding:3px 9px;">🗑️ נקה הכל</button>
+    <span style="font-size:0.72rem;color:#64748b;margin-right:auto;">💡 כבה את המרקר כדי לגלול באתר</span>
+  </div>
+  <div data-el="stage" style="flex:1;position:relative;width:100%;border:2px solid #cbd5e1;border-radius:16px;background:#fff;overflow:hidden;">
+    <iframe data-el="iframe" src="${url}" style="width:100%;height:100%;border:none;background:#fff;display:block;"></iframe>
+    <canvas data-el="hl-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;cursor:crosshair;z-index:5;"></canvas>
+  </div>
 </div>
 `;
 const inp = body.querySelector('[data-el="url"]');
 const iframe = body.querySelector('[data-el="iframe"]');
+const stage = body.querySelector('[data-el="stage"]');
+const canvas = body.querySelector('[data-el="hl-canvas"]');
+const ctx = canvas.getContext('2d');
+const toggleMarkerBtn = body.querySelector('[data-act="toggle-marker"]');
+const markerBar = body.querySelector('[data-el="marker-bar"]');
+const straightBtn = body.querySelector('[data-act="toggle-straight"]');
+const eraserBtn = body.querySelector('[data-act="marker-eraser"]');
+
+let drawing = false;
+let startX = 0;
+let startY = 0;
+let snapshotImg = null;
+
+function resizeEmbedCanvas() {
+  const rect = stage.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+  const prevUrl = state.highlightDataUrl || (canvas.width > 0 ? canvas.toDataURL() : null);
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  if (prevUrl) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = prevUrl;
+  }
+}
+setTimeout(resizeEmbedCanvas, 60);
+const ro = new ResizeObserver(() => resizeEmbedCanvas());
+ro.observe(stage);
+
 body.querySelector('[data-act="go"]').addEventListener('click', () => {
-let u = inp.value.trim();
-if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
-iframe.src = u;
-state.url = u;
-saveState();
+  let u = inp.value.trim();
+  if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+  iframe.src = u;
+  state.url = u;
+  saveState();
 });
+
+toggleMarkerBtn.addEventListener('click', () => {
+  markerMode = !markerMode;
+  canvas.style.pointerEvents = markerMode ? 'auto' : 'none';
+  markerBar.classList.toggle('hidden', !markerMode);
+  toggleMarkerBtn.innerHTML = markerMode ? '👆 חזור לגלילה באתר' : '🖍️ מרקר על האתר';
+  toggleMarkerBtn.style.background = markerMode ? '#dcfce7' : '#fef9c3';
+  toggleMarkerBtn.style.color = markerMode ? '#166534' : '#854d0e';
+});
+
+body.querySelectorAll('.embed-marker-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    isEraser = false;
+    eraserBtn.style.background = '';
+    activeColor = dot.dataset.rgba;
+    body.querySelectorAll('.embed-marker-dot').forEach(d => {
+      d.style.outline = 'none';
+      d.style.transform = '';
+    });
+    dot.style.outline = '2px solid #0f172a';
+    dot.style.transform = 'scale(1.15)';
+  });
+});
+
+straightBtn.addEventListener('click', () => {
+  straightLine = !straightLine;
+  straightBtn.textContent = straightLine ? '📏 קו ישר: פעיל' : '〰️ קו חופשי';
+  straightBtn.style.background = straightLine ? '#e0f2fe' : '#f1f5f9';
+});
+
+eraserBtn.addEventListener('click', () => {
+  isEraser = !isEraser;
+  eraserBtn.style.background = isEraser ? '#fee2e2' : '';
+});
+
+body.querySelector('[data-act="marker-clear"]').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  state.highlightDataUrl = null;
+  saveState();
+});
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (!markerMode) return;
+  drawing = true;
+  const rect = canvas.getBoundingClientRect();
+  startX = e.clientX - rect.left;
+  startY = e.clientY - rect.top;
+  snapshotImg = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!drawing || !markerMode) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (isEraser) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = 30;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  } else if (straightLine) {
+    // Restore pre-stroke canvas so highlighter doesn't stack alpha opacity while dragging!
+    if (snapshotImg) ctx.putImageData(snapshotImg, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = activeColor;
+    ctx.lineWidth = 22;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(x, startY); // horizontal straight text highlight line
+    ctx.stroke();
+  } else {
+    if (snapshotImg) ctx.putImageData(snapshotImg, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = activeColor;
+    ctx.lineWidth = 22;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+});
+
+window.addEventListener('pointerup', () => {
+  if (!drawing) return;
+  drawing = false;
+  ctx.globalCompositeOperation = 'source-over';
+  state.highlightDataUrl = canvas.toDataURL();
+  saveState();
+});
+
+return () => ro.disconnect();
 }
 },
 'duty-roster': {

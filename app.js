@@ -1318,9 +1318,23 @@ const toggleBtn = document.getElementById('btn-annotate-toggle');
 const colorInput = document.getElementById('anno-color');
 const sizeSelect = document.getElementById('anno-size');
 const eraserBtn = document.getElementById('btn-anno-eraser');
+const highlighterBtn = document.getElementById('btn-anno-highlighter');
+const straightBtn = document.getElementById('btn-anno-straight');
 let isAnnotating = false;
 let isDrawing = false;
 let isEraser = false;
+let isHighlighter = true;
+let isStraight = true;
+let startX = 0;
+let startY = 0;
+let snapshotImg = null;
+const hexToRgba = (hex, alpha = 0.42) => {
+  const clean = String(hex || '#facc15').replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16) || 250;
+  const g = parseInt(clean.substring(2, 4), 16) || 204;
+  const b = parseInt(clean.substring(4, 6), 16) || 21;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 const resize = () => {
 const saved = canvas.toDataURL();
 canvas.width = window.innerWidth;
@@ -1339,6 +1353,23 @@ toggleBtn.classList.toggle('active-mode', active);
 };
 toggleBtn.addEventListener('click', () => setMode(!isAnnotating));
 document.getElementById('btn-anno-done').addEventListener('click', () => setMode(false));
+if (highlighterBtn) {
+  highlighterBtn.addEventListener('click', () => {
+    isHighlighter = !isHighlighter;
+    isEraser = false;
+    eraserBtn.classList.remove('active-mode');
+    highlighterBtn.textContent = isHighlighter ? '🖍️ מרקר טקסט' : '🖊️ טוש אטום';
+    highlighterBtn.style.background = isHighlighter ? '#fef9c3' : '#f1f5f9';
+    if (isHighlighter) sizeSelect.value = '24';
+  });
+}
+if (straightBtn) {
+  straightBtn.addEventListener('click', () => {
+    isStraight = !isStraight;
+    straightBtn.textContent = isStraight ? '📏 קו ישר' : '〰️ קו חופשי';
+    straightBtn.style.background = isStraight ? '#e0f2fe' : '#f1f5f9';
+  });
+}
 document.querySelectorAll('#anno-color-presets .color-dot').forEach(dot => {
 dot.addEventListener('click', () => {
 isEraser = false;
@@ -1362,23 +1393,38 @@ ctx.clearRect(0, 0, canvas.width, canvas.height);
 canvas.addEventListener('pointerdown', (e) => {
 if (!isAnnotating) return;
 isDrawing = true;
+startX = e.clientX;
+startY = e.clientY;
+snapshotImg = ctx.getImageData(0, 0, canvas.width, canvas.height);
 ctx.beginPath();
-ctx.moveTo(e.clientX, e.clientY);
+ctx.moveTo(startX, startY);
 });
 canvas.addEventListener('pointermove', (e) => {
 if (!isDrawing || !isAnnotating) return;
-ctx.lineTo(e.clientX, e.clientY);
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
 if (isEraser) {
 ctx.globalCompositeOperation = 'destination-out';
 ctx.lineWidth = 32;
-} else {
-ctx.globalCompositeOperation = 'source-over';
-ctx.strokeStyle = colorInput.value;
-ctx.lineWidth = parseInt(sizeSelect.value, 10);
-}
+ctx.lineTo(e.clientX, e.clientY);
 ctx.stroke();
+} else if (isStraight) {
+if (snapshotImg) ctx.putImageData(snapshotImg, 0, 0);
+ctx.globalCompositeOperation = 'source-over';
+ctx.strokeStyle = isHighlighter ? hexToRgba(colorInput.value, 0.42) : colorInput.value;
+ctx.lineWidth = parseInt(sizeSelect.value, 10);
+ctx.beginPath();
+ctx.moveTo(startX, startY);
+ctx.lineTo(e.clientX, startY);
+ctx.stroke();
+} else {
+if (isHighlighter && snapshotImg) ctx.putImageData(snapshotImg, 0, 0);
+ctx.globalCompositeOperation = 'source-over';
+ctx.strokeStyle = isHighlighter ? hexToRgba(colorInput.value, 0.42) : colorInput.value;
+ctx.lineWidth = parseInt(sizeSelect.value, 10);
+ctx.lineTo(e.clientX, e.clientY);
+ctx.stroke();
+}
 });
 window.addEventListener('pointerup', () => {
 isDrawing = false;
