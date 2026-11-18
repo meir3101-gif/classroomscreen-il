@@ -6,6 +6,12 @@ const WAZE_3D_MAP = {
   'waze:shabbat-candles': 'assets/waze-3d/shabbat-candles.jpg',
   'waze:chanukiah': 'assets/waze-3d/chanukiah.jpg',
   'waze:sefer-torah': 'assets/waze-3d/sefer-torah.jpg',
+  'waze:challah': 'assets/waze-3d/challah.jpg',
+  'waze:kiddush-cup': 'assets/waze-3d/kiddush-cup.jpg',
+  'waze:pomegranate': 'assets/waze-3d/pomegranate.jpg',
+  'waze:dates': 'assets/waze-3d/dates.jpg',
+  'waze:wheat': 'assets/waze-3d/wheat.jpg',
+  'waze:barley': 'assets/waze-3d/barley.jpg',
   'waze:mood-cool': 'assets/waze-3d/mood-cool.jpg',
   'waze:mood-ninja': 'assets/waze-3d/mood-ninja.jpg',
   'waze:mood-king': 'assets/waze-3d/mood-king.jpg',
@@ -84,6 +90,12 @@ const ICON_CATEGORIES = [
       'waze:shabbat-candles',
       'waze:chanukiah',
       'waze:sefer-torah',
+      'waze:challah',
+      'waze:kiddush-cup',
+      'waze:pomegranate',
+      'waze:dates',
+      'waze:wheat',
+      'waze:barley',
       'waze:trophy-crown',
       'waze:star-shield',
       'waze:diamond-cyan',
@@ -97,7 +109,7 @@ const ICON_CATEGORIES = [
   },
   {
     id: 'judaica',
-    name: 'יהדות ומסורת 3D',
+    name: 'יהדות ושבעת המינים 3D',
     icon: '✡️',
     icons: [
       'waze:jewish-boy',
@@ -105,8 +117,14 @@ const ICON_CATEGORIES = [
       'waze:tefillin',
       'waze:siddur',
       'waze:shabbat-candles',
+      'waze:challah',
+      'waze:kiddush-cup',
       'waze:chanukiah',
-      'waze:sefer-torah'
+      'waze:sefer-torah',
+      'waze:pomegranate',
+      'waze:dates',
+      'waze:wheat',
+      'waze:barley'
     ]
   },
   {
@@ -3724,22 +3742,28 @@ calc();
 'stickers': {
 title: 'מדבקות וחיזוקים לכיתה',
 icon: '⭐',
-defaultW: 320,
-defaultH: 260,
+defaultW: 380,
+defaultH: 340,
 render(body) {
 const stickers = [
-{ emoji: '🏆', text: 'אלופים! כל הכבוד!' },
-{ emoji: '🌟', text: 'עבודה נהדרת!' },
-{ emoji: '👏', text: 'הקשבה מצוינת!' },
-{ emoji: '🚀', text: 'התקדמות מדהימה!' },
-{ emoji: '💎', text: 'כיתה מצטיינת!' },
-{ emoji: '❤️', text: 'גאה בכם מאוד!' }
+{ wazeKey: 'trophy-crown', text: 'אלופים! כל הכבוד!' },
+{ wazeKey: 'star-shield', text: 'עבודה נהדרת!' },
+{ wazeKey: 'mood-king', text: 'הקשבה מצוינת!' },
+{ wazeKey: 'mood-astronaut', text: 'התקדמות מדהימה!' },
+{ wazeKey: 'diamond-legend', text: 'כיתה מצטיינת!' },
+{ wazeKey: 'mood-superhero', text: 'גיבורי הכיתה!' },
+{ wazeKey: 'shabbat-candles', text: 'שבת שלום ומבורך!' },
+{ wazeKey: 'challah', text: 'עונג שבת קודש!' },
+{ wazeKey: 'kiddush-cup', text: 'יישר כוח עצום!' },
+{ wazeKey: 'sefer-torah', text: 'כתר תורה!' },
+{ wazeKey: 'pomegranate', text: 'מלאים מצוות כרימון!' },
+{ wazeKey: 'chanukiah', text: 'אור גדול בכיתה!' }
 ];
 body.innerHTML = `
 <div class="stickers-grid">
 ${stickers.map((s, i) => `
 <button class="sticker-badge-btn" data-idx="${i}">
-<span class="sticker-emoji">${s.emoji}</span>
+<span class="sticker-emoji">${renderWaze3DMedallion(s.wazeKey, 40)}</span>
 <span class="sticker-text">${s.text}</span>
 </button>
 `).join('')}
@@ -3752,7 +3776,7 @@ SoundFX.fanfare();
 const toast = document.createElement('div');
 toast.className = 'floating-praise-toast';
 toast.innerHTML = `
-<div style="font-size:4.5rem;">${s.emoji}</div>
+<div>${renderWaze3DMedallion(s.wazeKey, 108)}</div>
 <div style="font-size:2rem;font-weight:900;color:var(--primary);margin-top:8px;">${s.text}</div>
 `;
 document.body.appendChild(toast);
