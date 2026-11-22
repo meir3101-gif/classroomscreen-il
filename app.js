@@ -49,19 +49,19 @@ function getWidgetHeaderCapsule(type) {
     'brain-break': 'mood-astronaut.jpg',
     'exit-ticket': 'mood-detective.jpg',
     'birthdays': 'birthday-cake.jpg',
-    'poll': 'trophy-crown.jpg',
+    'poll': 'tool-poll.jpg',
     'text': 'tool-text-draw.jpg',
     'draw': 'shop-palette.jpg',
-    'daily-agenda': 'siddur.jpg',
+    'daily-agenda': 'tool-agenda.jpg',
     'duty-roster': 'mood-king.jpg',
-    'timetable': 'sefer-torah.jpg',
-    'calendar': 'chanukiah.jpg',
-    'countdown': 'shop-ticket.jpg',
+    'timetable': 'tool-timetable.jpg',
+    'calendar': 'tool-calendar.jpg',
+    'countdown': 'vehicle-rocket.jpg',
     'stickers': 'star-shield.jpg',
     'image': 'tool-background.jpg',
     'video': 'tool-video.jpg',
     'webcam': 'tool-webcam.jpg',
-    'embed': 'star-of-david.jpg'
+    'embed': 'tool-embed.jpg'
   };
   const imgFile = wazeMap[type] || 'diamond-cyan.jpg';
   return `<span class="w-header-capsule waze-capsule-3d"><img src="assets/waze-3d/${imgFile}" class="waze-3d-crop-img" alt="" /></span>`;
@@ -860,7 +860,7 @@ spawnFlyingDiamonds(targetEl, count = 1) {
   for (let i = 0; i < numDiamonds; i++) {
     const d = document.createElement('div');
     d.className = 'flying-diamond-particle';
-    d.textContent = '💎';
+    d.innerHTML = window.renderWaze3DDiamond ? window.renderWaze3DDiamond(count >= 3, 24) : '💎';
     d.style.left = `${startX}px`;
     d.style.top = `${startY}px`;
     

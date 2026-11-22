@@ -25,6 +25,17 @@ const WAZE_3D_MAP = {
   'waze:tool-background': 'assets/waze-3d/tool-background.jpg',
   'waze:tool-video': 'assets/waze-3d/tool-video.jpg',
   'waze:tool-webcam': 'assets/waze-3d/tool-webcam.jpg',
+  'waze:tool-calendar': 'assets/waze-3d/tool-calendar.jpg',
+  'waze:tool-agenda': 'assets/waze-3d/tool-agenda.jpg',
+  'waze:tool-timetable': 'assets/waze-3d/tool-timetable.jpg',
+  'waze:tool-poll': 'assets/waze-3d/tool-poll.jpg',
+  'waze:tool-embed': 'assets/waze-3d/tool-embed.jpg',
+  'waze:animal-lion': 'assets/waze-3d/animal-lion.jpg',
+  'waze:animal-dolphin': 'assets/waze-3d/animal-dolphin.jpg',
+  'waze:animal-eagle': 'assets/waze-3d/animal-eagle.jpg',
+  'waze:vehicle-rocket': 'assets/waze-3d/vehicle-rocket.jpg',
+  'waze:sport-soccer': 'assets/waze-3d/sport-soccer.jpg',
+  'waze:music-guitar': 'assets/waze-3d/music-guitar.jpg',
   'waze:mood-cool': 'assets/waze-3d/mood-cool.jpg',
   'waze:mood-ninja': 'assets/waze-3d/mood-ninja.jpg',
   'waze:mood-king': 'assets/waze-3d/mood-king.jpg',
@@ -63,7 +74,13 @@ const WAZE_DEFAULT_MOOD_KEYS = [
   'waze:mood-wizard',
   'waze:mood-detective',
   'waze:mood-chef',
-  'waze:mood-pirate'
+  'waze:mood-pirate',
+  'waze:animal-lion',
+  'waze:animal-dolphin',
+  'waze:animal-eagle',
+  'waze:vehicle-rocket',
+  'waze:sport-soccer',
+  'waze:music-guitar'
 ];
 
 function renderWaze3DDiamond(isLegend = false, size = 18) {
@@ -83,7 +100,7 @@ const ICON_CATEGORIES = [
   {
     id: 'waze3d',
     name: 'דמויות Waze 3D',
-    icon: '🌟',
+    icon: 'waze:mood-cool',
     icons: [
       'waze:jewish-boy',
       'waze:jewish-girl',
@@ -97,92 +114,87 @@ const ICON_CATEGORIES = [
       'waze:mood-wizard',
       'waze:mood-detective',
       'waze:mood-chef',
-      'waze:mood-pirate',
-      'waze:tefillin',
-      'waze:siddur',
-      'waze:shabbat-candles',
-      'waze:chanukiah',
-      'waze:sefer-torah',
-      'waze:challah',
-      'waze:kiddush-cup',
-      'waze:pomegranate',
-      'waze:dates',
-      'waze:wheat',
-      'waze:barley',
-      'waze:olive',
-      'waze:four-species',
-      'waze:star-of-david',
-      'waze:round-matzah',
-      'waze:trophy-crown',
-      'waze:star-shield',
-      'waze:diamond-cyan',
-      'waze:diamond-legend',
-      'waze:dice',
-      'waze:birthday-cake',
-      'waze:shop-chair',
-      'waze:shop-ticket',
-      'waze:shop-palette'
+      'waze:mood-pirate'
     ]
   },
   {
     id: 'judaica',
     name: 'יהדות ושבעת המינים 3D',
-    icon: '✡️',
+    icon: 'waze:star-of-david',
     icons: [
       'waze:jewish-boy',
       'waze:jewish-girl',
+      'waze:star-of-david',
       'waze:tefillin',
       'waze:siddur',
+      'waze:sefer-torah',
       'waze:shabbat-candles',
       'waze:challah',
       'waze:kiddush-cup',
       'waze:chanukiah',
-      'waze:sefer-torah',
+      'waze:four-species',
+      'waze:round-matzah',
       'waze:pomegranate',
       'waze:dates',
       'waze:wheat',
       'waze:barley',
-      'waze:olive',
-      'waze:four-species',
-      'waze:star-of-david',
-      'waze:round-matzah'
+      'waze:olive'
     ]
   },
   {
-    id: 'animals',
-    name: 'בעלי חיים',
-    icon: '🦁',
-    icons: ['🦁','🐼','🦊','🐶','🐱','🐰','🐻','🐨','🐵','🦄','🐬','🦅','🦉','🐢','🐧','🦖','🦋','🐝','🐘','🦒','🦓','🐺','🦩','🐳','🦔','🐸','🐑','🦌']
-  },
-  {
-    id: 'vehicles',
-    name: 'כלי תחבורה',
-    icon: '🚀',
-    icons: ['🚀','🚗','✈️','🏎️','🚁','🚲','🚂','⛵','🛸','🏍️','🚜','🚢','🛹','🛵','🚒','🚑','🚓','🚊','🚤','🛰️','🛩️','🚠','🛴','🚌','🚚']
-  },
-  {
-    id: 'food',
-    name: 'מאכלים ופירות',
-    icon: '🍎',
-    icons: ['🍎','🍓','🍇','🍉','🍌','🍒','🥑','🍍','🍊','🥞','🥐','🍕','🍟','🍦','🧁','🍩','🍪','🍫','🍿','🥨','🎂','🥗','🥕','🥪']
-  },
-  {
-    id: 'sports',
-    name: 'ספורט וכדורים',
-    icon: '⚽',
-    icons: ['⚽','🏀','🏈','🎾','🏐','⚾','🏓','🏸','🎳','🎯','🏆','🥇','🛹','⛳','🥋','🎿','⛸️']
-  },
-  {
-    id: 'music',
-    name: 'כלי נגינה ומוזיקה',
-    icon: '🎵',
-    icons: ['🎸','🎻','🎹','🎺','🎷','🥁','🪘','🪕','🪗','📯','🪈','🔔','🎵','🎶','🎼','📻','🎤','🪇']
+    id: 'animals_sports',
+    name: 'חיות, חלל, ספורט ומוזיקה 3D',
+    icon: 'waze:animal-lion',
+    icons: [
+      'waze:animal-lion',
+      'waze:animal-eagle',
+      'waze:animal-dolphin',
+      'waze:vehicle-rocket',
+      'waze:sport-soccer',
+      'waze:music-guitar',
+      'waze:mood-astronaut',
+      'waze:mood-superhero',
+      'waze:mood-ninja',
+      'waze:mood-pirate',
+      'waze:mood-wizard',
+      'waze:mood-detective',
+      'waze:mood-chef',
+      'waze:mood-headphones',
+      'waze:tool-embed'
+    ]
   },
   {
     id: 'gems',
-    name: 'יהלומים וסמלים',
-    icon: '💎',
-    icons: ['💎','⭐','👑','🪐','🔥','⚡','🌈','🔮','🌟','🎨','🎮','🧩','💡','🛡️','✨','🕶️','🎖️','🪄','🌺','🌻','🍀','💫','⚜️','📚']
+    name: 'יהלומים ופרסים 3D',
+    icon: 'waze:diamond-cyan',
+    icons: [
+      'waze:diamond-cyan',
+      'waze:diamond-legend',
+      'waze:trophy-crown',
+      'waze:star-shield',
+      'waze:shop-ticket',
+      'waze:shop-chair',
+      'waze:shop-palette',
+      'waze:birthday-cake',
+      'waze:dice',
+      'waze:tool-wheel',
+      'waze:tool-timer',
+      'waze:tool-clock',
+      'waze:tool-stopwatch',
+      'waze:tool-visual-timer',
+      'waze:tool-traffic-light',
+      'waze:tool-symbols',
+      'waze:tool-calendar',
+      'waze:tool-agenda',
+      'waze:tool-timetable',
+      'waze:tool-poll',
+      'waze:tool-embed',
+      'waze:tool-background',
+      'waze:tool-video',
+      'waze:tool-webcam',
+      'waze:tool-text-draw',
+      'waze:tool-groups'
+    ]
   }
 ];
 
@@ -191,9 +203,6 @@ const ALL_STUDENT_ICONS = ICON_CATEGORIES.flatMap(c => c.icons);
 function renderStudentIconHtml(icon, name = '') {
   if (icon && WAZE_3D_MAP[icon]) {
     return `<img src="${WAZE_3D_MAP[icon]}" alt="${name}" class="waze-3d-avatar-img" />`;
-  }
-  if (icon && !icon.startsWith('flag:')) {
-    return `<span class="icon-glyph">${icon}</span>`;
   }
   let hash = 0;
   for (let i = 0; i < (name || '').length; i++) {
@@ -301,13 +310,13 @@ function openGrandPodium(top1, top2, top3, categoryLeadersHtml = '') {
         ${top2 ? `
           <div class="grand-podium-col second">
             <div class="grand-winner-header">
-              <span class="grand-medal">🥈</span>
+              <span class="grand-medal">${renderWaze3DMedallion('star-shield', 38)}</span>
               ${renderWinnerAvatar(top2, 90)}
               <div class="grand-winner-name">${top2.name}</div>
             </div>
             <div class="grand-pedestal silver">
               <div class="grand-rank-badge">2</div>
-              <div class="grand-score-badge">💎 ${top2.score}</div>
+              <div class="grand-score-badge" style="display:inline-flex;align-items:center;gap:5px;">${renderWaze3DDiamond(top2.score >= 30, 20)} <span>${top2.score}</span></div>
               <div class="grand-score-sub">יהלומים היום</div>
             </div>
           </div>
@@ -315,28 +324,27 @@ function openGrandPodium(top1, top2, top3, categoryLeadersHtml = '') {
 
         <div class="grand-podium-col first">
           <div class="grand-winner-header">
-            <div class="grand-crown">👑</div>
-            <span class="grand-medal first">🥇</span>
+            <div class="grand-crown">${renderWaze3DMedallion('trophy-crown', 48)}</div>
             ${renderWinnerAvatar(top1, 116)}
             <div class="grand-winner-name first">${top1.name}</div>
           </div>
           <div class="grand-pedestal gold">
             <div class="grand-rank-badge first">1</div>
-            <div class="grand-score-badge first">💎 ${top1.score}</div>
-            <div class="grand-score-sub first">אלוף/ת היהלומים! 🏆</div>
+            <div class="grand-score-badge first" style="display:inline-flex;align-items:center;gap:5px;">${renderWaze3DDiamond(true, 22)} <span>${top1.score}</span></div>
+            <div class="grand-score-sub first">אלוף/ת היהלומים!</div>
           </div>
         </div>
 
         ${top3 ? `
           <div class="grand-podium-col third">
             <div class="grand-winner-header">
-              <span class="grand-medal">🥉</span>
+              <span class="grand-medal">${renderWaze3DMedallion('diamond-cyan', 36)}</span>
               ${renderWinnerAvatar(top3, 90)}
               <div class="grand-winner-name">${top3.name}</div>
             </div>
             <div class="grand-pedestal bronze">
               <div class="grand-rank-badge">3</div>
-              <div class="grand-score-badge">💎 ${top3.score}</div>
+              <div class="grand-score-badge" style="display:inline-flex;align-items:center;gap:5px;">${renderWaze3DDiamond(top3.score >= 30, 20)} <span>${top3.score}</span></div>
               <div class="grand-score-sub">יהלומים היום</div>
             </div>
           </div>
@@ -576,7 +584,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div data-el="award-all-drawer" class="sp-drawer hidden">
         <div class="sp-drawer-header">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span data-el="all-drawer-icon" style="font-size:1.3rem;">✨</span>
+            <span data-el="all-drawer-icon">${renderWaze3DDiamond(true, 24)}</span>
             <div>
               <div data-el="all-drawer-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">הענקת יהלומים לכל הכיתה בבת אחת</div>
               <div data-el="all-drawer-sub" style="font-size:0.75rem;color:var(--text-muted);">בחר חיזוק שיוענק מיידית לכל תלמידי הכיתה</div>
@@ -586,44 +594,44 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
         </div>
         <div class="sp-behavior-grid">
           <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="1" data-all-title="הקשבה והשתתפות כיתתית">
-            <span style="font-size:1.25rem;">👂</span>
+            ${renderWaze3DMedallion('mood-headphones', 28)}
             <span>הקשבה והשתתפות כיתתית</span>
-            <span class="sp-pts-tag">+1 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0284c7;">${renderWaze3DDiamond(false, 14)} <span>+1</span></span>
           </button>
           <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="2" data-all-title="ביצוע משימה כיתתית">
-            <span style="font-size:1.25rem;">📝</span>
+            ${renderWaze3DMedallion('shop-ticket', 28)}
             <span>ביצוע משימה כיתתית</span>
-            <span class="sp-pts-tag">+2 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0284c7;">${renderWaze3DDiamond(false, 14)} <span>+2</span></span>
           </button>
           <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="2" data-all-title="אווירה נעימה ושיתוף פעולה">
-            <span style="font-size:1.25rem;">🤝</span>
+            ${renderWaze3DMedallion('tool-groups', 28)}
             <span>אווירה נעימה ושיתוף פעולה</span>
-            <span class="sp-pts-tag">+2 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0284c7;">${renderWaze3DDiamond(false, 14)} <span>+2</span></span>
           </button>
           <button class="sp-behavior-btn" data-all-kind="positive" data-all-pts="3" data-all-title="מאמץ כיתתי מיוחד">
-            <span style="font-size:1.25rem;">💎</span>
+            ${renderWaze3DMedallion('trophy-crown', 28)}
             <span>מאמץ כיתתי מיוחד</span>
-            <span class="sp-pts-tag">+3 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0284c7;">${renderWaze3DDiamond(true, 14)} <span>+3</span></span>
           </button>
           <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-1" data-all-title="רעש / חוסר הקשבה כיתתי">
-            <span style="font-size:1.25rem;">🔇</span>
+            ${renderWaze3DMedallion('mood-pirate', 28)}
             <span>רעש / חוסר הקשבה</span>
-            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-1 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;">${renderWaze3DDiamond(false, 14)} <span>-1</span></span>
           </button>
           <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-2" data-all-title="הפרעה / אי עמידה במשימה">
-            <span style="font-size:1.25rem;">⚠️</span>
+            ${renderWaze3DMedallion('tool-traffic-light', 28)}
             <span>אי עמידה במשימה / הפרעה</span>
-            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-2 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;">${renderWaze3DDiamond(false, 14)} <span>-2</span></span>
           </button>
           <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-1" data-all-title="הורדה כיתתית כללית">
-            <span style="font-size:1.25rem;">➖</span>
+            ${renderWaze3DMedallion('mood-detective', 28)}
             <span>הורדת יהלום לכל הכיתה</span>
-            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-1 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;">${renderWaze3DDiamond(false, 14)} <span>-1</span></span>
           </button>
           <button class="sp-behavior-btn hidden" data-all-kind="negative" data-all-pts="-3" data-all-title="הורדת 3 יהלומים לכל הכיתה">
-            <span style="font-size:1.25rem;">⬇️</span>
+            ${renderWaze3DMedallion('mood-ninja', 28)}
             <span>הורדת 3 יהלומים לכולם</span>
-            <span class="sp-pts-tag" style="background:#fee2e2;color:#dc2626;">-3 💎</span>
+            <span class="sp-pts-tag" style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;">${renderWaze3DDiamond(false, 14)} <span>-3</span></span>
           </button>
         </div>
       </div>
@@ -632,18 +640,18 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       <div data-el="icon-picker-drawer" class="sp-drawer hidden">
         <div class="sp-drawer-header">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:1.3rem;">🎨</span>
-            <span data-el="icon-picker-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">בחירת סמל לתלמיד</span>
+            ${renderWaze3DMedallion('shop-palette', 24)}
+            <span data-el="icon-picker-title" style="font-weight:800;font-size:0.95rem;color:var(--text-dark);">בחירת סמל תלת-ממד לתלמיד</span>
           </div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <button class="small-btn" data-act="random-icon-one" title="הגרל סמל אקראי לתלמיד זה" style="font-size:0.75rem;">🎲 הגרל סמל</button>
+            <button class="small-btn" data-act="random-icon-one" title="הגרל סמל אקראי לתלמיד זה" style="font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;">${renderWaze3DMedallion('dice', 18)} <span>הגרל סמל</span></button>
             <button class="small-btn" data-act="close-icon-picker" style="padding:2px 8px;">✕</button>
           </div>
         </div>
         <div class="sp-icon-cat-bar" data-el="icon-cat-bar">
           ${ICON_CATEGORIES.map(c => `
-            <button class="sp-icon-cat-btn ${c.id === 'waze3d' ? 'active' : ''}" data-cat="${c.id}">
-              <span>${c.icon}</span>
+            <button class="sp-icon-cat-btn ${c.id === 'waze3d' ? 'active' : ''}" data-cat="${c.id}" style="display:inline-flex;align-items:center;gap:5px;">
+              ${renderWaze3DMedallion(c.icon, 20)}
               <span>${c.name}</span>
             </button>
           `).join('')}
@@ -1319,7 +1327,24 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
   // 3. DIAMOND SHOP LOGIC
   const shopView = body.querySelector('[data-el="shop-view"]');
-  const SHOP_EMOJI_CHOICES = ['🎁', '🎟️', '👑', '💺', '🎲', '🖍️', '📚', '🌟', '💌', '🏆', '🎨', '⚽', '🧩', '🏅', '🪄', '🧁'];
+  const SHOP_EMOJI_CHOICES = [
+    'waze:shop-ticket',
+    'waze:shop-chair',
+    'waze:trophy-crown',
+    'waze:shop-palette',
+    'waze:dice',
+    'waze:tool-wheel',
+    'waze:star-shield',
+    'waze:diamond-legend',
+    'waze:birthday-cake',
+    'waze:kiddush-cup',
+    'waze:challah',
+    'waze:pomegranate',
+    'waze:sefer-torah',
+    'waze:siddur',
+    'waze:mood-king',
+    'waze:mood-superhero'
+  ];
 
   function saveShopItemsList() {
     state.shopItems = shopItems;
@@ -1400,17 +1425,17 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
 
       ${showAddShopForm ? `
         <div class="shop-custom-form-card">
-          <div style="font-weight:800;font-size:0.9rem;color:#0f172a;margin-bottom:6px;">✨ הוספת הטבה חדשה משלך לחנות הכיתתית:</div>
+          <div style="font-weight:800;font-size:0.9rem;color:#0f172a;margin-bottom:6px;">✨ הוספת הטבה חדשה משלך לחנות הכיתתית (בחר סמל 3D):</div>
           <div class="shop-emoji-picker-row" data-el="shop-emoji-row">
             ${SHOP_EMOJI_CHOICES.map((em, idx) => `
-              <button type="button" class="shop-emoji-chip ${idx === 0 ? 'active' : ''}" data-emoji="${em}">${em}</button>
+              <button type="button" class="shop-emoji-chip ${idx === 0 ? 'active' : ''}" data-emoji="${em}" style="padding:3px;border-radius:50%;">${renderWaze3DMedallion(em, 30)}</button>
             `).join('')}
           </div>
           <div class="shop-custom-inputs-row">
-            <input type="text" data-el="custom-shop-icon" class="shop-input-icon" value="🎁" maxlength="4" title="אייקון / אימוג'י" />
+            <input type="hidden" data-el="custom-shop-icon" class="shop-input-icon" value="waze:shop-ticket" />
             <input type="text" data-el="custom-shop-title" class="shop-input-title" placeholder="שם ההטבה (למשל: בחירת מדבקה / זמן מחשב / פתיחת השיעור בחידה)..." />
             <div style="display:flex;align-items:center;gap:4px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:0 8px;">
-              <span>💎</span>
+              ${renderWaze3DDiamond(false, 16)}
               <input type="number" data-el="custom-shop-cost" class="shop-input-cost" value="20" min="1" max="500" />
             </div>
             <button type="button" class="primary-btn" data-act="save-custom-shop-item" style="padding:7px 16px;border-radius:10px;font-weight:800;white-space:nowrap;">💾 הוסף לחנות</button>
@@ -1445,7 +1470,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           const canBuy = selectedShopBuyer && buyerTotal >= item.cost;
           const itemIconHtml = WAZE_3D_MAP[item.icon]
             ? renderWaze3DMedallion(item.icon, 54)
-            : `<span style="font-size:2.4rem;">${item.icon || '🎁'}</span>`;
+            : renderWaze3DMedallion('shop-ticket', 54);
           return `
             <div class="shop-item-card ${canBuy ? 'can-afford' : ''}" data-shop-idx="${idx}">
               <div class="shop-item-card-tools">
@@ -2151,10 +2176,10 @@ defaultW: 250,
 defaultH: 260,
 render(body, state, saveState) {
 const modes = {
-silence: { icon: '🤫', title: 'דממה מוחלטת', sub: 'עובדים לבד בשקט מוחלט' },
-whisper: { icon: '🔉', title: 'עבודה בלחישה', sub: 'מותר לדבר בקול נמוך' },
-neighbor: { icon: '💬', title: 'שאל חבר קרוב', sub: 'התייעצות עם השכן' },
-together: { icon: '👥', title: 'עבודה בקבוצות', sub: 'שיתוף פעולה קבוצתי' }
+silence: { wazeKey: 'mood-headphones', title: 'דממה מוחלטת', sub: 'עובדים לבד בשקט מוחלט' },
+whisper: { wazeKey: 'tool-symbols', title: 'עבודה בלחישה', sub: 'מותר לדבר בקול נמוך' },
+neighbor: { wazeKey: 'mood-cool', title: 'שאל חבר קרוב', sub: 'התייעצות עם השכן' },
+together: { wazeKey: 'tool-groups', title: 'עבודה בקבוצות', sub: 'שיתוף פעולה קבוצתי' }
 };
 let current = state.mode ?? 'silence';
 
@@ -2171,7 +2196,7 @@ body.innerHTML = `
   </div>
   <div class="frameless-ws-pills">
     ${Object.entries(modes).map(([k, v]) => `
-      <button class="ws-mini-pill ${k === current ? 'active' : ''}" data-mode="${k}" title="${v.title}">${v.icon}</button>
+      <button class="ws-mini-pill ${k === current ? 'active' : ''}" data-mode="${k}" title="${v.title}" style="padding:3px;">${renderWaze3DMedallion(v.wazeKey, 26)}</button>
     `).join('')}
   </div>
 </div>
@@ -2179,7 +2204,7 @@ body.innerHTML = `
 
 function updateView() {
   const m = modes[current] || modes.silence;
-  body.querySelector('[data-el="icon"]').textContent = m.icon;
+  body.querySelector('[data-el="icon"]').innerHTML = renderWaze3DMedallion(m.wazeKey, 76);
   body.querySelector('[data-el="title"]').textContent = m.title;
   body.querySelector('[data-el="sub"]').textContent = m.sub;
   body.querySelectorAll('.ws-mini-pill').forEach(b => b.classList.toggle('active', b.dataset.mode === current));
@@ -4146,11 +4171,11 @@ defaultX: 20,
 defaultY: 70,
 render(body, state, saveState) {
 const DUTY_ROLES = [
-  { id: 'computer', title: 'תורן מחשב', icon: '💻' },
-  { id: 'cleaning', title: 'תורן ניקיון', icon: '🧹' },
-  { id: 'chairs', title: 'תורן הרמת כיסאות', icon: '🪑' },
-  { id: 'board', title: 'תורן לוח', icon: '🖍️' },
-  { id: 'errands', title: 'תורן שליחויות', icon: '🏃' }
+  { id: 'computer', title: 'תורן מחשב', icon: renderWaze3DMedallion('tool-webcam', 24) },
+  { id: 'cleaning', title: 'תורן ניקיון', icon: renderWaze3DMedallion('star-shield', 24) },
+  { id: 'chairs', title: 'תורן הרמת כיסאות', icon: renderWaze3DMedallion('shop-chair', 24) },
+  { id: 'board', title: 'תורן לוח', icon: renderWaze3DMedallion('tool-text-draw', 24) },
+  { id: 'errands', title: 'תורן שליחויות', icon: renderWaze3DMedallion('mood-superhero', 24) }
 ];
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -5273,11 +5298,11 @@ renderUI();
     let moveInterval = null;
 
     const CHALLENGES = [
-      { icon: '🙆‍♂️', title: 'מתיחות לשמיים ונשימה', desc: 'עמדו ליד הכיסא, מתחו ידיים גבוה לשמיים על קצות האצבעות ושחררו לאט 5 פעמים.' },
-      { icon: '🪞', title: 'משחק המראה בדממה', desc: 'עמדו מול השותף לשולחן וחקו את התנועות האיטיות שלו בדממה מוחלטת למשך דקה!' },
-      { icon: '🦩', title: 'אתגר הפלמינגו השקט', desc: 'עמדו על רגל אחת בשיווי משקל מלא ובדממה – אחרי 30 שניות החליפו רגל!' },
-      { icon: '🌧️', title: 'מקהלת הגשם באצבעות', desc: 'תיפוף עדין של טיפות גשם עם שתי אצבעות על השולחן שהולך ונחלש עד לדממה.' },
-      { icon: '🦋', title: 'שחרור כתפיים וצוואר', desc: 'סובבו כתפיים לאחור ברוגע 8 פעמים, עצמו עיניים והניחו ראש על השולחן ל-20 שניות.' }
+      { icon: renderWaze3DMedallion('mood-astronaut', 52), title: 'מתיחות לשמיים ונשימה', desc: 'עמדו ליד הכיסא, מתחו ידיים גבוה לשמיים על קצות האצבעות ושחררו לאט 5 פעמים.' },
+      { icon: renderWaze3DMedallion('mood-cool', 52), title: 'משחק המראה בדממה', desc: 'עמדו מול השותף לשולחן וחקו את התנועות האיטיות שלו בדממה מוחלטת למשך דקה!' },
+      { icon: renderWaze3DMedallion('mood-ninja', 52), title: 'אתגר שיווי המשקל השקט', desc: 'עמדו על רגל אחת בשיווי משקל מלא ובדממה – אחרי 30 שניות החליפו רגל!' },
+      { icon: renderWaze3DMedallion('mood-headphones', 52), title: 'מקהלת הגשם באצבעות', desc: 'תיפוף עדין של טיפות גשם עם שתי אצבעות על השולחן שהולך ונחלש עד לדממה.' },
+      { icon: renderWaze3DMedallion('mood-star', 52), title: 'שחרור כתפיים וצוואר', desc: 'סובבו כתפיים לאחור ברוגע 8 פעמים, עצמו עיניים והניחו ראש על השולחן ל-20 שניות.' }
     ];
     let currentChallengeIdx = state.challengeIdx ?? 0;
 
@@ -5306,7 +5331,7 @@ renderUI();
             <div class="bb-breathe-stage">
               <div class="bb-orb-container">
                 <div class="bb-orb ${breathingActive ? PHASES[phaseIndex].cls : ''}" data-el="bb-orb">
-                  <span class="bb-orb-emoji">🧘</span>
+                  <span class="bb-orb-emoji">${renderWaze3DMedallion('mood-astronaut', 54)}</span>
                   <span class="bb-orb-text" data-el="bb-orb-text">${breathingActive ? PHASES[phaseIndex].label : 'לחצו להתחלת נשימה'}</span>
                 </div>
               </div>
