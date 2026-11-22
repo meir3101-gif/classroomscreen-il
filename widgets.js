@@ -505,7 +505,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
   <input type="file" accept="image/*" data-el="sp-photo-file-input" style="display:none;" />
   <div style="display:flex;flex-direction:column;height:100%;gap:8px;position:relative;">
     <div style="display:flex;gap:8px;justify-content:center;padding:4px;">
-      <button class="rand-tab waze-pill-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams">👥 קבוצות</button>
+      <button class="rand-tab waze-pill-tab ${activeTab === 'teams' ? 'active' : ''}" data-sptab="teams">${renderWaze3DMedallion('tool-groups', 20)} <span>קבוצות</span></button>
       <button class="rand-tab waze-pill-tab ${activeTab === 'students' ? 'active' : ''}" data-sptab="students">${renderWaze3DDiamond(false, 20)} <span>יהלומים</span></button>
       <button class="rand-tab waze-pill-tab ${activeTab === 'shop' ? 'active' : ''}" data-sptab="shop">${renderWaze3DMedallion('trophy-crown', 20)} <span>חנות</span></button>
     </div>
@@ -540,7 +540,7 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
           <button class="small-btn waze-action-pill" data-act="open-all-drawer" style="background:#ffffff;color:#0284c7;font-weight:900;">${renderWaze3DDiamond(false, 20)} <span>+ לכולם</span></button>
           <button class="small-btn waze-action-pill" data-act="open-deduct-all-drawer" style="background:#fff1f2;color:#e11d48;font-weight:900;"><span>− לכולם</span></button>
           <button class="small-btn waze-action-pill" data-act="undo-score" title="בטל את פעולת הניקוד האחרונה" style="font-weight:900;background:#fef9c3;color:#92400e;" disabled>↩</button>
-          <button class="small-btn waze-action-pill" data-act="toggle-sidebar-view" style="font-weight:800;background:#ffffff;color:#334155;">📌 סרגל</button>
+          <button class="small-btn waze-action-pill" data-act="toggle-sidebar-view" style="font-weight:800;background:#ffffff;color:#334155;">${renderWaze3DDiamond(false, 18)} <span>סרגל</span></button>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="small-btn waze-action-pill" data-act="randomize-all-icons" title="חלק דמויות Waze 3D אקראיות לכל התלמידים" style="background:#ffffff;color:#0f172a;">${renderWaze3DMedallion('dice', 20)} <span>הגרל דמויות</span></button>
@@ -560,9 +560,9 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
             </div>
           </div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <button class="small-btn" data-act="upload-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;" title="העלה תמונה מהמחשב">📷 תמונה</button>
-            <button class="small-btn danger hidden" data-el="remove-photo-btn" data-act="remove-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;color:#dc2626;" title="מחק תמונה">🗑️</button>
-            <button class="small-btn" data-act="open-icon-from-drawer" style="font-size:0.75rem;padding:3px 8px;">🎨 סמל</button>
+            <button class="small-btn" data-act="upload-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;" title="העלה תמונה מהמחשב">${renderWaze3DMedallion('tool-webcam', 18)} <span>תמונה</span></button>
+            <button class="small-btn danger hidden" data-el="remove-photo-btn" data-act="remove-photo-from-drawer" style="font-size:0.75rem;padding:3px 8px;color:#dc2626;" title="מחק תמונה">מחק תמונה</button>
+            <button class="small-btn" data-act="open-icon-from-drawer" style="font-size:0.75rem;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;">${renderWaze3DMedallion('shop-palette', 18)} <span>סמל</span></button>
             <button class="small-btn" data-act="close-drawer" style="padding:2px 8px;">✕</button>
           </div>
         </div>
@@ -952,8 +952,8 @@ function renderScoreboardAndPoints(body, state, saveState, defaultTab = 'teams')
       return `
         <div class="sp-student-bubble ${haloClass}" data-student="${name}">
           <div class="sp-card-tools-bar">
-            <button class="sp-card-tool-btn" data-act="upload-photo" data-student="${name}" title="העלה תמונה מהמחשב">📷</button>
-            <button class="sp-card-tool-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד">🎨</button>
+            <button class="sp-card-tool-btn" data-act="upload-photo" data-student="${name}" title="העלה תמונה מהמחשב" style="padding:2px;">${renderWaze3DMedallion('tool-webcam', 20)}</button>
+            <button class="sp-card-tool-btn" data-act="pick-icon" data-student="${name}" title="בחר סמל לתלמיד" style="padding:2px;">${renderWaze3DMedallion('shop-palette', 20)}</button>
           </div>
           <div class="sp-bubble-avatar-wrap">
             <div class="sp-bubble-avatar ${photo ? 'has-custom-photo' : ''}" data-act="open-drawer" data-student="${name}" title="לחץ להענקת יהלומים ל-${name}">
@@ -5023,32 +5023,32 @@ renderUI();
         <div class="hq-wrap">
           <div class="hq-header-bar">
             <div>
-              <div style="font-weight:800;font-size:0.95rem;">✋ תור ממתינים לעזרה (${queue.length})</div>
+              <div style="font-weight:800;font-size:0.95rem;display:flex;align-items:center;gap:6px;">${renderWaze3DMedallion('mood-superhero', 24)} <span>תור ממתינים לעזרה (${queue.length})</span></div>
               <div style="font-size:0.75rem;color:var(--text-muted);">לחצו על שמכם להצטרפות לתור בלי להרים יד ולהתעייף</div>
             </div>
-            ${queue.length > 0 ? `<button class="small-btn danger" data-act="clear-hq" style="font-size:0.75rem;">🧹 נקה תור</button>` : ''}
+            ${queue.length > 0 ? `<button class="small-btn danger" data-act="clear-hq" style="font-size:0.75rem;">נקה תור</button>` : ''}
           </div>
 
           <div class="hq-queue-list">
             ${queue.length === 0 ? `
-              <div class="hq-empty-state">✨ אף תלמיד לא ממתין כרגע לעזרה – עבודה עצמית שקטה וזורמת!</div>
+              <div class="hq-empty-state">אף תלמיד לא ממתין כרגע לעזרה – עבודה עצמית שקטה וזורמת!</div>
             ` : queue.map((item, idx) => `
               <div class="hq-queue-item ${idx === 0 ? 'first-in-line' : ''}">
                 <span class="hq-rank-badge">#${idx + 1}</span>
                 <div class="hq-student-avatar">${renderAvatarSmall(item.name)}</div>
                 <div class="hq-student-info">
                   <div class="hq-student-name">${item.name}</div>
-                  <div class="hq-student-time">${idx === 0 ? '🟢 בתור עכשיו אצל המורה' : '⏳ ממתין/ה בתור'}</div>
+                  <div class="hq-student-time">${idx === 0 ? 'בתור עכשיו אצל המורה' : 'ממתין/ה בתור'}</div>
                 </div>
                 <div class="hq-item-actions">
-                  <button class="small-btn hq-peer-btn" data-act="peer-help" data-idx="${idx}" title="חבר עזר לתלמיד">+1 💎 חבר עזר</button>
+                  <button class="small-btn hq-peer-btn" data-act="peer-help" data-idx="${idx}" title="חבר עזר לתלמיד" style="display:inline-flex;align-items:center;gap:4px;">${renderWaze3DDiamond(false, 15)} <span>+1 חבר עזר</span></button>
                   <button class="small-btn hq-done-btn" data-act="done-help" data-idx="${idx}">✓ טופל</button>
                 </div>
               </div>
             `).join('')}
           </div>
 
-          <div class="hq-students-picker-title">👆 לחץ על הסמל שלך כדי להצטרף לתור:</div>
+          <div class="hq-students-picker-title">לחץ על הסמל שלך כדי להצטרף לתור:</div>
           <div class="hq-students-grid">
             ${students.map(name => {
               const isWaiting = waitingNames.has(name);
@@ -5187,24 +5187,24 @@ renderUI();
         <div class="sc-wrap">
           <div class="sc-toolbar">
             <div style="display:flex;gap:4px;">
-              <button class="sp-mode-pill ${layoutMode === 'pairs' ? 'active' : ''}" data-layout="pairs">🪑 זוגות</button>
-              <button class="sp-mode-pill ${layoutMode === 'groups' ? 'active' : ''}" data-layout="groups">🧩 קבוצות (4)</button>
-              <button class="sp-mode-pill ${layoutMode === 'rows' ? 'active' : ''}" data-layout="rows">📏 טורים</button>
+              <button class="sp-mode-pill ${layoutMode === 'pairs' ? 'active' : ''}" data-layout="pairs" style="display:inline-flex;align-items:center;gap:4px;">${renderWaze3DMedallion('shop-chair', 18)} <span>זוגות</span></button>
+              <button class="sp-mode-pill ${layoutMode === 'groups' ? 'active' : ''}" data-layout="groups" style="display:inline-flex;align-items:center;gap:4px;">${renderWaze3DMedallion('tool-groups', 18)} <span>קבוצות (4)</span></button>
+              <button class="sp-mode-pill ${layoutMode === 'rows' ? 'active' : ''}" data-layout="rows">טורים</button>
             </div>
             <div style="display:flex;gap:6px;align-items:center;">
-              <span style="font-size:0.74rem;color:var(--text-muted);">${swapSourceIndex !== null ? '🔄 בחר כיסא שני להחלפה' : '💡 לחץ על שני תלמידים להחלפת מקום'}</span>
-              <button class="small-btn" data-act="shuffle-seats" style="background:#e0f2fe;color:#0284c7;font-weight:800;border:1px solid #bae6fd;">🎲 ערבב מקומות</button>
+              <span style="font-size:0.74rem;color:var(--text-muted);">${swapSourceIndex !== null ? 'בחר כיסא שני להחלפה' : 'לחץ על שני תלמידים להחלפת מקום'}</span>
+              <button class="small-btn" data-act="shuffle-seats" style="background:#e0f2fe;color:#0284c7;font-weight:800;border:1px solid #bae6fd;display:inline-flex;align-items:center;gap:5px;">${renderWaze3DMedallion('dice', 18)} <span>ערבב מקומות</span></button>
             </div>
           </div>
 
-          <div class="sc-front-board">🖥️ לוח הכיתה ועמדת המורה</div>
+          <div class="sc-front-board" style="display:flex;align-items:center;justify-content:center;gap:8px;">${renderWaze3DMedallion('tool-text-draw', 22)} <span>לוח הכיתה ועמדת המורה</span></div>
 
           <div class="sc-desks-grid layout-${layoutMode}">
             ${desks.map((desk, dIdx) => `
               <div class="sc-desk-card">
                 <div class="sc-desk-header">
                   <span>שולחן ${dIdx + 1}</span>
-                  <button class="sc-desk-reward-btn" data-act="reward-desk" data-didx="${dIdx}" title="הענק יהלום לכל יושבי השולחן">+1 💎 לשולחן</button>
+                  <button class="sc-desk-reward-btn" data-act="reward-desk" data-didx="${dIdx}" title="הענק יהלום לכל יושבי השולחן" style="display:inline-flex;align-items:center;gap:4px;">${renderWaze3DDiamond(false, 15)} <span>+1 לשולחן</span></button>
                 </div>
                 <div class="sc-desk-seats">
                   ${desk.map(seat => {
@@ -5440,9 +5440,9 @@ renderUI();
     let activeStudent = null;
 
     const LEVELS = [
-      { id: 'green', icon: '🟢', title: 'הבנתי מצוין!', sub: 'יכול/ה גם להסביר לחבר', color: '#10b981' },
-      { id: 'yellow', icon: '🟡', title: 'הבנתי חלקית', sub: 'צריך/ה עוד תרגול קטן', color: '#f59e0b' },
-      { id: 'red', icon: '🔴', title: 'צריך/ה עזרה', sub: 'אשמח להסבר נוסף מהמורה', color: '#ef4444' }
+      { id: 'green', icon: renderWaze3DMedallion('trophy-crown', 20), title: 'הבנתי מצוין!', sub: 'יכול/ה גם להסביר לחבר', color: '#10b981' },
+      { id: 'yellow', icon: renderWaze3DMedallion('mood-detective', 20), title: 'הבנתי חלקית', sub: 'צריך/ה עוד תרגול קטן', color: '#f59e0b' },
+      { id: 'red', icon: renderWaze3DMedallion('mood-superhero', 20), title: 'צריך/ה עזרה', sub: 'אשמח להסבר נוסף מהמורה', color: '#ef4444' }
     ];
 
     function getStudents() {

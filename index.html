@@ -16,29 +16,23 @@
 <header class="top-bar">
 <div class="top-bar-right">
 <div class="brand-logo" title="מסך כיתה - דף הבית" id="btn-home-overview">
-<span class="brand-icon">
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <rect width="20" height="14" x="2" y="3" rx="2"/>
-    <line x1="8" x2="16" y1="21" y2="21"/>
-    <line x1="12" x2="12" y1="17" y2="21"/>
-  </svg>
-</span>
+<span class="waze-3d-gem-disc" style="width:24px;height:24px;"><img src="assets/waze-3d/tool-background.jpg" class="waze-3d-crop-img" alt="" /></span>
 <span class="brand-title">מסך כיתה</span>
 </div>
 <div class="screens-tabs" id="screens-tabs">
 </div>
 <button class="top-btn icon-text-btn" id="btn-add-screen" title="הוסף מסך חדש">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-<span>מסך חדש</span>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/star-shield.jpg" class="waze-3d-crop-img" alt="" /></span>
+<span>+ מסך חדש</span>
 </button>
 </div>
 <div class="top-bar-center">
 <div class="annotation-toolbar hidden" id="annotation-toolbar">
-<span class="toolbar-label">
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-left:4px;"><path d="m18 2 4 4-12 12H6v-4L18 2z"/></svg>
-  טוש / מרקר:
+<span class="toolbar-label" style="display:inline-flex;align-items:center;gap:5px;">
+  <span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/tool-text-draw.jpg" class="waze-3d-crop-img" alt="" /></span>
+  <span>טוש / מרקר:</span>
 </span>
-<button class="top-btn" id="btn-anno-highlighter" title="מצב מרקר שקוף להדגשת שורות טקסט" style="background:#fef9c3;color:#854d0e;">🖍️ מרקר טקסט</button>
+<button class="top-btn" id="btn-anno-highlighter" title="מצב מרקר שקוף להדגשת שורות טקסט" style="background:#fef9c3;color:#854d0e;">מרקר טקסט</button>
 <input type="color" id="anno-color" value="#facc15" title="צבע טוש/מרקר" />
 <div class="color-presets" id="anno-color-presets">
 <button class="color-dot active" data-color="#facc15" style="background:#facc15" title="צהוב מרקר"></button>
@@ -55,13 +49,11 @@
 <option value="12">טוש עבה</option>
 <option value="24" selected>מרקר שורה</option>
 </select>
-<button class="top-btn" id="btn-anno-straight" title="קו ישר אוטומטי להדגשת שורות טקסט" style="background:#e0f2fe;color:#0369a1;">📏 קו ישר</button>
+<button class="top-btn" id="btn-anno-straight" title="קו ישר אוטומטי להדגשת שורות טקסט" style="background:#e0f2fe;color:#0369a1;">קו ישר</button>
 <button class="top-btn" id="btn-anno-eraser" title="מחק">
-  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
   <span>מחק</span>
 </button>
 <button class="top-btn" id="btn-anno-clear" title="נקה ציור">
-  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
   <span>נקה הכל</span>
 </button>
 <button class="top-btn primary-btn" id="btn-anno-done">✓ סיום ציור</button>
@@ -70,24 +62,24 @@
 <div class="top-bar-left">
 <div class="cloud-sync-pill" id="cloud-sync-pill" title="סטטוס שמירה בשרת">
 <span id="cloud-sync-icon">
-  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+  <span class="waze-3d-gem-disc" style="width:18px;height:18px;"><img src="assets/waze-3d/tool-embed.jpg" class="waze-3d-crop-img" alt="" /></span>
 </span>
 <span id="cloud-sync-text">שמירה מקומית</span>
 </div>
 <button class="top-btn icon-text-btn" id="btn-student-lists" title="ניהול רשימות תלמידים">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/tool-groups.jpg" class="waze-3d-crop-img" alt="" /></span>
 <span>רשימת תלמידים</span>
 </button>
 <button class="top-btn icon-text-btn" id="btn-annotate-toggle" title="צייר מעל המסך">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4-12 12H6v-4L18 2z"/></svg>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/tool-text-draw.jpg" class="waze-3d-crop-img" alt="" /></span>
 <span>טוש מסך</span>
 </button>
 <button class="top-btn icon-text-btn" id="btn-templates" title="תבניות מוכנות לשיעור">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/shop-ticket.jpg" class="waze-3d-crop-img" alt="" /></span>
 <span>תבניות שיעור</span>
 </button>
 <button class="top-btn icon-only-btn" id="btn-clear-widgets" title="נקה את כל הווידג'טים מהמסך">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/mood-pirate.jpg" class="waze-3d-crop-img" alt="" /></span>
 </button>
 <button class="top-btn" id="btn-toggle-sidebar" title="סרגל תלמידים צדי וניקוד מהיר">
 <span class="waze-3d-gem-disc" style="width:20px;height:20px;margin-inline-end:4px;"><img src="assets/waze-3d/diamond-cyan.jpg" class="waze-3d-crop-img" alt="" /></span>
@@ -98,7 +90,7 @@
 <span style="font-weight:800;">תורנים</span>
 </button>
 <button class="top-btn icon-only-btn" id="btn-fullscreen" title="מסך מלא">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+<span class="waze-3d-gem-disc" style="width:20px;height:20px;"><img src="assets/waze-3d/mood-astronaut.jpg" class="waze-3d-crop-img" alt="" /></span>
 </button>
 <button class="google-top-btn" id="btn-google-login" title="התחבר עם חשבון גוגל לשמירה בענן">
 <svg class="google-g-icon" viewBox="0 0 24 24" width="18" height="18">
@@ -123,19 +115,15 @@
 <div class="more-widgets-drawer hidden" id="more-widgets-drawer">
 <div class="drawer-header">
 <div style="display:flex;align-items:center;gap:10px;">
-  <span class="drawer-header-icon">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="2"/><rect width="7" height="7" x="14" y="3" rx="2"/><rect width="7" height="7" x="14" y="14" rx="2"/><rect width="7" height="7" x="3" y="14" rx="2"/></svg>
-  </span>
+  <span class="waze-3d-gem-disc" style="width:28px;height:28px;"><img src="assets/waze-3d/diamond-legend.jpg" class="waze-3d-crop-img" alt="" /></span>
   <h3>כל הכלים והווידג'טים לכיתה</h3>
 </div>
-<button class="close-drawer-btn" id="btn-close-drawer" title="סגור">
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-</button>
+<button class="close-drawer-btn" id="btn-close-drawer" title="סגור">✕</button>
 </div>
 <div class="drawer-categories">
 <div class="drawer-category">
 <h4>
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <span class="waze-3d-gem-disc" style="width:22px;height:22px;"><img src="assets/waze-3d/tool-clock.jpg" class="waze-3d-crop-img" alt="" /></span>
   <span>ניהול זמן ויומן</span>
 </h4>
 <div class="drawer-grid">
@@ -175,7 +163,7 @@
 </div>
 <div class="drawer-category">
 <h4>
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="8" y="3" rx="4"/><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/></svg>
+  <span class="waze-3d-gem-disc" style="width:22px;height:22px;"><img src="assets/waze-3d/tool-traffic-light.jpg" class="waze-3d-crop-img" alt="" /></span>
   <span>ניהול כיתה והתנהגות</span>
 </h4>
 <div class="drawer-grid">
@@ -231,7 +219,7 @@
 </div>
 <div class="drawer-category">
 <h4>
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+  <span class="waze-3d-gem-disc" style="width:22px;height:22px;"><img src="assets/waze-3d/tool-wheel.jpg" class="waze-3d-crop-img" alt="" /></span>
   <span>מעורבות, הגרלות ומשחק</span>
 </h4>
 <div class="drawer-grid">
@@ -255,7 +243,7 @@
 </div>
 <div class="drawer-category">
 <h4>
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+  <span class="waze-3d-gem-disc" style="width:22px;height:22px;"><img src="assets/waze-3d/tool-video.jpg" class="waze-3d-crop-img" alt="" /></span>
   <span>תוכן, מדיה והצגה</span>
 </h4>
 <div class="drawer-grid">
@@ -389,7 +377,7 @@
 <div class="modal-backdrop hidden" id="modal-background">
 <div class="modal-card">
 <div class="modal-header">
-<h2>בחירת רקע למסך הכיתה</h2>
+<h2 style="display:flex;align-items:center;gap:8px;"><span class="waze-3d-gem-disc" style="width:26px;height:26px;"><img src="assets/waze-3d/tool-background.jpg" class="waze-3d-crop-img" alt="" /></span> <span>בחירת רקע למסך הכיתה</span></h2>
 <button class="modal-close" data-close="modal-background">✕</button>
 </div>
 <div class="modal-body">
@@ -402,8 +390,9 @@
 <div class="bg-grid" id="bg-picker-grid">
 </div>
 <div class="bg-custom-upload hidden" id="bg-custom-section">
-<label class="upload-box">
-<span>📁 לחץ לבחירת תמונה מהמחשב</span>
+<label class="upload-box" style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">
+<span class="waze-3d-gem-disc" style="width:24px;height:24px;"><img src="assets/waze-3d/tool-background.jpg" class="waze-3d-crop-img" alt="" /></span>
+<span>לחץ לבחירת תמונה מהמחשב</span>
 <input type="file" id="bg-file-input" accept="image/*" hidden />
 </label>
 <div class="custom-url-row">
@@ -417,7 +406,7 @@
 <div class="modal-backdrop hidden" id="modal-students">
 <div class="modal-card">
 <div class="modal-header">
-<h2>👥 ניהול רשימות תלמידים</h2>
+<h2 style="display:flex;align-items:center;gap:8px;"><span class="waze-3d-gem-disc" style="width:26px;height:26px;"><img src="assets/waze-3d/tool-groups.jpg" class="waze-3d-crop-img" alt="" /></span> <span>ניהול רשימות תלמידים</span></h2>
 <button class="modal-close" data-close="modal-students">✕</button>
 </div>
 <div class="modal-body">
@@ -439,7 +428,7 @@
 <div class="editor-actions">
 <button class="secondary-btn" id="btn-load-sample-students">טען שמות לדוגמה</button>
 <button class="danger-btn" id="btn-delete-class-list">מחק רשימה</button>
-<button class="primary-btn" id="btn-save-student-list">💾 שמור רשימה</button>
+<button class="primary-btn" id="btn-save-student-list">שמור רשימה</button>
 </div>
 </div>
 </div>
@@ -449,7 +438,7 @@
 <div class="modal-backdrop hidden" id="modal-templates">
 <div class="modal-card">
 <div class="modal-header">
-<h2>✨ תבניות שיעור מוכנות</h2>
+<h2 style="display:flex;align-items:center;gap:8px;"><span class="waze-3d-gem-disc" style="width:26px;height:26px;"><img src="assets/waze-3d/shop-ticket.jpg" class="waze-3d-crop-img" alt="" /></span> <span>תבניות שיעור מוכנות</span></h2>
 <button class="modal-close" data-close="modal-templates">✕</button>
 </div>
 <div class="modal-body">
