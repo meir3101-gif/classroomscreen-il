@@ -312,6 +312,7 @@ function sanitizeWorkspace(body) {
     classGoals: (body.classGoals && typeof body.classGoals === 'object') ? body.classGoals : undefined,
     shopItems: Array.isArray(body.shopItems) ? body.shopItems : undefined,
     studentBirthdays: (body.studentBirthdays && typeof body.studentBirthdays === 'object') ? body.studentBirthdays : undefined,
+    dutyRosterState: (body.dutyRosterState && typeof body.dutyRosterState === 'object') ? body.dutyRosterState : undefined,
     lastDailyResetDate: typeof body.lastDailyResetDate === 'string' ? body.lastDailyResetDate : undefined
   };
 }

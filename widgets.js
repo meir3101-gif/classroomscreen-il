@@ -3784,6 +3784,15 @@ body.querySelector('[data-act="next"]').addEventListener('click', () => {
   renderCal();
 });
 renderCal();
+const onBdaysUpdated = () => {
+  if (!document.body.contains(body)) {
+    window.removeEventListener('cs:birthdays-updated', onBdaysUpdated);
+    return;
+  }
+  renderCal();
+};
+window.addEventListener('cs:birthdays-updated', onBdaysUpdated);
+return () => window.removeEventListener('cs:birthdays-updated', onBdaysUpdated);
 }
 },
 'countdown': {
@@ -4180,11 +4189,43 @@ const DUTY_ROLES = [
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
+// Load global persistent duty roster state so closing/reopening the widget never resets rounds or history!
+const globalDutyState = (window.AppStore && typeof window.AppStore.getDutyRosterState === 'function')
+  ? window.AppStore.getDutyRosterState()
+  : {};
+if (globalDutyState && typeof globalDutyState === 'object' && Object.keys(globalDutyState).length > 0) {
+  Object.assign(state, globalDutyState);
+}
+
+function saveDutyState() {
+  if (window.AppStore && typeof window.AppStore.setDutyRosterState === 'function') {
+    window.AppStore.setDutyRosterState({
+      classId: state.classId,
+      dayOff: state.dayOff,
+      rolePools: state.rolePools,
+      roleRounds: state.roleRounds,
+      roleHistory: state.roleHistory,
+      globalRound: state.globalRound,
+      globalServed: state.globalServed,
+      assignments: state.assignments,
+      substitutes: state.substitutes,
+      lastAssignedDate: state.lastAssignedDate,
+      forceDutyToday: state.forceDutyToday
+    });
+  } else {
+    saveState();
+  }
+}
+
 if (state.dayOff === undefined) state.dayOff = 2; // יום שלישי כברירת מחדל
 if (!state.rolePools || typeof state.rolePools !== 'object') state.rolePools = {};
 if (!state.roleRounds || typeof state.roleRounds !== 'object') state.roleRounds = {};
+if (!state.roleHistory || typeof state.roleHistory !== 'object') state.roleHistory = {};
+if (typeof state.globalRound !== 'number') state.globalRound = 1;
+if (!Array.isArray(state.globalServed)) state.globalServed = [];
 DUTY_ROLES.forEach(r => {
   if (!Array.isArray(state.rolePools[r.id])) state.rolePools[r.id] = [];
+  if (!Array.isArray(state.roleHistory[r.id])) state.roleHistory[r.id] = [];
   if (typeof state.roleRounds[r.id] !== 'number') state.roleRounds[r.id] = 1;
 });
 if (!state.assignments) state.assignments = {};
@@ -4233,53 +4274,99 @@ function performDailyRotation(force = false) {
   const allStudents = getClassStudents();
   if (allStudents.length === 0) return;
 
+  // Clean up globalServed and roleHistory for students still in the class
+  state.globalServed = (state.globalServed || []).filter(s => allStudents.includes(s));
+
   const assignedToday = [];
   const newAssignments = {};
 
   DUTY_ROLES.forEach(role => {
-    // Keep only active students for this role
-    let pool = (state.rolePools[role.id] || []).filter(s => allStudents.includes(s));
+    let history = (state.roleHistory[role.id] || []).filter(s => allStudents.includes(s));
 
-    // Try finding the first candidate in this role's queue not yet assigned to another duty today
-    let chosenIdx = pool.findIndex(s => !assignedToday.includes(s));
+    // 1. Best candidates: students who haven't served ANY duty in the current global round AND haven't done this role in its round AND aren't assigned today
+    let candidates = allStudents.filter(s =>
+      !assignedToday.includes(s) &&
+      !state.globalServed.includes(s) &&
+      !history.includes(s)
+    );
 
-    if (chosenIdx === -1) {
-      // Round complete for this specific role! Start a new cycle for this role
-      state.roleRounds[role.id] = (state.roleRounds[role.id] || 0) + 1;
-      const unassignedInClass = allStudents.filter(s => !assignedToday.includes(s));
-      const alreadyAssigned = allStudents.filter(s => assignedToday.includes(s));
-      pool = [...shuffle(unassignedInClass), ...shuffle(alreadyAssigned)];
-      chosenIdx = pool.findIndex(s => !assignedToday.includes(s));
-      if (chosenIdx === -1) chosenIdx = 0; // fallback if fewer students than roles
+    // 2. If none, students who haven't served ANY duty in the current global round and aren't assigned today
+    if (candidates.length === 0) {
+      candidates = allStudents.filter(s =>
+        !assignedToday.includes(s) &&
+        !state.globalServed.includes(s)
+      );
     }
 
-    const chosenStudent = pool.splice(chosenIdx, 1)[0] || '';
-    state.rolePools[role.id] = pool;
+    // 3. If every available student has already been a duty officer in the current global round -> start a NEW global round!
+    if (candidates.length === 0) {
+      state.globalRound = (state.globalRound || 1) + 1;
+      state.globalServed = [];
+      // Now pick someone who hasn't done this specific role yet (if possible)
+      candidates = allStudents.filter(s =>
+        !assignedToday.includes(s) &&
+        !history.includes(s)
+      );
+    }
+
+    // 4. If all students have already done this specific role too -> start a new round for this role
+    if (candidates.length === 0) {
+      state.roleRounds[role.id] = (state.roleRounds[role.id] || 1) + 1;
+      history = [];
+      candidates = allStudents.filter(s => !assignedToday.includes(s));
+    }
+
+    // 5. Fallback if class has fewer than 5 students total
+    if (candidates.length === 0) {
+      candidates = [...allStudents];
+    }
+
+    const shuffled = shuffle(candidates);
+    const chosenStudent = shuffled[0] || '';
     newAssignments[role.id] = chosenStudent;
-    if (chosenStudent) assignedToday.push(chosenStudent);
+
+    if (chosenStudent) {
+      assignedToday.push(chosenStudent);
+      if (!state.globalServed.includes(chosenStudent)) {
+        state.globalServed.push(chosenStudent);
+      }
+      if (!history.includes(chosenStudent)) {
+        history.push(chosenStudent);
+      }
+    }
+    state.roleHistory[role.id] = history;
+    // Update rolePools to reflect remaining students who haven't done this role in this round
+    state.rolePools[role.id] = allStudents.filter(s => !history.includes(s));
   });
 
   state.assignments = newAssignments;
   state.substitutes = {};
   state.lastAssignedDate = todayStr;
   state.forceDutyToday = false;
-  saveState();
+  saveDutyState();
 }
 
 function replaceDuty(roleId, newStudent) {
   const curStudent = state.assignments[roleId];
   if (!curStudent || !newStudent || curStudent === newStudent) return;
 
-  if (!state.rolePools[roleId]) state.rolePools[roleId] = [];
+  if (!Array.isArray(state.roleHistory[roleId])) state.roleHistory[roleId] = [];
+  if (!Array.isArray(state.globalServed)) state.globalServed = [];
 
-  // Remove the replacement student from this role's pool so they don't get assigned again in the same round
-  state.rolePools[roleId] = state.rolePools[roleId].filter(s => s !== newStudent);
+  // The absent student didn't actually serve today -> remove them from globalServed & roleHistory so they get their turn next!
+  state.globalServed = state.globalServed.filter(s => s !== curStudent);
+  state.roleHistory[roleId] = state.roleHistory[roleId].filter(s => s !== curStudent);
 
-  // Return the absent student back into this role's round queue (at a random spot so they get another day in the same round)
-  if (!state.rolePools[roleId].includes(curStudent)) {
-    const insertIdx = Math.floor(Math.random() * (state.rolePools[roleId].length + 1));
-    state.rolePools[roleId].splice(insertIdx, 0, curStudent);
+  // Mark the substitute student as having served
+  if (!state.globalServed.includes(newStudent)) {
+    state.globalServed.push(newStudent);
   }
+  if (!state.roleHistory[roleId].includes(newStudent)) {
+    state.roleHistory[roleId].push(newStudent);
+  }
+
+  const allStudents = getClassStudents();
+  state.rolePools[roleId] = allStudents.filter(s => !state.roleHistory[roleId].includes(s));
 
   state.assignments[roleId] = newStudent;
   state.substitutes[roleId] = {
@@ -4287,20 +4374,29 @@ function replaceDuty(roleId, newStudent) {
     sub: newStudent,
     time: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
   };
-  saveState();
+  saveDutyState();
 }
 
 function drawRandomSubstitute(roleId) {
   const curStudent = state.assignments ? state.assignments[roleId] : '';
   const allStudents = getClassStudents();
   const assignedOthers = Object.values(state.assignments || {}).filter(s => s && s !== curStudent);
-  const rolePool = state.rolePools[roleId] || [];
+  const history = state.roleHistory?.[roleId] || [];
+  const globalServed = state.globalServed || [];
 
-  // 1. Prefer students remaining in this role's current round who aren't on another duty today
-  let candidates = rolePool.filter(s => s !== curStudent && !assignedOthers.includes(s));
-  // 2. Fallback: any student remaining in this role's round
+  // 1. Prefer students who haven't served ANY duty in this global round AND aren't on another duty today
+  let candidates = allStudents.filter(s =>
+    s !== curStudent &&
+    !assignedOthers.includes(s) &&
+    !globalServed.includes(s)
+  );
+  // 2. Fallback: students who haven't done this specific role yet and aren't on another duty today
   if (candidates.length === 0) {
-    candidates = rolePool.filter(s => s !== curStudent);
+    candidates = allStudents.filter(s =>
+      s !== curStudent &&
+      !assignedOthers.includes(s) &&
+      !history.includes(s)
+    );
   }
   // 3. Fallback: any student in class not on another duty today
   if (candidates.length === 0) {
@@ -4335,8 +4431,8 @@ function renderUI() {
           <span class="duty-day-icon">📅</span>
           <span>יום ${dayName}</span>
         </div>
-        <div class="duty-round-pill" title="סבב תורנויות כיתתי אישי לכל תפקיד">
-          <span>סבב נפרד לכל תפקיד</span>
+        <div class="duty-round-pill" title="אף תלמיד לא ישובץ שוב עד שכל תלמידי הכיתה יהיו תורנים בסבב">
+          <span>סבב ${state.globalRound || 1} • נותרו ${Math.max(0, totalStudents - (state.globalServed || []).filter(s => allStudents.includes(s)).length)}/${totalStudents}</span>
         </div>
         <button class="duty-icon-btn ${showSettings ? 'active' : ''}" data-act="toggle-settings" title="הגדרות תורנות ויום חופשי">
           ⚙️
@@ -4364,7 +4460,8 @@ function renderUI() {
             </select>
           </div>
           <div class="duty-settings-actions">
-            <button class="duty-mini-btn" data-act="reroll-today">🎲 ערבב תורנים להיום</button>
+            <button class="duty-mini-btn" data-act="next-day-rotation" style="background:#e0f2fe;color:#0284c7;font-weight:800;">⏭️ תורנים חדשים (הבא בסבב)</button>
+            <button class="duty-mini-btn" data-act="reroll-today">🎲 ערבב מחדש להיום</button>
             <button class="duty-mini-btn danger" data-act="reset-cycle">🔄 איפוס כל הסבבים</button>
           </div>
         </div>
@@ -4488,6 +4585,9 @@ function bindEvents() {
       state.classId = e.target.value;
       state.rolePools = {};
       state.roleRounds = {};
+      state.roleHistory = {};
+      state.globalRound = 1;
+      state.globalServed = [];
       state.assignments = {};
       state.substitutes = {};
       performDailyRotation(true);
@@ -4499,7 +4599,16 @@ function bindEvents() {
   if (dayoffSel) {
     dayoffSel.addEventListener('change', (e) => {
       state.dayOff = parseInt(e.target.value, 10);
-      saveState();
+      saveDutyState();
+      renderUI();
+    });
+  }
+
+  const nextDayBtn = body.querySelector('[data-act="next-day-rotation"]');
+  if (nextDayBtn) {
+    nextDayBtn.addEventListener('click', () => {
+      performDailyRotation(true);
+      if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
       renderUI();
     });
   }
@@ -4507,6 +4616,15 @@ function bindEvents() {
   const rerollBtn = body.querySelector('[data-act="reroll-today"]');
   if (rerollBtn) {
     rerollBtn.addEventListener('click', () => {
+      // Remove today's current assignments from globalServed/roleHistory before re-drawing today so today's replaced students aren't skipped!
+      const curAssigned = Object.entries(state.assignments || {});
+      curAssigned.forEach(([rId, stName]) => {
+        if (!stName) return;
+        state.globalServed = (state.globalServed || []).filter(s => s !== stName);
+        if (Array.isArray(state.roleHistory?.[rId])) {
+          state.roleHistory[rId] = state.roleHistory[rId].filter(s => s !== stName);
+        }
+      });
       performDailyRotation(true);
       if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
       renderUI();
@@ -4519,6 +4637,9 @@ function bindEvents() {
       if (confirm('לאפס את כל הסבבים של כל התורנויות ולהתחיל סבב 1 מחדש?')) {
         state.rolePools = {};
         state.roleRounds = {};
+        state.roleHistory = {};
+        state.globalRound = 1;
+        state.globalServed = [];
         state.assignments = {};
         state.substitutes = {};
         state.lastAssignedDate = '';
@@ -5549,7 +5670,8 @@ renderUI();
   defaultH: 520,
   render(body, state, saveState) {
     let selectedClassId = state.classId ?? window.AppStore.getSelectedClassId();
-    let bdays = (window.AppStore && window.AppStore.getStudentBirthdays) ? window.AppStore.getStudentBirthdays() : (state.bdays || {});
+    const globalBdays = (window.AppStore && window.AppStore.getStudentBirthdays) ? window.AppStore.getStudentBirthdays() : {};
+    let bdays = { ...(state.bdays || {}), ...globalBdays };
     let viewTab = state.viewTab || 'list'; // 'list' | 'months'
     let editingStudent = null;
     let pickerDay = 'א׳';
@@ -5646,15 +5768,21 @@ renderUI();
         return 0;
       });
 
+      const lists = window.AppStore.getClassLists() || [];
       body.innerHTML = `
         <div class="bd-wrap" style="position:relative;">
           <div class="bd-header-banner">
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               ${renderWaze3DMedallion('birthday-cake', 30)}
               <div>
                 <div style="font-weight:900;font-size:0.96rem;color:#831843;">ימי הולדת עברי</div>
                 <div style="font-size:0.76rem;font-weight:800;color:#9d174d;">${todayHeb.shortDisplay} ${todayHeb.year}</div>
               </div>
+              ${lists.length > 1 ? `
+                <select data-el="bd-class-sel" style="padding:3px 8px;border-radius:10px;border:1px solid #fbcfe8;font-weight:800;font-size:0.76rem;color:#831843;background:#fff;">
+                  ${lists.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${c.name}</option>`).join('')}
+                </select>
+              ` : ''}
             </div>
             <div style="display:flex;gap:4px;background:rgba(255,255,255,0.75);padding:3px;border-radius:10px;">
               <button class="sp-mode-pill ${viewTab === 'list' ? 'active' : ''}" data-bdtab="list">תלמידים</button>
@@ -5673,14 +5801,21 @@ renderUI();
                         <span class="bd-name">${item.name}</span>
                         ${item.isToday ? `<span class="bd-badge-today">חוגג/ת היום!</span>` : (item.isThisMonth ? `<span class="bd-badge-month">${todayHeb.month}</span>` : '')}
                       </div>
-                      <div style="font-size:0.75rem;color:#64748b;font-weight:700;">
-                        ${item.displayStr ? `<b style="color:#0f172a;">${item.displayStr}</b>` : 'לא הוגדר'}
+                      <div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;">
+                        <select class="bd-quick-day-sel" data-student="${item.name}" title="בחר יום בחודש העברי" style="padding:2px 6px;border-radius:8px;border:1.5px solid #cbd5e1;font-weight:800;font-size:0.76rem;background:#fff;color:#0f172a;cursor:pointer;">
+                          <option value="" ${!item.hasHeb ? 'selected' : ''}>יום...</option>
+                          ${HEBREW_DAYS_GEMATRIA.map(d => `<option value="${d}" ${(item.hasHeb && item.parsed.hebDay === d) ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                        <select class="bd-quick-month-sel" data-student="${item.name}" title="בחר חודש עברי" style="padding:2px 6px;border-radius:8px;border:1.5px solid #cbd5e1;font-weight:800;font-size:0.76rem;background:#fff;color:#0f172a;cursor:pointer;">
+                          <option value="" ${!item.hasHeb ? 'selected' : ''}>חודש...</option>
+                          ${HEBREW_MONTHS_LIST.map(m => `<option value="${m}" ${(item.hasHeb && item.parsed.hebMonth === m) ? 'selected' : ''}>${m}</option>`).join('')}
+                        </select>
                       </div>
                     </div>
                   </div>
                   <div class="bd-actions">
-                    <button class="small-btn bd-date-btn" data-act="open-heb-picker" data-student="${item.name}">
-                      ${item.displayStr || 'תאריך'}
+                    <button class="small-btn bd-date-btn" data-act="open-heb-picker" data-student="${item.name}" title="בחר מלוח מלא או המר מתאריך לועזי">
+                      📅 ${item.displayStr || 'בחר תאריך'}
                     </button>
                     <button class="small-btn bd-celebrate-btn" data-act="celebrate-bday" data-student="${item.name}" data-heb="${item.displayStr}" title="חגיגת יום הולדת על המסך והענקת 5 יהלומים במתנה!">
                       ${renderWaze3DDiamond(true, 16)} <span>+5</span>
@@ -5717,50 +5852,178 @@ renderUI();
               }).join('')}
             </div>
           `}
-
-          ${editingStudent ? `
-            <div class="bd-heb-picker-overlay">
-              <div class="bd-heb-picker-modal">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <div style="font-weight:900;font-size:0.98rem;color:#0f172a;">🗓️ בחירת יום הולדת עברי: <span style="color:#db2777;">${editingStudent}</span></div>
-                  <button class="small-btn" data-act="close-heb-picker" style="padding:2px 8px;">✕</button>
-                </div>
-
-                <div class="bd-heb-preview-bar">
-                  תאריך נבחר: <b>${pickerDay} ב${pickerMonth}</b>
-                </div>
-
-                <div style="font-size:0.76rem;font-weight:800;color:#475569;margin-bottom:4px;">1. בחר יום בחודש העברי (א׳ עד ל׳):</div>
-                <div class="bd-heb-days-grid">
-                  ${HEBREW_DAYS_GEMATRIA.map(d => `
-                    <button type="button" class="bd-heb-day-btn ${pickerDay === d ? 'active' : ''}" data-hday="${d}">${d}</button>
-                  `).join('')}
-                </div>
-
-                <div style="font-size:0.76rem;font-weight:800;color:#475569;margin:8px 0 4px 0;">2. בחר חודש עברי:</div>
-                <div class="bd-heb-months-grid">
-                  ${HEBREW_MONTHS_LIST.map(m => `
-                    <button type="button" class="bd-heb-month-btn ${pickerMonth === m ? 'active' : ''}" data-hmonth="${m}">${m}</button>
-                  `).join('')}
-                </div>
-
-                <div class="bd-greg-converter-row">
-                  <span style="font-size:0.74rem;font-weight:700;color:#475569;">🔄 יודע רק תאריך לידה לועזי? בחר והמערכת תמיר לעברי:</span>
-                  <input type="date" data-el="greg-convert-inp" value="${pickerGreg}" style="padding:3px 8px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.76rem;" />
-                </div>
-
-                <div style="display:flex;justify-content:space-between;gap:8px;margin-top:10px;">
-                  <button type="button" class="small-btn danger" data-act="clear-student-bday" style="font-size:0.76rem;">🗑️ נקה תאריך</button>
-                  <div style="display:flex;gap:6px;">
-                    <button type="button" class="small-btn" data-act="close-heb-picker">ביטול</button>
-                    <button type="button" class="primary-btn" data-act="save-heb-bday" style="padding:6px 18px;border-radius:10px;font-weight:800;">💾 שמור תאריך עברי</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ` : ''}
         </div>
       `;
+
+      // Render modal directly into document.body so it is never clipped by a compact widget window!
+      const existingModal = document.getElementById('bd-heb-picker-global-overlay');
+      if (existingModal) existingModal.remove();
+
+      if (editingStudent) {
+        const modalOverlay = document.createElement('div');
+        modalOverlay.id = 'bd-heb-picker-global-overlay';
+        modalOverlay.className = 'shop-voucher-overlay';
+        modalOverlay.innerHTML = `
+          <div class="bd-heb-picker-modal" style="max-width:480px;width:94vw;max-height:90vh;overflow-y:auto;direction:rtl;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-weight:900;font-size:1.05rem;color:#0f172a;">🗓️ בחירת יום הולדת עברי: <span style="color:#db2777;">${editingStudent}</span></div>
+              <button class="small-btn" data-act="close-heb-picker" style="padding:2px 8px;">✕</button>
+            </div>
+
+            <div class="bd-heb-preview-bar" data-el="bd-preview-text">
+              תאריך נבחר: <b>${pickerDay} ב${pickerMonth}</b>
+            </div>
+
+            <div style="font-size:0.8rem;font-weight:800;color:#475569;margin-bottom:4px;">1. בחר יום בחודש העברי (א׳ עד ל׳):</div>
+            <div class="bd-heb-days-grid">
+              ${HEBREW_DAYS_GEMATRIA.map(d => `
+                <button type="button" class="bd-heb-day-btn ${pickerDay === d ? 'active' : ''}" data-hday="${d}">${d}</button>
+              `).join('')}
+            </div>
+
+            <div style="font-size:0.8rem;font-weight:800;color:#475569;margin:10px 0 4px 0;">2. בחר חודש עברי:</div>
+            <div class="bd-heb-months-grid">
+              ${HEBREW_MONTHS_LIST.map(m => `
+                <button type="button" class="bd-heb-month-btn ${pickerMonth === m ? 'active' : ''}" data-hmonth="${m}">${m}</button>
+              `).join('')}
+            </div>
+
+            <div class="bd-greg-converter-row">
+              <span style="font-size:0.76rem;font-weight:700;color:#475569;">🔄 יודע רק תאריך לידה לועזי? בחר והמערכת תמיר לעברי:</span>
+              <input type="date" data-el="greg-convert-inp" value="${pickerGreg}" style="padding:4px 8px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.8rem;" />
+            </div>
+
+            <div style="display:flex;justify-content:space-between;gap:8px;margin-top:12px;">
+              <button type="button" class="small-btn danger" data-act="clear-student-bday" style="font-size:0.78rem;">🗑️ נקה תאריך</button>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="small-btn" data-act="close-heb-picker">ביטול</button>
+                <button type="button" class="primary-btn" data-act="save-heb-bday" style="padding:7px 20px;border-radius:10px;font-weight:800;">💾 שמור תאריך עברי</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modalOverlay);
+
+        const updateModalHighlight = () => {
+          const prevEl = modalOverlay.querySelector('[data-el="bd-preview-text"]');
+          if (prevEl) prevEl.innerHTML = `תאריך נבחר: <b>${pickerDay} ב${pickerMonth}</b>`;
+          modalOverlay.querySelectorAll('.bd-heb-day-btn').forEach(b => b.classList.toggle('active', b.dataset.hday === pickerDay));
+          modalOverlay.querySelectorAll('.bd-heb-month-btn').forEach(b => b.classList.toggle('active', b.dataset.hmonth === pickerMonth));
+        };
+
+        modalOverlay.querySelectorAll('.bd-heb-day-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            pickerDay = btn.dataset.hday;
+            updateModalHighlight();
+          });
+        });
+
+        modalOverlay.querySelectorAll('.bd-heb-month-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            pickerMonth = btn.dataset.hmonth;
+            updateModalHighlight();
+          });
+        });
+
+        modalOverlay.querySelector('[data-el="greg-convert-inp"]')?.addEventListener('change', (e) => {
+          const val = e.target.value;
+          if (!val) return;
+          pickerGreg = val;
+          const dObj = new Date(val + 'T12:00:00');
+          if (!isNaN(dObj.getTime())) {
+            const converted = getHebrewDateInfo(dObj);
+            pickerDay = converted.dayGematria;
+            pickerMonth = converted.month;
+            if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+            updateModalHighlight();
+          }
+        });
+
+        modalOverlay.querySelectorAll('[data-act="close-heb-picker"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            editingStudent = null;
+            modalOverlay.remove();
+          });
+        });
+
+        modalOverlay.addEventListener('click', (ev) => {
+          if (ev.target === modalOverlay) {
+            editingStudent = null;
+            modalOverlay.remove();
+          }
+        });
+
+        modalOverlay.querySelector('[data-act="clear-student-bday"]')?.addEventListener('click', () => {
+          if (!editingStudent) return;
+          delete bdays[editingStudent];
+          editingStudent = null;
+          modalOverlay.remove();
+          saveBdays();
+          renderUI();
+        });
+
+        modalOverlay.querySelector('[data-act="save-heb-bday"]')?.addEventListener('click', () => {
+          if (!editingStudent) return;
+          bdays[editingStudent] = {
+            hebDay: pickerDay,
+            hebMonth: pickerMonth,
+            gregDate: pickerGreg
+          };
+          editingStudent = null;
+          modalOverlay.remove();
+          saveBdays();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        });
+      }
+
+      body.querySelector('[data-el="bd-class-sel"]')?.addEventListener('change', (e) => {
+        selectedClassId = e.target.value;
+        state.classId = selectedClassId;
+        saveState();
+        renderUI();
+      });
+
+      // Quick inline day/month dropdowns on each student row — saves immediately on change!
+      body.querySelectorAll('.bd-quick-day-sel').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const sName = sel.dataset.student;
+          const newDay = sel.value;
+          const existing = parseSavedHebrewBirthday(bdays[sName]);
+          if (!newDay) {
+            delete bdays[sName];
+          } else {
+            bdays[sName] = {
+              hebDay: newDay,
+              hebMonth: (existing && existing.hebMonth) ? existing.hebMonth : todayHeb.month,
+              gregDate: (existing && existing.gregDate) ? existing.gregDate : ''
+            };
+          }
+          saveBdays();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        });
+      });
+
+      body.querySelectorAll('.bd-quick-month-sel').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const sName = sel.dataset.student;
+          const newMonth = sel.value;
+          const existing = parseSavedHebrewBirthday(bdays[sName]);
+          if (!newMonth) {
+            delete bdays[sName];
+          } else {
+            bdays[sName] = {
+              hebDay: (existing && existing.hebDay) ? existing.hebDay : 'א׳',
+              hebMonth: newMonth,
+              gregDate: (existing && existing.gregDate) ? existing.gregDate : ''
+            };
+          }
+          saveBdays();
+          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
+          renderUI();
+        });
+      });
 
       body.querySelectorAll('[data-bdtab]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -5781,62 +6044,6 @@ renderUI();
           pickerGreg = (existing && existing.gregDate) ? existing.gregDate : '';
           renderUI();
         });
-      });
-
-      body.querySelectorAll('.bd-heb-day-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          pickerDay = btn.dataset.hday;
-          renderUI();
-        });
-      });
-
-      body.querySelectorAll('.bd-heb-month-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          pickerMonth = btn.dataset.hmonth;
-          renderUI();
-        });
-      });
-
-      body.querySelector('[data-el="greg-convert-inp"]')?.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (!val) return;
-        pickerGreg = val;
-        const dObj = new Date(val + 'T12:00:00');
-        if (!isNaN(dObj.getTime())) {
-          const converted = getHebrewDateInfo(dObj);
-          pickerDay = converted.dayGematria;
-          pickerMonth = converted.month;
-          if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
-          renderUI();
-        }
-      });
-
-      body.querySelectorAll('[data-act="close-heb-picker"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          editingStudent = null;
-          renderUI();
-        });
-      });
-
-      body.querySelector('[data-act="clear-student-bday"]')?.addEventListener('click', () => {
-        if (!editingStudent) return;
-        delete bdays[editingStudent];
-        editingStudent = null;
-        saveBdays();
-        renderUI();
-      });
-
-      body.querySelector('[data-act="save-heb-bday"]')?.addEventListener('click', () => {
-        if (!editingStudent) return;
-        bdays[editingStudent] = {
-          hebDay: pickerDay,
-          hebMonth: pickerMonth,
-          gregDate: pickerGreg
-        };
-        editingStudent = null;
-        saveBdays();
-        if (typeof SoundFX !== 'undefined' && SoundFX.pop) SoundFX.pop();
-        renderUI();
       });
 
       body.querySelectorAll('[data-act="celebrate-bday"]').forEach(btn => {

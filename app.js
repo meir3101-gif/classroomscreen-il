@@ -91,6 +91,7 @@ studentPhotos: {},
 classGoals: {},
 shopItems: null,
 studentBirthdays: {},
+dutyRosterState: {},
 lastDailyResetDate: new Date().toLocaleDateString('sv-SE'),
 classLists: [
 { id: 'cls-1', name: "כיתה ה'1", students: [...DEFAULT_STUDENTS] },
@@ -215,7 +216,8 @@ studentPhotos: (cloudWorkspace.studentPhotos && Object.keys(cloudWorkspace.stude
 studentIcons: (cloudWorkspace.studentIcons && Object.keys(cloudWorkspace.studentIcons).length > 0) ? cloudWorkspace.studentIcons : (localData.studentIcons || {}),
 classGoals: (cloudWorkspace.classGoals && Object.keys(cloudWorkspace.classGoals).length > 0) ? cloudWorkspace.classGoals : (localData.classGoals || {}),
 shopItems: (Array.isArray(cloudWorkspace.shopItems) && cloudWorkspace.shopItems.length > 0) ? cloudWorkspace.shopItems : (localData.shopItems || null),
-studentBirthdays: (cloudWorkspace.studentBirthdays && Object.keys(cloudWorkspace.studentBirthdays).length > 0) ? cloudWorkspace.studentBirthdays : (localData.studentBirthdays || {})
+studentBirthdays: { ...(localData.studentBirthdays || {}), ...(cloudWorkspace.studentBirthdays || {}) },
+dutyRosterState: (cloudWorkspace.dutyRosterState && Object.keys(cloudWorkspace.dutyRosterState).length > 0) ? cloudWorkspace.dutyRosterState : (localData.dutyRosterState || {})
 };
 this.checkDailyReset();
 try {
@@ -576,6 +578,12 @@ setShopItems: (items) => {
 getStudentBirthdays: () => this.data.studentBirthdays || {},
 setStudentBirthdays: (bdays) => {
   this.data.studentBirthdays = bdays;
+  this.saveState();
+  window.dispatchEvent(new CustomEvent('cs:birthdays-updated', { detail: bdays }));
+},
+getDutyRosterState: () => this.data.dutyRosterState || {},
+setDutyRosterState: (dutyState) => {
+  this.data.dutyRosterState = dutyState;
   this.saveState();
 },
 redeemStudentDiamonds: (name, cost, rewardTitle = 'הטבה מחנות היהלומים') => {
